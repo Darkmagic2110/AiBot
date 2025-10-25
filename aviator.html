@@ -1,0 +1,227 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Dark Magic Ai Aviator Bot</title>
+
+<link href="https://fonts.googleapis.com/css2?family=UnifrakturCook:wght@700&display=swap" rel="stylesheet">
+<link href="https://fonts.googleapis.com/css2?family=Poppins:wght@500;600&display=swap" rel="stylesheet">
+
+<style>
+    body {
+        background: black;
+        color: #ff3300;
+        font-family: 'Poppins', sans-serif;
+        text-align: center;
+        padding: 15px;
+        overflow-x: hidden;
+    }
+
+    h1 {
+        font-family: 'UnifrakturCook', cursive;
+        font-size: 30px;
+        color: red;
+        margin-bottom: 20px;
+        text-shadow: 0 0 8px #ff3300, 0 0 15px #ff4d4d;
+    }
+
+    #botImage {
+        width: 200px;
+        height: 200px;
+        border-radius: 20px;
+        object-fit: cover;
+        margin-bottom: 20px;
+        border: 3px solid red;
+        box-shadow: 0 0 20px #ff3300, 0 0 35px #ff4d4d;
+        animation: pulse 2s infinite;
+    }
+
+    @keyframes pulse {
+        0%, 100% {box-shadow: 0 0 20px #ff3300, 0 0 35px #ff4d4d;}
+        50% {box-shadow: 0 0 30px #ff3300, 0 0 50px #ff4d4d;}
+    }
+
+    #predictBtn {
+        padding: 14px 20px;
+        font-size: 18px;
+        font-weight: 600;
+        border-radius: 12px;
+        border: none;
+        background: #ff3300;
+        color: black;
+        cursor: pointer;
+        margin-bottom: 20px;
+        box-shadow: 0 0 18px #ff3300, 0 0 25px #ff4d4d;
+        transition: 0.3s ease-in-out;
+        position: relative;
+        overflow: hidden;
+    }
+
+    #predictBtn:disabled {
+        background: #7f0000;
+        cursor: not-allowed;
+        box-shadow: 0 0 10px #7f0000;
+    }
+
+    #predictionBox {
+        background: linear-gradient(145deg, #000000, #330000);
+        border: 2px solid red;
+        border-radius: 16px;
+        padding: 20px;
+        font-family: 'Poppins', sans-serif;
+        color: #ff4d4d;
+        font-size: 16px;
+        text-align: left;
+        white-space: pre-line;
+        display: none;
+        max-width: 400px;
+        margin: 0 auto;
+        box-shadow: 0 0 25px #ff3300, 0 0 40px #ff4d4d, 0 0 55px #ff3300 inset;
+        position: relative;
+        overflow: hidden;
+    }
+
+    #loadingText {
+        color: #ff3300;
+        font-size: 18px;
+        margin-bottom: 20px;
+        display: none;
+        font-weight: 600;
+        animation: blink 1s infinite;
+    }
+
+    @keyframes blink {
+        0%, 50%, 100% {opacity: 1;}
+        25%, 75% {opacity: 0.2;}
+    }
+
+    .rocket {
+        position: absolute;
+        font-size: 24px;
+    }
+
+    .trail {
+        position: absolute;
+        width: 4px;
+        height: 4px;
+        background: #ff4d4d;
+        border-radius: 50%;
+        opacity: 0.8;
+        pointer-events: none;
+    }
+</style>
+</head>
+
+<body>
+
+<h1>Dark Magic Ai Aviator Bot</h1>
+
+<img id="botImage" src="aviator.jpg" alt="Aviator Bot">
+
+<div id="loadingText">⏳ Predicting...</div>
+<button id="predictBtn">🚀 Predict Aviator</button>
+
+<div id="predictionBox"></div>
+
+<script>
+function padZero(num) { return num < 10 ? '0'+num : num; }
+function getRandomCoefficient() { return (Math.random() * (4.50 - 2.30) + 2.30).toFixed(2); }
+function getRandomMinuteOffset() { return Math.floor(Math.random() * 3) + 2; } // 2-4 mins
+
+const predictBtn = document.getElementById("predictBtn");
+const predictionBox = document.getElementById("predictionBox");
+const loadingText = document.getElementById("loadingText");
+
+predictBtn.addEventListener("click", () => {
+    predictBtn.disabled = true;
+    predictionBox.style.display = "none";
+    loadingText.style.display = "block";
+
+    // Rocket + Curved Trail
+    const rocket = document.createElement("div");
+    rocket.classList.add("rocket");
+    rocket.textContent = "🚀";
+    document.body.appendChild(rocket);
+
+    const trails = [];
+    for(let i=0;i<15;i++){
+        const trail = document.createElement("div");
+        trail.classList.add("trail");
+        document.body.appendChild(trail);
+        trails.push({el: trail, offset: i*3});
+    }
+
+    let t=0;
+    const animInterval = setInterval(()=>{
+        t += 0.03;
+        const x = 10 + 90*t; // horizontal
+        const y = 90 - (t*t*90); // parabola curve
+        rocket.style.left = x + "%";
+        rocket.style.top = y + "%";
+
+        trails.forEach(tr => {
+            const trailX = x - tr.offset;
+            const trailY = y + tr.offset/2;
+            tr.el.style.left = trailX + "%";
+            tr.el.style.top = trailY + "%";
+            tr.el.style.opacity = Math.max(0, 1 - t - tr.offset/30);
+        });
+
+        if(t>=1){
+            clearInterval(animInterval);
+            rocket.remove();
+            trails.forEach(tr => tr.el.remove());
+            showPrediction();
+        }
+    }, 30);
+
+    function showPrediction() {
+        loadingText.style.display = "none";
+        const now = new Date();
+        const offsetMinutes = getRandomMinuteOffset();
+        const predictedTime = new Date(now.getTime() + offsetMinutes * 60000);
+        const hour = padZero(predictedTime.getHours());
+        const minute = padZero(predictedTime.getMinutes());
+        const coef = parseFloat(getRandomCoefficient());
+
+        const text = `AVIATOR PREDICTION
+┏━━━━━━━━━━━━━
+┠ ⭓➤𝐓𝐈𝐌𝐄 : ${hour}:${minute} 
+┠ ⭓➤𝐂𝐎𝐄𝐅𝐅𝐈𝐂𝐈𝐄𝐍𝐓: `;
+        predictionBox.textContent = text;
+        predictionBox.style.display = "block";
+
+        let start = 1.00;
+        const steps = 50;
+        const coefElement = document.createElement("span");
+        coefElement.style.color = "#ff4d4d";
+        coefElement.style.fontWeight = "700";
+        coefElement.textContent = start.toFixed(2) + "X";
+        predictionBox.appendChild(coefElement);
+
+        let currentStep = 0;
+        const coefInterval = setInterval(()=>{
+            currentStep++;
+            const value = 1.00 + ((coef-1.00)*(currentStep/steps));
+            coefElement.textContent = value.toFixed(2) + "X";
+            if(currentStep>=steps) clearInterval(coefInterval);
+        }, 20);
+
+        const closingText = document.createElement("div");
+        closingText.textContent = "┗━━━━━━━━━━━━━";
+        predictionBox.appendChild(document.createElement("br"));
+        predictionBox.appendChild(closingText);
+
+        const checkInterval = setInterval(()=>{
+            if(new Date()>=predictedTime){
+                predictBtn.disabled = false;
+                clearInterval(checkInterval);
+            }
+        },1000);
+    }
+});
+</script>
+
+</body>
+</html>

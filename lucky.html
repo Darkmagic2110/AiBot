@@ -1,0 +1,224 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Dark Magic Ai Lucky Jet Bot</title>
+
+<link href="https://fonts.googleapis.com/css2?family=UnifrakturCook:wght@700&display=swap" rel="stylesheet">
+<link href="https://fonts.googleapis.com/css2?family=Poppins:wght@500;600&display=swap" rel="stylesheet">
+
+<style>
+    body {
+        background: black;
+        color: #00bfff;
+        font-family: 'Poppins', sans-serif;
+        text-align: center;
+        padding: 15px;
+    }
+
+    h1 {
+        font-family: 'UnifrakturCook', cursive;
+        font-size: 30px;
+        color: cyan;
+        margin-bottom: 20px;
+        text-shadow: 0 0 8px #00bfff, 0 0 15px #00ffff;
+    }
+
+    #botImage {
+        width: 200px;
+        height: 200px;
+        border-radius: 20px;
+        object-fit: cover;
+        margin-bottom: 20px;
+        border: 3px solid #00bfff;
+        box-shadow: 0 0 20px #00bfff, 0 0 35px #00ffff;
+        animation: pulse 2s infinite;
+    }
+
+    @keyframes pulse {
+        0%, 100% {box-shadow: 0 0 20px #00bfff, 0 0 35px #00ffff;}
+        50% {box-shadow: 0 0 30px #00bfff, 0 0 50px #00ffff;}
+    }
+
+    #predictBtn {
+        padding: 14px 20px;
+        font-size: 18px;
+        font-weight: 600;
+        border-radius: 12px;
+        border: none;
+        background: #00bfff;
+        color: black;
+        cursor: pointer;
+        margin-bottom: 20px;
+        box-shadow: 0 0 18px #00bfff, 0 0 25px #00ffff;
+        transition: 0.3s ease-in-out;
+        position: relative;
+        overflow: hidden;
+    }
+
+    #predictBtn:disabled {
+        background: #005f7f;
+        cursor: not-allowed;
+        box-shadow: 0 0 10px #005f7f;
+    }
+
+    #predictionBox {
+        background: linear-gradient(145deg, #000000, #001f2f);
+        border: 2px solid #00bfff;
+        border-radius: 16px;
+        padding: 20px;
+        font-family: 'Poppins', sans-serif;
+        color: #00ffff;
+        font-size: 16px;
+        text-align: left;
+        white-space: pre-line;
+        display: none;
+        max-width: 400px;
+        margin: 0 auto;
+        box-shadow: 0 0 25px #00bfff, 0 0 40px #00ffff, 0 0 55px #00bfff inset;
+        position: relative;
+        overflow: hidden;
+    }
+
+    #loadingText {
+        color: #00bfff;
+        font-size: 18px;
+        margin-bottom: 20px;
+        display: none;
+        font-weight: 600;
+        animation: blink 1s infinite;
+    }
+
+    @keyframes blink {
+        0%, 50%, 100% {opacity: 1;}
+        25%, 75% {opacity: 0.2;}
+    }
+
+    .rocket {
+        position: absolute;
+        font-size: 24px;
+        animation: flyRocket 1.5s linear forwards;
+    }
+
+    @keyframes flyRocket {
+        0% {top: 100%; left: 10%;}
+        25% {top: 70%; left: 40%;}
+        50% {top: 40%; left: 60%;}
+        75% {top: 20%; left: 80%;}
+        100% {top: 0%; left: 100%;}
+    }
+
+    .trail {
+        position: absolute;
+        width: 4px;
+        height: 4px;
+        background: #00ffff;
+        border-radius: 50%;
+        opacity: 0.8;
+        pointer-events: none;
+        animation: trailAnim 1.5s linear forwards;
+    }
+
+    @keyframes trailAnim {
+        0% {transform: translate(0, 0); opacity: 1;}
+        100% {transform: translate(-50px, -100px); opacity: 0;}
+    }
+</style>
+</head>
+
+<body>
+
+<h1>Dark Magic Ai Lucky Jet Bot</h1>
+
+<img id="botImage" src="lucky.jpg" alt="Lucky Jet Bot">
+
+<div id="loadingText">⏳ Predicting...</div>
+<button id="predictBtn">🚀 Predict Lucky Jet</button>
+
+<div id="predictionBox"></div>
+
+<script>
+function padZero(num) { return num < 10 ? '0'+num : num; }
+function getRandomCoefficient() { return (Math.random() * (4.50 - 2.50) + 2.50).toFixed(2); }
+function getRandomMinuteOffset() { return Math.floor(Math.random() * 3) + 2; } // 2-4 mins
+
+const predictBtn = document.getElementById("predictBtn");
+const predictionBox = document.getElementById("predictionBox");
+const loadingText = document.getElementById("loadingText");
+
+predictBtn.addEventListener("click", () => {
+    predictBtn.disabled = true;
+    predictionBox.style.display = "none";
+    loadingText.style.display = "block";
+
+    // Rocket + Trail
+    const rocket = document.createElement("div");
+    rocket.classList.add("rocket");
+    rocket.textContent = "🚀";
+    document.body.appendChild(rocket);
+
+    for(let i=0;i<8;i++){
+        const trail = document.createElement("div");
+        trail.classList.add("trail");
+        trail.style.left = (10 + i*8) + "%";
+        trail.style.top = "100%";
+        document.body.appendChild(trail);
+        setTimeout(()=>trail.remove(),1500);
+    }
+
+    setTimeout(()=>{
+        loadingText.style.display = "none";
+        rocket.remove();
+
+        const now = new Date();
+        const offsetMinutes = getRandomMinuteOffset();
+        const predictedTime = new Date(now.getTime() + offsetMinutes * 60000);
+        const hour = padZero(predictedTime.getHours());
+        const minute = padZero(predictedTime.getMinutes());
+        const coef = parseFloat(getRandomCoefficient());
+
+        const text = `LUCKY JET PREDICTION
+┏━━━━━━━━━━━━━
+┠ ⭓➤𝐓𝐈𝐌𝐄 : ${hour}:${minute} 
+┠ ⭓➤𝐂𝐎𝐄𝐅𝐅𝐈𝐂𝐈𝐄𝐍𝐓: `;
+
+        predictionBox.textContent = text;
+        predictionBox.style.display = "block";
+
+        // Animate coefficient counting
+        let start = 1.00;
+        const steps = 50;
+        const coefElement = document.createElement("span");
+        coefElement.style.color = "#00ffff";
+        coefElement.style.fontWeight = "700";
+        coefElement.textContent = start.toFixed(2) + "X";
+        predictionBox.appendChild(coefElement);
+
+        let currentStep = 0;
+        const coefInterval = setInterval(()=>{
+            currentStep++;
+            const value = 1.00 + ((coef-1.00)*(currentStep/steps));
+            coefElement.textContent = value.toFixed(2) + "X";
+            if(currentStep>=steps) clearInterval(coefInterval);
+        }, 20);
+
+        const closingText = document.createElement("div");
+        closingText.textContent = "┗━━━━━━━━━━━━━";
+        predictionBox.appendChild(document.createElement("br"));
+        predictionBox.appendChild(closingText);
+
+        // Unlock button after predicted time
+        const checkInterval = setInterval(()=>{
+            if(new Date()>=predictedTime){
+                predictBtn.disabled = false;
+                clearInterval(checkInterval);
+            }
+        },1000);
+
+    },1500);
+});
+</script>
+
+</body>
+</html>
