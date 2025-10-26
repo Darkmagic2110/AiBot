@@ -1,8 +1,8 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-<meta charset="UTF-8">
-<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1" />
 <title>Dark Magic Ai Bot - Main</title>
 
 <link href="https://fonts.googleapis.com/css2?family=UnifrakturCook:wght@700&display=swap" rel="stylesheet">
@@ -16,21 +16,18 @@
         text-align: center;
         padding: 10px;
     }
-
     h1 {
         font-family: 'UnifrakturCook', cursive;
         font-size: 35px;
         color: red;
         margin-bottom: 5px;
     }
-
     .grid {
         display: grid;
         grid-template-columns: repeat(2, 1fr);
         gap: 20px;
         padding-top: 20px;
     }
-
     .game-button img {
         width: 100%;
         max-width: 160px;
@@ -42,14 +39,12 @@
         pointer-events: none;
         transition: .2s;
     }
-
     .label {
         font-family: 'UnifrakturCook', cursive;
         margin-top: 5px;
         color: cyan;
         font-size: 20px;
     }
-
     button {
         width: 92%;
         padding: 14px;
@@ -66,16 +61,15 @@
         transition: 0.3s ease-in-out;
         box-shadow: 0 0 18px rgba(255, 0, 0, 0.7);
     }
-
-    button:hover {
+    button[disabled] {
+        opacity: 0.6;
+        pointer-events: none;
+        box-shadow: none;
+    }
+    button:hover:not([disabled]) {
         box-shadow: 0 0 25px rgba(255, 0, 0, 1);
     }
-
-    button:active {
-        background: #b30000;
-    }
-
-    input {
+    input[type="number"], input[type="text"] {
         width: 90%;
         padding: 12px;
         font-size: 18px;
@@ -83,7 +77,6 @@
         border-radius: 8px;
         border: none;
     }
-
     #toast {
         visibility: hidden;
         min-width: 240px;
@@ -102,33 +95,37 @@
         opacity: 0;
         transition: opacity 0.3s, bottom 0.3s;
     }
-
     #toast.show {
         visibility: visible;
         opacity: 1;
         bottom: 50px;
     }
-
     #statusMessage {
         margin-top: 12px;
         font-size: 19px;
         color: yellow;
     }
-
     #instructionText {
         font-size: 18px;
         font-family: 'Poppins', sans-serif;
         color: orange;
         margin-bottom: 15px;
     }
-
-    /* Wrap all registration elements in a container */
     #registrationContainer {
         margin-bottom: 20px;
     }
+    #depositInfo {
+        font-size: 15px;
+        color: #ffd700;
+        margin-top: 8px;
+    }
+    .small-muted {
+        font-size: 13px;
+        color: #aaa;
+        margin-top: 6px;
+    }
 </style>
 </head>
-
 <body>
 
 <h1>Dark Magic Ai Bot</h1>
@@ -138,15 +135,23 @@
 <div id="registrationContainer">
     <p id="instructionText">
         Click REGISTER below to create a new account ✅<br>
-        Then enter your NEW 1Win ID here to unlock the app 🔓
+        You MUST submit your NEW 1Win ID AND your first deposit amount (minimum $1) together.
     </p>
 
-    <button id="registerBtn" onclick="window.open('https://1wihrq.life/?open=register&p=yefx', '_blank')">
+    <button id="registerBtn" onclick="window.open('https://lkxw.cc/9e8cb290', '_blank')">
         ✅ Register with Official Link
     </button>
 
-    <input type="number" id="oneWinID" placeholder="Enter Your New 1Win Account ID">
-    <button id="submitIDBtn" onclick="submitID()">📩 Submit New ID</button>
+    <!-- Combined required inputs: ID + deposit -->
+    <input type="text" id="oneWinID" placeholder="Enter Your New 1Win Account ID" autocomplete="off" />
+    <input type="number" id="depositAmount" placeholder="Enter deposit amount ($1 minimum)" step="0.01" min="1" />
+
+    <div class="small-muted">B) Enter your first deposit to unlock predictions</div>
+
+    <!-- Single submit button - both fields required -->
+    <button id="submitBothBtn" onclick="submitBoth()">📩 Submit ID & Deposit</button>
+
+    <div id="depositInfo"></div>
 </div>
 
 <div class="grid">
@@ -173,11 +178,15 @@
 
 <div id="toast"></div>
 
+<!-- Firebase -->
 <script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-app.js"></script>
 <script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-auth.js"></script>
 <script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-database.js"></script>
 
 <script>
+/* ---------------------------
+   Firebase initialization
+   --------------------------- */
 const firebaseConfig = {
     apiKey: "AIzaSyDvFDByPPo9zgwKLdPaREz1OVMQCXmPfrs",
     authDomain: "bets-d795d.firebaseapp.com",
@@ -188,88 +197,41 @@ const firebaseConfig = {
     databaseURL: "https://bets-d795d-default-rtdb.firebaseio.com"
 };
 firebase.initializeApp(firebaseConfig);
-
-let approvalStatus = null;
 const db = firebase.database();
 
+let approvalStatus = null;
+let currentUserUid = null;
+
+/* ---------------------------
+   DOM refs
+   --------------------------- */
+const statusMessage = document.getElementById("statusMessage");
+const registrationContainer = document.getElementById("registrationContainer");
+const depositInfo = document.getElementById("depositInfo");
+const submitBothBtn = document.getElementById("submitBothBtn");
+const oneWinInput = document.getElementById("oneWinID");
+const depositInput = document.getElementById("depositAmount");
+
+/* ---------------------------
+   Auth state
+   --------------------------- */
 firebase.auth().onAuthStateChanged(user => {
     if (!user) {
         window.location.href = "login.html";
-    } else {
-        checkStatus(user.uid);
-    }
-});
-
-function toast(msg) {
-    let t = document.getElementById("toast");
-    t.innerHTML = msg;
-    t.className = "show";
-    setTimeout(() => { t.className = t.className.replace("show", ""); }, 2500);
-}
-
-function handleGameClick(page) {
-    if (approvalStatus !== "approved") {
-        toast("Register a new account first!");
         return;
     }
-    toast("Loading…");
-    setTimeout(() => {
-        location.href = page;
-    }, 2000);
-}
-
-document.getElementById("luckyJetBtn").onclick = () => handleGameClick('lucky.html');
-document.getElementById("aviatorBtn").onclick = () => handleGameClick('aviator.html');
-document.getElementById("minesBtn").onclick = () => toast("🚫 Server Unavailable");
-document.getElementById("rocketBtn").onclick = () => toast("🚫 Server Unavailable");
-
-function submitID() {
-    const user = firebase.auth().currentUser;
-    const id = document.getElementById("oneWinID").value;
-
-    if (!id) return toast("Enter your 1Win ID");
-
-    db.ref("users/" + user.uid).update({
-        email: user.email,
-        oneWinID: id,
-        status: "pending"
-    });
-
-    toast("ID Submitted — Wait for approval");
+    currentUserUid = user.uid;
     checkStatus(user.uid);
-}
+});
 
-function checkStatus(uid) {
-    const instruction = document.getElementById("instructionText");
-    const registrationContainer = document.getElementById("registrationContainer");
-
-    db.ref("users/" + uid).on("value", snap => {
-        let data = snap.val();
-        if (!data || !data.status) {
-            approvalStatus = "none";
-            document.getElementById("statusMessage").innerHTML = "🚫 Submit your ID to continue";
-            lockButtons();
-            registrationContainer.style.display = "block";
-        } else {
-            approvalStatus = data.status;
-
-            if (data.status === "pending") {
-                document.getElementById("statusMessage").innerHTML = "⏳ Approval Pending...";
-                lockButtons();
-                registrationContainer.style.display = "block";
-            }
-            else if (data.status === "declined") {
-                document.getElementById("statusMessage").innerHTML = "❌ Register using our official link!";
-                lockButtons();
-                registrationContainer.style.display = "block";
-            }
-            else if (data.status === "approved") {
-                document.getElementById("statusMessage").innerHTML = "✅ Approved — You can play!";
-                unlockButtons();
-                registrationContainer.style.display = "none"; // hide registration elements
-            }
-        }
-    });
+/* ---------------------------
+   UI helpers
+   --------------------------- */
+function toast(msg) {
+    const t = document.getElementById("toast");
+    t.innerHTML = msg;
+    t.className = "show";
+    setTimeout(() => { t.className = t.className.replace("show", ""); }, 3000);
 }
 
 function lockButtons() {
@@ -285,6 +247,216 @@ function unlockButtons() {
         i.style.pointerEvents = "auto";
     });
 }
+
+/* ---------------------------
+   Game click handling
+   --------------------------- */
+function handleGameClick(page) {
+    if (approvalStatus !== "activated") {
+        toast("You must complete verification and deposit to access games.");
+        return;
+    }
+    toast("Loading…");
+    setTimeout(() => { location.href = page; }, 900);
+}
+document.getElementById("luckyJetBtn").onclick = () => handleGameClick('lucky.html');
+document.getElementById("aviatorBtn").onclick = () => handleGameClick('aviator.html');
+document.getElementById("minesBtn").onclick = () => toast("🚫 Server Unavailable");
+document.getElementById("rocketBtn").onclick = () => toast("🚫 Server Unavailable");
+
+/* ---------------------------
+   Submit both ID + deposit together (MANDATORY)
+   Only allowed when status is null or cleared (i.e. not pending/approved/activated)
+   --------------------------- */
+function submitBoth() {
+    const user = firebase.auth().currentUser;
+    if (!user) return toast("Auth error — please login again.");
+
+    // Prevent submission if current status is pending/approved/activated
+    if (approvalStatus && approvalStatus !== "declined") {
+        return toast("You already have a pending submission — wait for admin.");
+    }
+
+    const idRaw = (oneWinInput.value || "").toString().trim();
+    const depositRaw = (depositInput.value || "").toString().trim();
+
+    if (!idRaw) {
+        return toast("Enter your 1Win ID");
+    }
+    if (depositRaw === "") {
+        return toast("Enter your deposit amount (minimum $1)");
+    }
+
+    const amount = Number(depositRaw);
+    if (isNaN(amount) || amount < 1) {
+        return toast("Minimum deposit is $1");
+    }
+
+    // Build payload: deposit is recorded with status pending
+    const depositPayload = {
+        amount: Number(amount),
+        status: "pending",
+        submittedAt: Date.now()
+    };
+
+    // Top-level we set status to "pending" (admin will set to "approved" after checking ID)
+    const updates = {
+        email: user.email || "",
+        oneWinID: idRaw,
+        deposit: depositPayload,
+        status: "pending"
+    };
+
+    // Write to DB
+    db.ref("users/" + user.uid).update(updates)
+      .then(() => {
+        toast("ID and deposit submitted — Wait for admin verification.");
+        // show deposit info in UI
+        renderDepositInfo(depositPayload);
+        // Immediately hide registration UI because pending submissions must block re-submission
+        registrationContainer.style.display = "none";
+      })
+      .catch(err => {
+        console.error(err);
+        toast("Error submitting — try again.");
+      });
+}
+
+/* ---------------------------
+   Render deposit info
+   --------------------------- */
+function renderDepositInfo(deposit) {
+    if (!deposit) {
+        depositInfo.innerHTML = "";
+        return;
+    }
+    const amount = deposit.amount != null ? Number(deposit.amount).toFixed(2) : "-";
+    depositInfo.innerHTML = `Deposit: $${amount} — Status: ${deposit.status || "pending"}`;
+}
+
+/* ---------------------------
+   Status listener & logic
+   - Hide registration form for any non-null non-declined status (pending/approved/activated)
+   - If admin sets status to "declined" -> clear DB fields (oneWinID, deposit, status) and show form
+   - If deposit.status === "approved" -> treat as activated and unlock games
+   --------------------------- */
+function checkStatus(uid) {
+    statusMessage.innerHTML = "Checking approval status...";
+    registrationContainer.style.display = "block";
+    lockButtons();
+    depositInfo.innerHTML = "";
+
+    const ref = db.ref("users/" + uid);
+    ref.on("value", snap => {
+        const data = snap.val() || {};
+        let userStatus = data.status || null;
+        const deposit = data.deposit || null;
+
+        // If deposit status approved, treat user as activated and ensure top-level status sync
+        if (deposit && deposit.status === "approved") {
+            userStatus = "activated";
+            if (data.status !== "activated") {
+                // best-effort set top-level status to activated (do not block on failure)
+                db.ref("users/" + uid).update({ status: "activated" }).catch(()=>{});
+            }
+        }
+
+        approvalStatus = userStatus;
+
+        // If admin explicitly declined, clear DB (remove old ID & deposit) and allow resubmit
+        if (userStatus === "declined") {
+            // Clear old data and reset status to null so user can submit fresh data
+            // We only clear server-side if there is something to clear
+            db.ref("users/" + uid).update({
+                oneWinID: null,
+                deposit: null,
+                status: null
+            }).then(() => {
+                // reflect cleared UI
+                statusMessage.innerHTML = "❌ Your submission was declined — re-submit your ID & deposit";
+                registrationContainer.style.display = "block";
+                depositInfo.innerHTML = "";
+                // also clear inputs
+                oneWinInput.value = "";
+                depositInput.value = "";
+                approvalStatus = null;
+                lockButtons();
+            }).catch(err => {
+                console.error("Error clearing declined data:", err);
+                // Even if clearing failed, allow re-submit visually:
+                statusMessage.innerHTML = "❌ Your submission was declined — re-submit your ID & deposit";
+                registrationContainer.style.display = "block";
+                depositInfo.innerHTML = "";
+                oneWinInput.value = "";
+                depositInput.value = "";
+                approvalStatus = null;
+                lockButtons();
+            });
+            return; // done handling decline case
+        }
+
+        // Now handle other statuses
+        switch (userStatus) {
+            case null:
+            case "":
+                // User has not submitted anything (or cleared after decline)
+                statusMessage.innerHTML = "🚫 You have not submitted your ID & deposit yet";
+                registrationContainer.style.display = "block";
+                lockButtons();
+                renderDepositInfo(deposit);
+                break;
+
+            case "pending":
+                // user submitted both; admin has not yet approved ID or deposit
+                statusMessage.innerHTML = "⏳ Your submission is pending — wait for admin verification";
+                // hide registration because re-submission not allowed while pending
+                registrationContainer.style.display = "none";
+                lockButtons();
+                renderDepositInfo(deposit);
+                break;
+
+            case "approved":
+                // Admin approved ID — deposit still pending or requires action by admin
+                statusMessage.innerHTML = "✅ ID verified — awaiting deposit approval";
+                registrationContainer.style.display = "none";
+                lockButtons();
+                renderDepositInfo(deposit);
+                break;
+
+            case "deposit_pending":
+                statusMessage.innerHTML = "⏳ Deposit verification pending...";
+                registrationContainer.style.display = "none";
+                lockButtons();
+                renderDepositInfo(deposit);
+                break;
+
+            case "activated":
+                statusMessage.innerHTML = "✅ Fully verified — You can now play!";
+                registrationContainer.style.display = "none";
+                unlockButtons();
+                renderDepositInfo(deposit);
+                break;
+
+            default:
+                statusMessage.innerHTML = "🔒 Account locked — contact support.";
+                registrationContainer.style.display = "none";
+                lockButtons();
+                renderDepositInfo(deposit);
+                break;
+        }
+    }, err => {
+        console.error("DB listen error:", err);
+        toast("Network/database error — try again.");
+    });
+}
+
+/* ---------------------------
+   Notes for Admin:
+   - To approve ID: set users/UID/status = "approved"
+   - To approve deposit: set users/UID/deposit/status = "approved"
+       (When deposit.status === "approved" the app will auto-set users/UID/status = "activated")
+   - To decline: set users/UID/status = "declined"  <-- this triggers clearing the DB fields and allows the user to resubmit
+   --------------------------- */
 </script>
 
 </body>
