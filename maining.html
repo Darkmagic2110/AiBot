@@ -143,7 +143,7 @@
     </button>
 
     <!-- Combined required inputs: ID + deposit -->
-    <input type="text" id="oneWinID" placeholder="Enter Your New 1Win Account ID" autocomplete="off" />
+    <input type="text" id="oneWinID" placeholder="Enter Your New 1Win Account ID" />
     <input type="number" id="depositAmount" placeholder="Enter deposit amount ($1 minimum)" step="0.01" min="1" />
 
     <div class="small-muted">B) Enter your first deposit to unlock predictions</div>
@@ -209,8 +209,6 @@ const statusMessage = document.getElementById("statusMessage");
 const registrationContainer = document.getElementById("registrationContainer");
 const depositInfo = document.getElementById("depositInfo");
 const submitBothBtn = document.getElementById("submitBothBtn");
-const oneWinInput = document.getElementById("oneWinID");
-const depositInput = document.getElementById("depositAmount");
 
 /* ---------------------------
    Auth state
@@ -266,19 +264,13 @@ document.getElementById("rocketBtn").onclick = () => toast("🚫 Server Unavaila
 
 /* ---------------------------
    Submit both ID + deposit together (MANDATORY)
-   Only allowed when status is null or cleared (i.e. not pending/approved/activated)
    --------------------------- */
 function submitBoth() {
     const user = firebase.auth().currentUser;
     if (!user) return toast("Auth error — please login again.");
 
-    // Prevent submission if current status is pending/approved/activated
-    if (approvalStatus && approvalStatus !== "declined") {
-        return toast("You already have a pending submission — wait for admin.");
-    }
-
-    const idRaw = (oneWinInput.value || "").toString().trim();
-    const depositRaw = (depositInput.value || "").toString().trim();
+    const idRaw = (document.getElementById("oneWinID").value || "").toString().trim();
+    const depositRaw = (document.getElementById("depositAmount").value || "").toString().trim();
 
     if (!idRaw) {
         return toast("Enter your 1Win ID");
@@ -313,8 +305,6 @@ function submitBoth() {
         toast("ID and deposit submitted — Wait for admin verification.");
         // show deposit info in UI
         renderDepositInfo(depositPayload);
-        // Immediately hide registration UI because pending submissions must block re-submission
-        registrationContainer.style.display = "none";
       })
       .catch(err => {
         console.error(err);
@@ -335,10 +325,7 @@ function renderDepositInfo(deposit) {
 }
 
 /* ---------------------------
-   Status listener & logic
-   - Hide registration form for any non-null non-declined status (pending/approved/activated)
-   - If admin sets status to "declined" -> clear DB fields (oneWinID, deposit, status) and show form
-   - If deposit.status === "approved" -> treat as activated and unlock games
+   Status listener
    --------------------------- */
 function checkStatus(uid) {
     statusMessage.innerHTML = "Checking approval status...";
@@ -363,84 +350,58 @@ function checkStatus(uid) {
 
         approvalStatus = userStatus;
 
-        // If admin explicitly declined, clear DB (remove old ID & deposit) and allow resubmit
-        if (userStatus === "declined") {
-            // Clear old data and reset status to null so user can submit fresh data
-            // We only clear server-side if there is something to clear
-            db.ref("users/" + uid).update({
-                oneWinID: null,
-                deposit: null,
-                status: null
-            }).then(() => {
-                // reflect cleared UI
-                statusMessage.innerHTML = "❌ Your submission was declined — re-submit your ID & deposit";
-                registrationContainer.style.display = "block";
-                depositInfo.innerHTML = "";
-                // also clear inputs
-                oneWinInput.value = "";
-                depositInput.value = "";
-                approvalStatus = null;
-                lockButtons();
-            }).catch(err => {
-                console.error("Error clearing declined data:", err);
-                // Even if clearing failed, allow re-submit visually:
-                statusMessage.innerHTML = "❌ Your submission was declined — re-submit your ID & deposit";
-                registrationContainer.style.display = "block";
-                depositInfo.innerHTML = "";
-                oneWinInput.value = "";
-                depositInput.value = "";
-                approvalStatus = null;
-                lockButtons();
-            });
-            return; // done handling decline case
-        }
-
-        // Now handle other statuses
+        // UI by status
         switch (userStatus) {
             case null:
             case "":
-                // User has not submitted anything (or cleared after decline)
                 statusMessage.innerHTML = "🚫 You have not submitted your ID & deposit yet";
-                registrationContainer.style.display = "block";
                 lockButtons();
+                registrationContainer.style.display = "block";
                 renderDepositInfo(deposit);
                 break;
 
             case "pending":
-                // user submitted both; admin has not yet approved ID or deposit
-                statusMessage.innerHTML = "⏳ Your submission is pending — wait for admin verification";
-                // hide registration because re-submission not allowed while pending
-                registrationContainer.style.display = "none";
+                // user submitted both; admin has not yet approved ID
+                statusMessage.innerHTML = "⏳ Awaiting admin ID verification...";
                 lockButtons();
+                registrationContainer.style.display = "block";
                 renderDepositInfo(deposit);
                 break;
 
             case "approved":
-                // Admin approved ID — deposit still pending or requires action by admin
-                statusMessage.innerHTML = "✅ ID verified — awaiting deposit approval";
-                registrationContainer.style.display = "none";
+                // Admin approved ID but deposit is still pending approval (deposit already submitted by user)
+                statusMessage.innerHTML = "✅ ID verified — Deposit awaiting admin approval";
                 lockButtons();
+                registrationContainer.style.display = "block";
                 renderDepositInfo(deposit);
                 break;
 
             case "deposit_pending":
+                // This state might be used if admin wants a separate flag — but deposit will usually be deposit.status === 'pending'
                 statusMessage.innerHTML = "⏳ Deposit verification pending...";
-                registrationContainer.style.display = "none";
                 lockButtons();
+                registrationContainer.style.display = "block";
                 renderDepositInfo(deposit);
                 break;
 
             case "activated":
                 statusMessage.innerHTML = "✅ Fully verified — You can now play!";
-                registrationContainer.style.display = "none";
                 unlockButtons();
+                registrationContainer.style.display = "none";
+                renderDepositInfo(deposit);
+                break;
+
+            case "declined":
+                statusMessage.innerHTML = "❌ Your ID or deposit was declined — re-submit using the form";
+                lockButtons();
+                registrationContainer.style.display = "block";
                 renderDepositInfo(deposit);
                 break;
 
             default:
                 statusMessage.innerHTML = "🔒 Account locked — contact support.";
-                registrationContainer.style.display = "none";
                 lockButtons();
+                registrationContainer.style.display = "block";
                 renderDepositInfo(deposit);
                 break;
         }
@@ -454,8 +415,8 @@ function checkStatus(uid) {
    Notes for Admin:
    - To approve ID: set users/UID/status = "approved"
    - To approve deposit: set users/UID/deposit/status = "approved"
-       (When deposit.status === "approved" the app will auto-set users/UID/status = "activated")
-   - To decline: set users/UID/status = "declined"  <-- this triggers clearing the DB fields and allows the user to resubmit
+     (When deposit.status === "approved" the app will auto-set users/UID/status = "activated")
+   - To decline: set users/UID/status = "declined" (and optionally users/UID/deposit/status = "declined")
    --------------------------- */
 </script>
 
