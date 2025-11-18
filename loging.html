@@ -58,12 +58,12 @@
 <h1>Dark Magic Ai Bot</h1>
 <img src="dark.jpg" alt="Logo">
 
-<input type="email" id="email" placeholder="Enter Email" required>
-<input type="password" id="password" placeholder="Enter Password" required>
+<input type="email" id="email" placeholder="𝗘𝗻𝘁𝗲𝗿 𝗘𝗺𝗮𝗶𝗹" required>
+<input type="password" id="password" placeholder="𝗘𝗻𝘁𝗲𝗿 𝗣𝗮𝘀𝘀𝘄𝗼𝗿𝗱" required>
 
-<button onclick="login()">Login</button>
+<button onclick="login()">𝐋𝐨𝐠𝐢𝐧</button>
 
-<p>Don’t have an account? <a href="index.html">Register Now</a></p>
+<p>𝗗𝗼𝗻𝘁 𝗵𝗮𝘃𝗲 𝗮𝗻 𝗮𝗰𝗰𝗼𝘂𝗻𝘁? <a href="index.html">𝗥𝗲𝗴𝗶𝘀𝘁𝗲𝗿 𝗡𝗼𝘄</a></p>
 
 <!-- Firebase -->
 <script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-app.js"></script>
@@ -87,7 +87,7 @@ function login() {
 
     firebase.auth().signInWithEmailAndPassword(email, pass)
     .then(() => {
-        alert("Login Successful!");
+        alert("𝐋𝐨𝐠𝐢𝐧 𝐒𝐮𝐜𝐜𝐞𝐬𝐬𝐟𝐮𝐥");
         window.location.href = "maining.html"; // ← Change later to your main bot page
     })
     .catch(error => {

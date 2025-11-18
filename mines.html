@@ -1,0 +1,142 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" /><meta name="viewport" content="width=device-width,initial-scale=1.0"/>
+  <title>𝐃𝐀𝐑𝐊 𝐌𝐀𝐆𝐈𝐂 𝐌𝐈𝐍𝐄𝐒 𝐁𝐎𝐓</title>
+  <style>
+    *{margin:0;padding:0;box-sizing:border-box;font-family:sans-serif;}
+    body {
+      background:#0e1218;
+      color:#fff;
+      display:flex;
+      flex-direction:column;
+      align-items:center;
+      padding:20px;
+    }
+
+    .blinking-text {
+      font-size:20px;
+      font-weight:bold;
+      margin-bottom:20px;
+      animation:blinkColor 2s infinite ease-in-out;
+    }
+
+    @keyframes blinkColor {
+      0% { color: #00f; }
+      50% { color: #fff; }
+      100% { color: #00f; }
+    }
+
+    .board {
+      width:100%;
+      max-width:400px;
+      background:#1a1f2b;
+      border-radius:16px;
+      padding:12px;
+      box-shadow:0 0 10px rgba(0,255,255,0.2);
+      margin-bottom:20px;
+    }
+
+    .grid {
+      display:grid;
+      grid-template-columns:repeat(5,60px);
+      gap:8px;
+    }
+
+    .cell {
+      width:60px;
+      height:60px;
+      background:url('https://i.ibb.co/4R4WT7v6/1000023083.png') center/cover;
+      border-radius:8px;
+      cursor:pointer;
+      transition:transform .1s;
+    }
+
+    /* ⭐ STAR IMAGE */
+    .cell.star {
+      background-image:url('https://upload.wikimedia.org/wikipedia/commons/thumb/4/44/Plain_Yellow_Star.png/512px-Plain_Yellow_Star.png');
+      background-size: cover;
+      animation:reveal 0.25s ease-in;
+    }
+
+    @keyframes reveal {
+      0%{transform:scale(0.6);opacity:0;}
+      100%{transform:scale(1);opacity:1;}
+    }
+
+    .predict-btn {
+      background:linear-gradient(90deg,#009fff,#00f5ff);
+      color:#000;
+      border:none;
+      padding:14px 24px;
+      border-radius:12px;
+      font-size:16px;
+      font-weight:bold;
+      cursor:pointer;
+      margin-bottom:12px;
+    }
+
+    .bomb-select {
+      margin-bottom:15px;
+      font-size:16px;
+      font-weight:bold;
+    }
+  </style>
+</head>
+<body>
+
+  <div class="blinking-text">𝐃𝐀𝐑𝐊 𝐌𝐀𝐆𝐈𝐂 𝐌𝐈𝐍𝐄𝐒 𝐁𝐎𝐓</div>
+
+  <!-- Bomb selector -->
+  <select id="bombChoice" class="bomb-select">
+    <option value="1">1 Bomb</option>
+    <option value="3">3 Bombs</option>
+    <option value="5">5 Bombs</option>
+    <option value="7">7 Bombs</option>
+  </select>
+
+  <div class="board">
+    <div class="grid" id="grid"></div>
+  </div>
+
+  <button class="predict-btn" onclick="predict()">Predict</button>
+
+  <script>
+    const grid = document.getElementById('grid');
+
+    function predict() {
+      const cells = [...grid.children];
+      cells.forEach(c => c.classList.remove('star'));
+
+      let bombs = parseInt(document.getElementById("bombChoice").value);
+
+      let stars = 0;
+
+      if (bombs === 1) stars = getRandom(6, 11);
+      if (bombs === 3) stars = getRandom(4, 6);
+      if (bombs === 5) stars = getRandom(3, 5);
+      if (bombs === 7) stars = getRandom(2, 4);
+
+      let used = new Set();
+      while (used.size < stars) {
+        let r = Math.floor(Math.random() * cells.length);
+        used.add(r);
+      }
+
+      used.forEach(i => cells[i].classList.add("star"));
+    }
+
+    function getRandom(min, max) {
+      return Math.floor(Math.random() * (max - min + 1)) + min;
+    }
+
+    // Create 25 cells
+    for (let i = 0; i < 25; i++) {
+      const cell = document.createElement('div');
+      cell.className = 'cell';
+      grid.appendChild(cell);
+    }
+  </script>
+
+</body>
+</html>
