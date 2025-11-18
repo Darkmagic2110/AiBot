@@ -88,7 +88,7 @@ function login() {
     firebase.auth().signInWithEmailAndPassword(email, pass)
     .then(() => {
         alert("𝐋𝐨𝐠𝐢𝐧 𝐒𝐮𝐜𝐜𝐞𝐬𝐬𝐟𝐮𝐥");
-        window.location.href = "maining.html"; // ← Change later to your main bot page
+        window.location.href = "maning.html"; // ← Change later to your main bot page
     })
     .catch(error => {
         alert(error.message);
