@@ -87,7 +87,6 @@
 
   <div class="blinking-text">𝐃𝐀𝐑𝐊 𝐌𝐀𝐆𝐈𝐂 𝐌𝐈𝐍𝐄𝐒 𝐁𝐎𝐓</div>
 
-  <!-- Bomb selector -->
   <select id="bombChoice" class="bomb-select">
     <option value="1">1 Bomb</option>
     <option value="3">3 Bombs</option>
@@ -112,10 +111,11 @@
 
       let stars = 0;
 
-      if (bombs === 1) stars = getRandom(6, 11);
-      if (bombs === 3) stars = getRandom(4, 6);
-      if (bombs === 5) stars = getRandom(3, 5);
-      if (bombs === 7) stars = getRandom(2, 4);
+      // ⭐ NEW STAR RULES
+      if (bombs === 7) stars = getRandom(3, 6);
+      if (bombs === 5) stars = getRandom(5, 7);
+      if (bombs === 3) stars = getRandom(8, 11);
+      if (bombs === 1) stars = getRandom(10, 15);
 
       let used = new Set();
       while (used.size < stars) {
@@ -130,7 +130,6 @@
       return Math.floor(Math.random() * (max - min + 1)) + min;
     }
 
-    // Create 25 cells
     for (let i = 0; i < 25; i++) {
       const cell = document.createElement('div');
       cell.className = 'cell';
