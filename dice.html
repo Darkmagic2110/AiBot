@@ -1,0 +1,218 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>DICE</title>
+
+<style>
+    body {
+        background: #003300; /* Dark green */
+        color: white;
+        font-family: Arial, sans-serif;
+        text-align: center;
+        padding-top: 40px;
+    }
+
+    /* LETTER-BY-LETTER ANIMATION */
+    .dice-header {
+        font-size: 70px;
+        font-weight: 900;
+        letter-spacing: 20px;
+        height: 90px;
+        display: inline-block;
+    }
+
+    .dice-header span {
+        opacity: 0;
+        animation: showLetter 4s infinite;
+        display: inline-block;
+    }
+
+    .dice-header span:nth-child(1) { animation-delay: 0.2s; }
+    .dice-header span:nth-child(2) { animation-delay: 0.8s; }
+    .dice-header span:nth-child(3) { animation-delay: 1.4s; }
+    .dice-header span:nth-child(4) { animation-delay: 2.0s; }
+
+    @keyframes showLetter {
+        0% { opacity: 0; transform: translateY(20px); }
+        10% { opacity: 1; transform: translateY(0); }
+        25% { opacity: 1; }
+        40% { opacity: 0; }
+        100% { opacity: 0; }
+    }
+
+    /* BIG NUMBER */
+    #numberDisplay {
+        font-size: 110px;
+        font-weight: 900;
+        margin-top: 40px;
+        color: white;
+    }
+
+    /* Option Buttons */
+    .option-box {
+        margin-top: 40px;
+        display: flex;
+        justify-content: center;
+        gap: 20px;
+    }
+
+    .btn {
+        padding: 14px 26px;   /* smaller */
+        font-size: 22px;      /* smaller */
+        border-radius: 10px;
+        border: 2px solid white;
+        background: transparent;
+        color: white;
+        font-weight: 800;
+        cursor: pointer;
+        transition: .3s;
+        display: flex;
+        align-items: center;
+        gap: 10px;
+    }
+
+    .indicator {
+        width: 16px;
+        height: 16px;
+        border-radius: 50%;
+        border: 2px solid white;
+        display: inline-block;
+    }
+
+    .active-green { background: green; }
+    .active-red { background: red; }
+
+    /* Predict button */
+    .predict-btn {
+        margin-top: 40px;
+        padding: 18px 40px;     /* smaller */
+        font-size: 26px;        /* smaller */
+        font-weight: 900;
+        background: #004d00;
+        color: white;
+        border: none;
+        border-radius: 14px;
+        cursor: pointer;
+        transition: .3s;
+    }
+
+    .predict-btn:hover {
+        background: #006600;
+    }
+
+    /* Toast */
+    #toast {
+        visibility: hidden;
+        min-width: 180px;
+        background: black;
+        padding: 12px 18px;
+        border-radius: 8px;
+        color: white;
+        font-weight: bold;
+        position: fixed;
+        left: 50%;
+        bottom: 60px;
+        transform: translateX(-50%);
+        z-index: 9999;
+        text-align: center;
+    }
+</style>
+
+</head>
+<body>
+
+    <!-- LETTER-BY-LETTER "D I C E" -->
+    <div class="dice-header">
+        <span>D</span>
+        <span>I</span>
+        <span>C</span>
+        <span>E</span>
+    </div>
+
+    <!-- BIG NUMBER -->
+    <div id="numberDisplay">00</div>
+
+    <!-- Buttons -->
+    <div class="option-box">
+        <button id="overBtn" class="btn">
+            <span class="indicator" id="indOver"></span> OVER
+        </button>
+
+        <button id="underBtn" class="btn">
+            <span class="indicator" id="indUnder"></span> UNDER
+        </button>
+    </div>
+
+    <button class="predict-btn" onclick="predict()">PREDICT</button>
+
+    <!-- Toast -->
+    <div id="toast"></div>
+
+<script>
+let choice = ""; 
+
+function showToast(msg) {
+    const toast = document.getElementById("toast");
+    toast.innerText = msg;
+    toast.style.visibility = "visible";
+
+    setTimeout(() => { toast.style.visibility = "hidden"; }, 1800);
+}
+
+document.getElementById("overBtn").onclick = () => {
+    choice = "over";
+    document.getElementById("overBtn").style.background = "green";
+    document.getElementById("underBtn").style.background = "transparent";
+
+    document.getElementById("indOver").classList.add("active-green");
+    document.getElementById("indUnder").classList.remove("active-red");
+
+    showToast("OVER selected");
+};
+
+document.getElementById("underBtn").onclick = () => {
+    choice = "under";
+    document.getElementById("underBtn").style.background = "red";
+    document.getElementById("overBtn").style.background = "transparent";
+
+    document.getElementById("indUnder").classList.add("active-red");
+    document.getElementById("indOver").classList.remove("active-green");
+
+    showToast("UNDER selected");
+};
+
+function predict() {
+    if (!choice) {
+        showToast("Select OVER or UNDER!");
+        return;
+    }
+
+    const display = document.getElementById("numberDisplay");
+
+    let count = 0;
+    let counting = setInterval(() => {
+        display.innerText = 
+            Math.floor(Math.random() * 99).toString().padStart(2, '0');
+        count++;
+        if (count > 35) clearInterval(counting);
+    }, 70);
+
+    setTimeout(() => {
+        let result = 0;
+
+        if (choice === "over") {
+            result = Math.floor(Math.random() * (55 - 35 + 1)) + 35; 
+        } else {
+            result = Math.floor(Math.random() * (80 - 55 + 1)) + 55; 
+        }
+
+        display.innerText = result;
+        showToast("Prediction Complete");
+    }, 2600);
+}
+</script>
+
+</body>
+</html>

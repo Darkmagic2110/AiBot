@@ -134,7 +134,7 @@
 
 <div id="registrationContainer">
     <p id="instructionText">
-        Click REGISTER below to create a new account ✅And Use Promo code 𝗗𝗮𝗿𝗸001<br>
+        Click REGISTER below to create a new account ✅ And Use Promo code 𝗗𝗮𝗿𝗸001<br>
         You MUST submit your NEW 1Win ID AND your first deposit amount (minimum ₦1,500) together.
     </p>
 
@@ -163,6 +163,11 @@
     <div class="game-button" id="aviatorBtn">
         <img src="aviator.jpg" alt="Aviator">
         <div class="label">Aviator</div>
+    </div>
+    
+    <div class="game-button" id="diceBtn">
+        <img src="dice.jpg" alt="Dice">
+        <div class="label">Dice</div>
     </div>
 
     <div class="game-button" id="minesBtn">
@@ -254,12 +259,13 @@ function handleGameClick(page) {
         toast("You must complete verification and deposit to access games.");
         return;
     }
-    toast("Loading…");
+    toast("Connecting to Game Server...");
     setTimeout(() => { location.href = page; }, 900);
 }
 
 document.getElementById("luckyJetBtn").onclick = () => handleGameClick('lucky.html');
 document.getElementById("aviatorBtn").onclick = () => handleGameClick('aviator.html');
+document.getElementById("diceBtn").onclick = () => handleGameClick('dice.html');
 document.getElementById("minesBtn").onclick = () => handleGameClick('mines.html'); // updated
 document.getElementById("rocketBtn").onclick = () => toast("🚫 Server Unavailable");
 
