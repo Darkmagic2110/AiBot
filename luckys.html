@@ -2,12 +2,21 @@
 <html lang="en">
 <head>
   <meta charset="UTF-8">
+
+  <!-- ✅ Fix screen scaling on all devices -->
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+
   <title>Lucky Jet Grand Prediction</title>
+
   <style>
+    * {
+      box-sizing: border-box;
+    }
+
     body {
       margin: 0;
       padding: 0;
-      height: 100vh;
+      min-height: 100vh;
       background: url("Luckys.jpg") no-repeat center center/cover;
       display: flex;
       flex-direction: column;
@@ -19,21 +28,21 @@
     }
 
     h1 {
-      font-size: 28px;
+      font-size: clamp(20px, 6vw, 40px);
       font-weight: bold;
       margin-bottom: 20px;
       text-shadow: 0 0 10px purple;
     }
 
     .circle {
-      width: 200px;
-      height: 200px;
+      width: min(60vw, 260px);
+      height: min(60vw, 260px);
       border: 4px solid #7f00ff;
       border-radius: 50%;
       display: flex;
       align-items: center;
       justify-content: center;
-      font-size: 36px;
+      font-size: clamp(24px, 8vw, 48px);
       font-weight: bold;
       color: white;
       box-shadow: 0 0 20px #7f00ff;
@@ -49,7 +58,7 @@
 
     button {
       padding: 12px 35px;
-      font-size: 18px;
+      font-size: clamp(14px, 4vw, 20px);
       font-weight: bold;
       color: #b266ff;
       background: transparent;
@@ -91,10 +100,8 @@ function generateSignal() {
       let finalNumber;
 
       if (chance < 0.7) {
-        // 70% chance for low values (1.00x - 2.99x)
         finalNumber = (1 + Math.random() * 1.99).toFixed(2);
       } else {
-        // 30% chance for higher values (3.00x - 6.50x)
         finalNumber = (3 + Math.random() * 3.5).toFixed(2);
       }
 
