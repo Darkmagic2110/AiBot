@@ -174,6 +174,11 @@
         <img src="mine.jpg" alt="Mines">
         <div class="label">Mines</div>
     </div>
+    
+    <div class="game-button" id="luckyBtn">
+        <img src="luckys.jpg" alt="Lucky jet Pro">
+        <div class="label">Lucky Jet Pro</div>
+    </div>
 
     <div class="game-button" id="rocketBtn">
         <img src="rocket.jpg" alt="Rocket Queen">
@@ -266,6 +271,7 @@ function handleGameClick(page) {
 document.getElementById("luckyJetBtn").onclick = () => handleGameClick('lucky.html');
 document.getElementById("aviatorBtn").onclick = () => handleGameClick('aviator.html');
 document.getElementById("diceBtn").onclick = () => handleGameClick('dice.html');
+document.getElementById("luckyBtn").onclick = () => handleGameClick('luckys.html');
 document.getElementById("minesBtn").onclick = () => handleGameClick('mines.html'); // updated
 document.getElementById("rocketBtn").onclick = () => toast("🚫 Server Unavailable");
 

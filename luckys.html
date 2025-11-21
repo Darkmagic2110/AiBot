@@ -1,0 +1,108 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <title>Lucky Jet Grand Prediction</title>
+  <style>
+    body {
+      margin: 0;
+      padding: 0;
+      height: 100vh;
+      background: url("Luckys.jpg") no-repeat center center/cover;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      font-family: Arial, sans-serif;
+      color: white;
+      text-align: center;
+    }
+
+    h1 {
+      font-size: 28px;
+      font-weight: bold;
+      margin-bottom: 20px;
+      text-shadow: 0 0 10px purple;
+    }
+
+    .circle {
+      width: 200px;
+      height: 200px;
+      border: 4px solid #7f00ff;
+      border-radius: 50%;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 36px;
+      font-weight: bold;
+      color: white;
+      box-shadow: 0 0 20px #7f00ff;
+      animation: glow 1.5s infinite alternate;
+      margin-bottom: 25px;
+      background: rgba(0,0,0,0.5);
+    }
+
+    @keyframes glow {
+      from { box-shadow: 0 0 10px #7f00ff; }
+      to { box-shadow: 0 0 30px #b266ff; }
+    }
+
+    button {
+      padding: 12px 35px;
+      font-size: 18px;
+      font-weight: bold;
+      color: #b266ff;
+      background: transparent;
+      border: 2px solid #7f00ff;
+      border-radius: 30px;
+      cursor: pointer;
+      box-shadow: 0 0 10px #7f00ff;
+      animation: glow 1.5s infinite alternate;
+    }
+
+    button:active {
+      transform: scale(0.95);
+    }
+  </style>
+</head>
+<body>
+
+  <h1>LUCKY JET GRAND PREDICTION</h1>
+
+  <div class="circle" id="display">0.00x</div>
+
+  <button onclick="generateSignal()">GET SIGNALS</button>
+
+<script>
+function generateSignal() {
+  const display = document.getElementById("display");
+
+  let count = 0;
+  let anim = setInterval(() => {
+    let fake = (Math.random() * 6.5).toFixed(2);
+    display.textContent = fake + "x";
+    count++;
+
+    if (count > 15) {
+      clearInterval(anim);
+
+      // Higher chance BELOW 3.00x
+      let chance = Math.random();
+      let finalNumber;
+
+      if (chance < 0.7) {
+        // 70% chance for low values (1.00x - 2.99x)
+        finalNumber = (1 + Math.random() * 1.99).toFixed(2);
+      } else {
+        // 30% chance for higher values (3.00x - 6.50x)
+        finalNumber = (3 + Math.random() * 3.5).toFixed(2);
+      }
+
+      display.textContent = finalNumber + "x";
+    }
+  }, 80);
+}
+</script>
+
+</body>
+</html>
