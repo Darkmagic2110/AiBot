@@ -1,0 +1,167 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Coin Flip</title>
+<link href="https://fonts.googleapis.com/css2?family=Orbitron:wght@800&display=swap" rel="stylesheet">
+<style>
+body {
+    font-family: 'Orbitron', sans-serif;
+    background-color: #000;
+    color: #fff;
+    text-align: center;
+    padding: 20px;
+}
+
+h1 {
+    font-size: 50px;
+    font-weight: 800;
+    color: gold;
+    margin-bottom: 40px;
+    letter-spacing: 3px;
+    text-shadow: 0 0 15px #ffd700, 0 0 30px #ffcc00;
+    animation: glowPulse 2s ease-in-out infinite;
+}
+
+@keyframes glowPulse {
+    0% { text-shadow: 0 0 10px #ffd700, 0 0 20px #ffcc00; transform: scale(1); }
+    50% { text-shadow: 0 0 25px #fff200, 0 0 60px #ffcc00; transform: scale(1.05); }
+    100% { text-shadow: 0 0 10px #ffd700, 0 0 20px #ffcc00; transform: scale(1); }
+}
+
+.coin-container {
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    height: 300px;
+    perspective: 1000px;
+}
+
+.coin {
+    width: 230px;
+    height: 230px;
+    border-radius: 50%;
+    object-fit: cover;
+    box-shadow: 0 0 30px rgba(255, 215, 0, 0.4);
+    transition: transform 0.2s;
+    position: relative;
+}
+
+.progress-container {
+    width: 80%;
+    background-color: #333;
+    border-radius: 10px;
+    margin: 20px auto;
+    height: 25px;
+    display: none;
+}
+
+.progress-bar {
+    width: 1%;
+    height: 100%;
+    background-color: gold;
+    border-radius: 10px;
+    transition: width 0.03s linear;
+}
+
+.predict-btn {
+    background-color: gold;
+    color: #000;
+    border: none;
+    padding: 15px 40px;
+    font-size: 20px;
+    border-radius: 35px;
+    cursor: pointer;
+    margin-top: 20px;
+    transition: 0.3s;
+}
+
+.predict-btn:hover:enabled {
+    background-color: #ffd700;
+    transform: scale(1.05);
+}
+
+.predict-btn:disabled {
+    background-color: gray;
+    color: #222;
+    cursor: not-allowed;
+}
+</style>
+</head>
+<body>
+
+<h1>COIN FLIP</h1>
+
+<div class="coin-container">
+    <img id="coinImage" src="head.jpg" class="coin" alt="Coin">
+</div>
+
+<div class="progress-container" id="progressContainer">
+    <div class="progress-bar" id="progressBar"></div>
+</div>
+
+<button class="predict-btn" id="predictBtn" onclick="predict()">Predict</button>
+
+<script>
+function predict() {
+    const btn = document.getElementById("predictBtn");
+    const coin = document.getElementById("coinImage");
+    const progressContainer = document.getElementById("progressContainer");
+    const progressBar = document.getElementById("progressBar");
+
+    btn.disabled = true;
+    progressContainer.style.display = "block";
+    progressBar.style.width = "1%";
+
+    // Progress animation (3 seconds)
+    let progress = 0;
+    const progressInterval = setInterval(() => {
+        progress++;
+        progressBar.style.width = progress + "%";
+        if(progress >= 100){
+            clearInterval(progressInterval);
+            spinCoin();
+        }
+    },30);
+}
+
+function spinCoin() {
+    const coin = document.getElementById("coinImage");
+    const btn = document.getElementById("predictBtn");
+
+    const totalFlips = 30;
+    let flipCount = 0;
+
+    function doSpin() {
+        if(flipCount < totalFlips){
+            // Coin shows head.jpg during spin
+            coin.src = "head.jpg";
+
+            // Slow start → fast middle → slow end
+            let speed;
+            if(flipCount < totalFlips/3) speed = 200 - flipCount*10; // accelerate
+            else if(flipCount < 2*totalFlips/3) speed = 50; // fast
+            else speed = 50 + (flipCount - 2*totalFlips/3)*15; // decelerate
+
+            // Rotate in place
+            let rotation = flipCount * 180;
+            coin.style.transform = `rotateY(${rotation}deg)`;
+
+            flipCount++;
+            setTimeout(doSpin, speed);
+        } else {
+            // Show final result randomly
+            const finalSide = Math.random() < 0.5 ? "head.jpg" : "tail.jpg";
+            coin.src = finalSide;
+            coin.style.transform = "rotateY(0deg)";
+            btn.disabled = false;
+        }
+    }
+
+    doSpin();
+}
+</script>
+
+</body>
+</html>
