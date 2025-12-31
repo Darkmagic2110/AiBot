@@ -1,0 +1,218 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>CHICKEN RUN</title>
+
+<style>
+  body {
+    margin: 0;
+    padding: 0;
+    height: 100vh;
+    background: rgba(0, 50, 0, 0.9);
+    backdrop-filter: blur(10px);
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    font-family: "Arial Black", sans-serif;
+    color: yellow;
+    text-align: center;
+  }
+
+  h1 {
+    font-size: 50px;
+    font-weight: bold;
+    color: yellow;
+    margin-bottom: 20px;
+    text-shadow: 0 0 15px yellow;
+  }
+
+  #coefficient {
+    font-size: 55px;
+    font-weight: 900;
+    color: yellow;
+    text-shadow: 0 0 20px yellow;
+    margin-bottom: 10px;
+    display: none;
+  }
+
+  #chicken {
+    width: 200px;
+    height: 200px;
+    object-fit: cover;
+    border-radius: 25px;
+    display: none;
+    margin-bottom: 15px;
+  }
+
+  .difficulty {
+    display: flex;
+    gap: 10px;
+    margin-top: 10px;
+    flex-wrap: wrap;
+    justify-content: center;
+  }
+
+  .option {
+    border: 2px solid yellow;
+    padding: 8px 20px;
+    border-radius: 10px;
+    cursor: pointer;
+    font-weight: bold;
+    color: yellow;
+    transition: 0.3s;
+  }
+
+  .option.active {
+    background: yellow;
+    color: darkgreen;
+  }
+
+  button {
+    background: transparent;
+    border: 2px solid yellow;
+    color: yellow;
+    font-size: 22px;
+    font-weight: bold;
+    padding: 10px 30px;
+    border-radius: 10px;
+    cursor: pointer;
+    transition: 0.3s;
+    margin-top: 25px;
+  }
+
+  button:hover {
+    background: yellow;
+    color: darkgreen;
+  }
+
+  /* Smooth slow blinking (not too bright, not too fast) */
+  .blink {
+    animation: blink 4s infinite alternate ease-in-out;
+  }
+
+  @keyframes blink {
+    from { opacity: 0.4; }
+    to { opacity: 1.0; }
+  }
+
+  /* Toast popup style */
+  #toast {
+    visibility: hidden;
+    min-width: 240px;
+    background-color: rgba(255, 255, 0, 0.95);
+    color: darkgreen;
+    text-align: center;
+    border-radius: 10px;
+    padding: 14px;
+    position: fixed;
+    z-index: 1;
+    left: 50%;
+    bottom: 30px;
+    font-weight: bold;
+    font-size: 18px;
+    transform: translateX(-50%);
+    box-shadow: 0 0 20px yellow;
+  }
+
+  #toast.show {
+    visibility: visible;
+    animation: fadein 0.6s, fadeout 0.6s 2.4s;
+  }
+
+  @keyframes fadein {
+    from { bottom: 10px; opacity: 0; }
+    to { bottom: 30px; opacity: 1; }
+  }
+
+  @keyframes fadeout {
+    from { bottom: 30px; opacity: 1; }
+    to { bottom: 10px; opacity: 0; }
+  }
+</style>
+</head>
+
+<body>
+
+  <h1>𝐂𝐇𝐈𝐂𝐊𝐄𝐍 𝐑𝐔𝐍</h1>
+
+  <!-- Coefficient above the chicken -->
+  <div id="coefficient" class="blink"></div>
+
+  <!-- Chicken image -->
+  <img id="chicken" src="chicken.jpg" alt="Chicken" class="blink">
+
+  <!-- Difficulty options -->
+  <div class="difficulty">
+    <div class="option" id="easy">𝐄𝐀𝐒𝐘</div>
+    <div class="option" id="medium">𝐌𝐄𝐃𝐈𝐔𝐌</div>
+    <div class="option" id="hard">𝐇𝐀𝐑𝐃</div>
+    <div class="option" id="hardcore">𝐇𝐀𝐑𝐃𝐂𝐎𝐑𝐄</div>
+  </div>
+
+  <!-- Predict button -->
+  <button id="predictBtn">𝐏𝐑𝐄𝐃𝐈𝐂𝐓</button>
+
+  <!-- Toast message -->
+  <div id="toast"></div>
+
+<script>
+  const options = document.querySelectorAll(".option");
+  const predictBtn = document.getElementById("predictBtn");
+  const coeff = document.getElementById("coefficient");
+  const chicken = document.getElementById("chicken");
+  const toast = document.getElementById("toast");
+
+  let selected = null;
+
+  // Difficulty selection
+  options.forEach(opt => {
+    opt.addEventListener("click", () => {
+      options.forEach(o => o.classList.remove("active"));
+      opt.classList.add("active");
+      selected = opt.id;
+    });
+  });
+
+  // Toast function
+  function showToast(message) {
+    toast.textContent = message;
+    toast.className = "show";
+    setTimeout(() => {
+      toast.className = toast.className.replace("show", "");
+    }, 3000);
+  }
+
+  // Predict button click
+  predictBtn.addEventListener("click", () => {
+    if (!selected) {
+      showToast("Please choose a difficulty first!");
+      return;
+    }
+
+    let values = [];
+
+    if (selected === "easy") {
+      values = ["1.3X", "1.4X", "1.5X", "1.6X", "1.7X", "1.8X", "1.9X", "2.0X", "2.2X", "2.4X", "2.6X", "2.8X", "3.0X", "3.5X"];
+    } 
+    else if (selected === "medium") {
+      values = ["1.4X", "1.6X", "1.8X", "2.0X", "2.2X", "2.4X", "2.7X", "3.0X"];
+    } 
+    else if (selected === "hard") {
+      values = ["1.5X", "1.7X", "2.0X", "3.0X", "4.5X"];
+    } 
+    else if (selected === "hardcore") {
+      values = ["2.5X", "5.0X", "10.0X"];
+    }
+
+    const randomCoeff = values[Math.floor(Math.random() * values.length)];
+    coeff.textContent = randomCoeff;
+    coeff.style.display = "block";
+    chicken.style.display = "block";
+  });
+</script>
+
+</body>
+</html>

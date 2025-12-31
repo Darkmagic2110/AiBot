@@ -24,26 +24,27 @@
     }
     .grid {
         display: grid;
-        grid-template-columns: repeat(2, 1fr);
-        gap: 20px;
+        grid-template-columns: repeat(3, 1fr);
+        gap: 15px;
         padding-top: 20px;
+        justify-items: center;
     }
     .game-button img {
         width: 100%;
-        max-width: 160px;
-        height: 160px;
-        border-radius: 20px;
+        max-width: 120px;
+        height: 120px;
+        border-radius: 15px;
         object-fit: cover;
         border: 3px solid red;
         opacity: 0.3;
         pointer-events: none;
-        transition: .2s;
+        transition: 0.2s ease-in-out;
     }
     .label {
         font-family: 'UnifrakturCook', cursive;
         margin-top: 5px;
         color: cyan;
-        font-size: 20px;
+        font-size: 16px;
     }
     button {
         width: 92%;
@@ -189,6 +190,11 @@
         <img src="rocket.jpg" alt="Rocket Queen">
         <div class="label">Rocket Queen</div>
     </div>
+    
+    <div class="game-button" id="chickenBtn">
+        <img src="chick.jpg" alt="Chicken Run ">
+        <div class="label">Chicken Run</div>
+    </div>
 </div>
 
 <div id="toast"></div>
@@ -278,7 +284,8 @@ document.getElementById("aviatorBtn").onclick = () => handleGameClick('aviator.h
 document.getElementById("diceBtn").onclick = () => handleGameClick('dice.html');
 document.getElementById("luckyBtn").onclick = () => handleGameClick('luckys.html');
 document.getElementById("coinBtn").onclick = () => handleGameClick('coin.html');
-document.getElementById("minesBtn").onclick = () => handleGameClick(''); // updated
+document.getElementById("minesBtn").onclick = () => handleGameClick('mines.html'); // updated
+document.getElementById("chickenBtn").onclick = () => handleGameClick('chicken.html'); // updated
 document.getElementById("rocketBtn").onclick = () => toast("🚫 Server Unavailable");
 
 /* ---------------------------
