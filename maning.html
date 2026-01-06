@@ -225,6 +225,16 @@ const firebaseConfig = {
 firebase.initializeApp(firebaseConfig);
 const db = firebase.database();
 
+db.ref("settings/siteStatus").on("value", snap => {
+    const status = snap.val();
+    if (status === "blocked") {
+        document.body.innerHTML = `
+            <div style="color:red; text-align:center; font-family:Arial; margin-top:40vh; font-size:20px; font-weight:bold;">
+                DARK MAGIC AI BOT IS UNAVAILABLE
+            </div>`;
+    }
+});
+
 let approvalStatus = null;
 let currentUserUid = null;
 
@@ -446,7 +456,16 @@ function checkStatus(uid) {
 /* ---------------------------
    Notes for Admin:
    - To approve ID: set users/UID/status = "approved"
-   - To approve deposit: set users/UID/deposit/status = "approved"
+   - To approve <!DOCTYPE html>
+   <html lang="en">
+   <head>
+       <meta charset="UTF-8">
+       <title>Page title</title>
+   </head>
+   <body>
+       deposit
+   </body>
+   </html>: set users/UID/deposit/status = "approved"
      (When deposit.status === "approved" the app will auto-set users/UID/status = "activated")
    - To decline: set users/UID/status = "declined" (and optionally users/UID/deposit/status = "declined")
    --------------------------- */
