@@ -1,0 +1,199 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>TOWER GAME</title>
+<style>
+body {
+    margin: 0;
+    padding: 0;
+    font-family: Arial, sans-serif;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    background-color: #1E3A8A; /* Dark blue */
+    color: #FFD700; /* Yellow */
+    height: 100vh;
+    overflow: hidden; /* Prevent scroll */
+}
+
+h1 {
+    font-size: 2.5rem;
+    font-weight: bold;
+    margin: 10px 0;
+    text-shadow: 2px 2px #000;
+}
+
+.drawer {
+    margin-bottom: 10px;
+}
+
+select {
+    padding: 8px 15px;
+    font-size: 1rem;
+    font-weight: bold;
+    border-radius: 8px;
+    border: 2px solid #FFD700;
+    background-color: #1E3A8A;
+    color: #FFD700;
+    cursor: pointer;
+}
+
+button {
+    padding: 10px 20px;
+    font-size: 1rem;
+    font-weight: bold;
+    border-radius: 8px;
+    border: 2px solid #FFD700;
+    cursor: pointer;
+    margin-top: 10px;
+    background-color: #FFD700;
+    color: #1E3A8A;
+}
+
+button:hover {
+    background-color: #1E3A8A;
+    color: #FFD700;
+}
+
+.grid-container {
+    display: none;
+    margin-top: 10px;
+    gap: 18px;
+    border: 2px solid #FFD700;
+    padding: 10px;
+    border-radius: 10px;
+    background-color: #1E40AF;
+    justify-content: center;
+    align-content: center;
+}
+
+.grid-cell {
+    width: 40px;
+    height: 40px;
+    background-color: #1E40AF;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 1.6rem;
+    border: 2px solid #FFD700;
+    border-radius: 5px;
+    opacity: 0;
+    transform: translateY(40px);
+    transition: all 0.3s ease;
+}
+</style>
+</head>
+<body>
+
+<h1>𝐓𝐎𝐖𝐄𝐑</h1>
+
+<div class="drawer">
+    <select id="difficulty">
+        <option value="">Select Difficulty</option>
+        <option value="easy">𝐄𝐀𝐒𝐘</option>
+        <option value="medium">𝐌𝐄𝐃𝐈𝐔𝐌</option>
+        <option value="hard">𝐇𝐀𝐑𝐃</option>
+        <option value="expert">𝐄𝐗𝐏𝐄𝐑𝐓</option>
+        <option value="master">𝐌𝐀𝐒𝐓𝐄𝐑</option>
+        <option value="nightmare">𝐍𝐈𝐆𝐇𝐓 𝐌𝐀𝐑𝐄</option>
+    </select>
+</div>
+
+<div id="grid" class="grid-container"></div>
+
+<button id="predictBtn">𝐏𝐑𝐄𝐃𝐈𝐂𝐓</button>
+
+<script>
+const gridContainer = document.getElementById('grid');
+const difficultySelect = document.getElementById('difficulty');
+const predictBtn = document.getElementById('predictBtn');
+
+let gridRows = 0;
+let gridCols = 0;
+
+function setupGrid(rows, cols) {
+    gridContainer.innerHTML = '';
+    gridContainer.style.display = 'grid';
+    gridContainer.style.gridTemplateColumns = `repeat(${cols}, 40px)`;
+    gridContainer.style.gridTemplateRows = `repeat(${rows}, 40px)`;
+    gridRows = rows;
+    gridCols = cols;
+
+    for (let r = 0; r < rows; r++) {
+        for (let c = 0; c < cols; c++) {
+            const cell = document.createElement('div');
+            cell.classList.add('grid-cell');
+            gridContainer.appendChild(cell);
+            setTimeout(() => {
+                cell.style.opacity = 1;
+                cell.style.transform = 'translateY(0)';
+            }, (r * cols + c) * 25);
+        }
+    }
+}
+
+difficultySelect.addEventListener('change', () => {
+    const val = difficultySelect.value;
+    if (!val) {
+        gridContainer.style.display = 'none';
+        gridContainer.innerHTML = '';
+        return;
+    }
+
+    switch(val) {
+        case 'easy':
+            setupGrid(9,5);
+            break;
+        case 'medium':
+            setupGrid(9,3);
+            break;
+        case 'hard':
+            setupGrid(9,2);
+            break;
+        case 'expert':
+            setupGrid(6,5);
+            break;
+        case 'master':
+            setupGrid(5,3);
+            break;
+        case 'nightmare':
+            setupGrid(5,4);
+            break;
+    }
+});
+
+predictBtn.addEventListener('click', () => {
+    const cells = Array.from(gridContainer.querySelectorAll('.grid-cell'));
+    if (cells.length === 0) return;
+
+    // Clear previous 🏆
+    cells.forEach(cell => (cell.textContent = ''));
+
+    const diff = difficultySelect.value;
+    let minRow;
+    if (diff === 'easy') minRow = 1;   // 5th–9th
+    else if (diff === 'medium') minRow = 3; // 4th–9th
+    else minRow = 2;                   // 3rd–9th others
+
+    // Choose random stop row range
+    const stopRow = Math.floor(Math.random() * (gridRows - minRow) + minRow);
+
+    // For each row from bottom to stopRow: one 🏆 in a random column
+    for (let r = gridRows - 1; r >= stopRow; r--) {
+        const randomCol = Math.floor(Math.random() * gridCols);
+        const index = r * gridCols + randomCol;
+        const cell = cells[index];
+
+        setTimeout(() => {
+            cell.textContent = '🏆';
+            cell.style.opacity = 1;
+            cell.style.transform = 'translateY(0)';
+        }, (gridRows - 1 - r) * 200);
+    }
+});
+</script>
+
+</body>
+</html>
