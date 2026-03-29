@@ -93,8 +93,8 @@ button:hover {
 
 <h1>Deposit Coins</h1>
 
-<input type="number" id="depositAmount" placeholder="Enter deposit amount (₦)" min="100" />
-<div id="coinRate">₦100 = 20 coins</div>
+<input type="number" id="depositAmount" placeholder="Enter deposit amount (₦)" min="1000" />
+<div id="coinRate">₦200 = 1 coin</div>
 <button id="submitDepositBtn">💰 Buy Coins</button>
 
 <div id="depositStatus"></div>
@@ -162,11 +162,15 @@ db.ref("settings/paystackKeys/public").once("value").then(snap => {
    Validate deposit amount
    --------------------------- */
 function validateAmount(amount) {
-    const min = 100; // temporary testing
-    const coinsPer100 = 20;
+    const min = 1000;
+    const rate = 200; // ₦200 per coin
     if (amount < min) return { valid: false, msg: `Minimum deposit is ₦${min}` };
-    const coins = Math.floor(amount / 100) * coinsPer100; // 100 naira = 20 coins
-    return { valid: true, coins };
+    if (amount % rate !== 0) {
+        const lower = amount - (amount % rate);
+        const upper = amount + (rate - (amount % rate));
+        return { valid: false, msg: `Enter a multiple of ₦${rate}. Try ₦${lower} or ₦${upper}` };
+    }
+    return { valid: true, coins: amount / rate };
 }
 
 /* ---------------------------
@@ -196,7 +200,7 @@ submitBtn.onclick = () => {
             toast("Payment successful! Ref: " + response.reference);
             depositStatus.innerHTML = `Payment complete! Coins added: ${coins}`;
 
-            // ✅ Update main page balance key
+            // ✅ Update the same key as main page
             const userBalanceRef = db.ref("users/" + user.uid + "/balance");
             userBalanceRef.transaction(current => (current || 0) + coins);
         },

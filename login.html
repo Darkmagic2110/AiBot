@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>Dark Magic Ai Bot - Register</title>
+<title>Dark Magic Ai Bot - Login</title>
 
 <link href="https://fonts.googleapis.com/css2?family=UnifrakturCook:wght@700&display=swap" rel="stylesheet">
 
@@ -48,7 +48,7 @@
         margin-top: 10px;
     }
 
-    /* NEW: Disabled button style */
+    /* NEW: Disabled style */
     button:disabled {
         opacity: 0.6;
         cursor: not-allowed;
@@ -69,9 +69,9 @@
 <input type="password" id="password" placeholder="𝗘𝗻𝘁𝗲𝗿 𝗣𝗮𝘀𝘀𝘄𝗼𝗿𝗱" required>
 
 <!-- ADDED ID -->
-<button id="registerBtn" onclick="register()">𝐂𝐫𝐞𝐚𝐭𝐞 𝐀𝐜𝐜𝐨𝐮𝐧𝐭</button>
+<button id="loginBtn" onclick="login()">𝐋𝐨𝐠𝐢𝐧</button>
 
-<p>𝗔𝗹𝗿𝗲𝗮𝗱𝘆 𝗵𝗮𝘃𝗲 𝗮𝗻 𝗮𝗰𝗰𝗼𝘂𝗻𝘁? <a href="loging.html">𝗟𝗼𝗴𝗶𝗻 𝗻𝗼𝘄</a></p>
+<p>𝗗𝗼𝗻𝘁 𝗵𝗮𝘃𝗲 𝗮𝗻 𝗮𝗰𝗰𝗼𝘂𝗻𝘁? <a href="index.html">𝗥𝗲𝗴𝗶𝘀𝘁𝗲𝗿 𝗡𝗼𝘄</a></p>
 
 <!-- Firebase -->
 <script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-app.js"></script>
@@ -89,26 +89,26 @@ const firebaseConfig = {
 };
 firebase.initializeApp(firebaseConfig);
 
-function register() {
+function login() {
     const email = document.getElementById("email").value;
     const pass = document.getElementById("password").value;
-    const btn = document.getElementById("registerBtn");
+    const btn = document.getElementById("loginBtn");
 
     // START LOADING
     btn.disabled = true;
-    btn.innerText = "Creating...";
+    btn.innerText = "Logging in...";
 
-    firebase.auth().createUserWithEmailAndPassword(email, pass)
+    firebase.auth().signInWithEmailAndPassword(email, pass)
     .then(() => {
-        alert("Account created successfully!");
+        alert("𝐋𝐨𝐠𝐢𝐧 𝐒𝐮𝐜𝐜𝐞𝐬𝐬𝐟𝐮𝐥");
         window.location.href = "maining.html";
     })
     .catch(error => {
         alert(error.message);
 
-        // RESET BUTTON IF ERROR
+        // RESET BUTTON
         btn.disabled = false;
-        btn.innerText = "𝐂𝐫𝐞𝐚𝐭𝐞 𝐀𝐜𝐜𝐨𝐮𝐧𝐭";
+        btn.innerText = "𝐋𝐨𝐠𝐢𝐧";
     });
 }
 </script>
