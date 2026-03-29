@@ -96,19 +96,16 @@
         25%, 75% {opacity: 0.2;}
     }
 
-    .rocket {
-        position: absolute;
-        font-size: 24px;
-    }
-
-    .trail {
-        position: absolute;
-        width: 4px;
-        height: 4px;
-        background: #ff4d4d;
-        border-radius: 50%;
-        opacity: 0.8;
-        pointer-events: none;
+    #balanceContainer {
+        position: fixed;
+        top: 10px;
+        right: 15px;
+        background: #1a1a1a;
+        padding: 5px 12px;
+        border-radius: 20px;
+        color: #fff;
+        font-weight: bold;
+        z-index: 9999;
     }
 </style>
 </head>
@@ -117,12 +114,21 @@
 
 <h1>Dark Magic Ai Aviator Bot</h1>
 
+<div id="balanceContainer">
+  <span id="balanceAmount">0</span> COINS
+</div>
+
 <img id="botImage" src="aviator.jpg" alt="Aviator Bot">
 
 <div id="loadingText">⏳ Predicting...</div>
 <button id="predictBtn">🚀 Predict Aviator</button>
 
 <div id="predictionBox"></div>
+
+<!-- Firebase -->
+<script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-app.js"></script>
+<script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-auth.js"></script>
+<script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-database.js"></script>
 
 <script>
 function padZero(num) { return num < 10 ? '0'+num : num; }
@@ -132,13 +138,50 @@ function getRandomMinuteOffset() { return Math.floor(Math.random() * 3) + 2; } /
 const predictBtn = document.getElementById("predictBtn");
 const predictionBox = document.getElementById("predictionBox");
 const loadingText = document.getElementById("loadingText");
+const balanceDisplay = document.getElementById("balanceAmount");
+
+const firebaseConfig = {
+  apiKey: "AIzaSyDvFDByPPo9zgwKLdPaREz1OVMQCXmPfrs",
+  authDomain: "bets-d795d.firebaseapp.com",
+  projectId: "bets-d795d",
+  storageBucket: "bets-d795d.appspot.com",
+  messagingSenderId: "384386108287",
+  appId: "1:384386108287:android:d238a5ec8068d9bb9be84a",
+  databaseURL: "https://bets-d795d-default-rtdb.firebaseio.com"
+};
+firebase.initializeApp(firebaseConfig);
+const db = firebase.database();
+let currentUserUid = null;
+
+// Auth & balance listener
+firebase.auth().onAuthStateChanged(user => {
+  if (!user) { alert("Please login first"); return; }
+  currentUserUid = user.uid;
+
+  db.ref("users/" + currentUserUid + "/balance").on("value", snap => {
+    const val = snap.val();
+    balanceDisplay.innerText = val != null ? Math.floor(val) : 0;
+  });
+});
 
 predictBtn.addEventListener("click", () => {
-    predictBtn.disabled = true;
+  if (!currentUserUid) return alert("User not logged in!");
+
+  const userBalanceRef = db.ref("users/" + currentUserUid + "/balance");
+
+  // Deduct 1 coin per prediction
+  userBalanceRef.transaction(current => {
+    current = current || 0;
+    if (current < 1) { alert("Insufficient balance!"); return; }
+    return current - 1;
+  }, (err, committed, snapshot) => {
+    if (!committed) return;
+
+    // Start prediction animation
     predictionBox.style.display = "none";
     loadingText.style.display = "block";
+    predictBtn.disabled = true;
 
-    // Rocket + Curved Trail
     const rocket = document.createElement("div");
     rocket.classList.add("rocket");
     rocket.textContent = "🚀";
@@ -155,8 +198,8 @@ predictBtn.addEventListener("click", () => {
     let t=0;
     const animInterval = setInterval(()=>{
         t += 0.03;
-        const x = 10 + 90*t; // horizontal
-        const y = 90 - (t*t*90); // parabola curve
+        const x = 10 + 90*t;
+        const y = 90 - (t*t*90);
         rocket.style.left = x + "%";
         rocket.style.top = y + "%";
 
@@ -220,6 +263,7 @@ predictBtn.addEventListener("click", () => {
             }
         },1000);
     }
+  });
 });
 </script>
 

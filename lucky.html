@@ -25,6 +25,18 @@
         text-shadow: 0 0 8px #00bfff, 0 0 15px #00ffff;
     }
 
+    #balanceContainer {
+        position: fixed;
+        top: 10px;
+        right: 15px;
+        background: #111;
+        padding: 5px 12px;
+        border-radius: 20px;
+        color: #00ffff;
+        font-weight: bold;
+        z-index: 9999;
+    }
+
     #botImage {
         width: 200px;
         height: 200px;
@@ -124,6 +136,29 @@
         0% {transform: translate(0, 0); opacity: 1;}
         100% {transform: translate(-50px, -100px); opacity: 0;}
     }
+
+    #toast {
+        visibility: hidden;
+        min-width: 200px;
+        background-color: #00bfff;
+        color: black;
+        text-align: center;
+        border-radius: 8px;
+        padding: 10px;
+        position: fixed;
+        bottom: 50px;
+        z-index: 999;
+        font-weight: bold;
+        font-size: 1rem;
+    }
+
+    #toast.show {
+        visibility: visible;
+        animation: fadein 0.5s, fadeout 0.5s 2s;
+    }
+
+    @keyframes fadein { from { bottom: 30px; opacity: 0; } to { bottom: 50px; opacity: 1; } }
+    @keyframes fadeout { from { bottom: 50px; opacity: 1; } to { bottom: 70px; opacity: 0; } }
 </style>
 </head>
 
@@ -131,12 +166,21 @@
 
 <h1>Dark Magic Ai Lucky Jet Bot</h1>
 
+<div id="balanceContainer">
+    Balance: <span id="balanceAmount">0</span> COINS
+</div>
+
 <img id="botImage" src="lucky.jpg" alt="Lucky Jet Bot">
 
 <div id="loadingText">⏳ Predicting...</div>
 <button id="predictBtn">🚀 Predict Lucky Jet</button>
 
 <div id="predictionBox"></div>
+<div id="toast"></div>
+
+<script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-app.js"></script>
+<script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-auth.js"></script>
+<script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-database.js"></script>
 
 <script>
 function padZero(num) { return num < 10 ? '0'+num : num; }
@@ -146,77 +190,125 @@ function getRandomMinuteOffset() { return Math.floor(Math.random() * 3) + 2; } /
 const predictBtn = document.getElementById("predictBtn");
 const predictionBox = document.getElementById("predictionBox");
 const loadingText = document.getElementById("loadingText");
+const balanceDisplay = document.getElementById("balanceAmount");
+const toast = document.getElementById("toast");
 
+let currentUserUid = null;
+
+// Firebase config
+const firebaseConfig = {
+    apiKey: "AIzaSyDvFDByPPo9zgwKLdPaREz1OVMQCXmPfrs",
+    authDomain: "bets-d795d.firebaseapp.com",
+    projectId: "bets-d795d",
+    storageBucket: "bets-d795d.appspot.com",
+    messagingSenderId: "384386108287",
+    appId: "1:384386108287:android:d238a5ec8068d9bb9be84a",
+    databaseURL: "https://bets-d795d-default-rtdb.firebaseio.com"
+};
+firebase.initializeApp(firebaseConfig);
+const db = firebase.database();
+
+// Auth & balance listener
+firebase.auth().onAuthStateChanged(user => {
+    if (!user) { alert("Please login first"); return; }
+    currentUserUid = user.uid;
+
+    db.ref("users/" + currentUserUid + "/balance").once("value").then(snap => {
+        balanceDisplay.innerText = snap.val() != null ? Math.floor(snap.val()) : 0;
+    });
+
+    db.ref("users/" + currentUserUid + "/balance").on("value", snap => {
+        balanceDisplay.innerText = snap.val() != null ? Math.floor(snap.val()) : 0;
+    });
+});
+
+// Toast
+function showToast(message) {
+    toast.textContent = message;
+    toast.className = "show";
+    setTimeout(()=>{toast.className = toast.className.replace("show","");},2500);
+}
+
+// Prediction click
 predictBtn.addEventListener("click", () => {
-    predictBtn.disabled = true;
-    predictionBox.style.display = "none";
-    loadingText.style.display = "block";
+    if(!currentUserUid){ showToast("Please login first!"); return; }
 
-    // Rocket + Trail
-    const rocket = document.createElement("div");
-    rocket.classList.add("rocket");
-    rocket.textContent = "🚀";
-    document.body.appendChild(rocket);
+    const userBalanceRef = db.ref("users/" + currentUserUid + "/balance");
+    userBalanceRef.transaction(current => {
+        current = current || 0;
+        if(current < 1){ showToast("Insufficient balance!"); return; }
+        return current - 1;
+    }, (err, committed, snapshot) => {
+        if(!committed) return;
 
-    for(let i=0;i<8;i++){
-        const trail = document.createElement("div");
-        trail.classList.add("trail");
-        trail.style.left = (10 + i*8) + "%";
-        trail.style.top = "100%";
-        document.body.appendChild(trail);
-        setTimeout(()=>trail.remove(),1500);
-    }
+        predictBtn.disabled = true;
+        predictionBox.style.display = "none";
+        loadingText.style.display = "block";
 
-    setTimeout(()=>{
-        loadingText.style.display = "none";
-        rocket.remove();
+        // Rocket + trail
+        const rocket = document.createElement("div");
+        rocket.classList.add("rocket");
+        rocket.textContent = "🚀";
+        document.body.appendChild(rocket);
 
-        const now = new Date();
-        const offsetMinutes = getRandomMinuteOffset();
-        const predictedTime = new Date(now.getTime() + offsetMinutes * 60000);
-        const hour = padZero(predictedTime.getHours());
-        const minute = padZero(predictedTime.getMinutes());
-        const coef = parseFloat(getRandomCoefficient());
+        for(let i=0;i<8;i++){
+            const trail = document.createElement("div");
+            trail.classList.add("trail");
+            trail.style.left = (10 + i*8) + "%";
+            trail.style.top = "100%";
+            document.body.appendChild(trail);
+            setTimeout(()=>trail.remove(),1500);
+        }
 
-        const text = `LUCKY JET PREDICTION
+        setTimeout(()=>{
+            loadingText.style.display = "none";
+            rocket.remove();
+
+            const now = new Date();
+            const offsetMinutes = getRandomMinuteOffset();
+            const predictedTime = new Date(now.getTime() + offsetMinutes * 60000);
+            const hour = padZero(predictedTime.getHours());
+            const minute = padZero(predictedTime.getMinutes());
+            const coef = parseFloat(getRandomCoefficient());
+
+            const text = `LUCKY JET PREDICTION
 ┏━━━━━━━━━━━━━
 ┠ ⭓➤𝐓𝐈𝐌𝐄 : ${hour}:${minute} 
 ┠ ⭓➤𝐂𝐎𝐄𝐅𝐅𝐈𝐂𝐈𝐄𝐍𝐓: `;
+            predictionBox.textContent = text;
+            predictionBox.style.display = "block";
 
-        predictionBox.textContent = text;
-        predictionBox.style.display = "block";
+            let start = 1.00;
+            const steps = 50;
+            const coefElement = document.createElement("span");
+            coefElement.style.color = "#00ffff";
+            coefElement.style.fontWeight = "700";
+            coefElement.textContent = start.toFixed(2) + "X";
+            predictionBox.appendChild(coefElement);
 
-        // Animate coefficient counting
-        let start = 1.00;
-        const steps = 50;
-        const coefElement = document.createElement("span");
-        coefElement.style.color = "#00ffff";
-        coefElement.style.fontWeight = "700";
-        coefElement.textContent = start.toFixed(2) + "X";
-        predictionBox.appendChild(coefElement);
+            let currentStep = 0;
+            const coefInterval = setInterval(()=>{
+                currentStep++;
+                const value = 1.00 + ((coef-1.00)*(currentStep/steps));
+                coefElement.textContent = value.toFixed(2) + "X";
+                if(currentStep>=steps) clearInterval(coefInterval);
+            },20);
 
-        let currentStep = 0;
-        const coefInterval = setInterval(()=>{
-            currentStep++;
-            const value = 1.00 + ((coef-1.00)*(currentStep/steps));
-            coefElement.textContent = value.toFixed(2) + "X";
-            if(currentStep>=steps) clearInterval(coefInterval);
-        }, 20);
+            const closingText = document.createElement("div");
+            closingText.textContent = "┗━━━━━━━━━━━━━";
+            predictionBox.appendChild(document.createElement("br"));
+            predictionBox.appendChild(closingText);
 
-        const closingText = document.createElement("div");
-        closingText.textContent = "┗━━━━━━━━━━━━━";
-        predictionBox.appendChild(document.createElement("br"));
-        predictionBox.appendChild(closingText);
+            // Unlock button after predicted time
+            const checkInterval = setInterval(()=>{
+                if(new Date()>=predictedTime){
+                    predictBtn.disabled = false;
+                    clearInterval(checkInterval);
+                }
+            },1000);
 
-        // Unlock button after predicted time
-        const checkInterval = setInterval(()=>{
-            if(new Date()>=predictedTime){
-                predictBtn.disabled = false;
-                clearInterval(checkInterval);
-            }
-        },1000);
-
-    },1500);
+        },1500);
+    });
 });
 </script>
 

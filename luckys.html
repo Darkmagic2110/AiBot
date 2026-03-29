@@ -9,10 +9,7 @@
   <title>Lucky Jet Grand Prediction</title>
 
   <style>
-    * {
-      box-sizing: border-box;
-    }
-
+    * { box-sizing: border-box; }
     body {
       margin: 0;
       padding: 0;
@@ -26,14 +23,12 @@
       color: white;
       text-align: center;
     }
-
     h1 {
       font-size: clamp(20px, 6vw, 40px);
       font-weight: bold;
       margin-bottom: 20px;
       text-shadow: 0 0 10px purple;
     }
-
     .circle {
       width: min(60vw, 260px);
       height: min(60vw, 260px);
@@ -50,12 +45,10 @@
       margin-bottom: 25px;
       background: rgba(0,0,0,0.5);
     }
-
     @keyframes glow {
       from { box-shadow: 0 0 10px #7f00ff; }
       to { box-shadow: 0 0 30px #b266ff; }
     }
-
     button {
       padding: 12px 35px;
       font-size: clamp(14px, 4vw, 20px);
@@ -68,13 +61,26 @@
       box-shadow: 0 0 10px #7f00ff;
       animation: glow 1.5s infinite alternate;
     }
+    button:active { transform: scale(0.95); }
 
-    button:active {
-      transform: scale(0.95);
+    #balanceContainer {
+      position: fixed;
+      top: 10px;
+      right: 15px;
+      background: #1a1a1a;
+      padding: 5px 12px;
+      border-radius: 20px;
+      color: #fff;
+      font-weight: bold;
+      z-index: 9999;
     }
   </style>
 </head>
 <body>
+
+  <div id="balanceContainer">
+    <span id="balanceAmount">0</span> COINS
+  </div>
 
   <h1>LUCKY JET GRAND PREDICTION</h1>
 
@@ -82,34 +88,75 @@
 
   <button onclick="generateSignal()">GET SIGNALS</button>
 
-<script>
-function generateSignal() {
-  const display = document.getElementById("display");
+  <!-- Firebase -->
+  <script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-app.js"></script>
+  <script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-auth.js"></script>
+  <script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-database.js"></script>
 
-  let count = 0;
-  let anim = setInterval(() => {
-    let fake = (Math.random() * 6.5).toFixed(2);
-    display.textContent = fake + "x";
-    count++;
+  <script>
+    const display = document.getElementById("display");
+    const balanceDisplay = document.getElementById("balanceAmount");
 
-    if (count > 15) {
-      clearInterval(anim);
+    // Firebase config
+    const firebaseConfig = {
+      apiKey: "AIzaSyDvFDByPPo9zgwKLdPaREz1OVMQCXmPfrs",
+      authDomain: "bets-d795d.firebaseapp.com",
+      projectId: "bets-d795d",
+      storageBucket: "bets-d795d.appspot.com",
+      messagingSenderId: "384386108287",
+      appId: "1:384386108287:android:d238a5ec8068d9bb9be84a",
+      databaseURL: "https://bets-d795d-default-rtdb.firebaseio.com"
+    };
+    firebase.initializeApp(firebaseConfig);
+    const db = firebase.database();
+    let currentUserUid = null;
 
-      // Higher chance BELOW 3.00x
-      let chance = Math.random();
-      let finalNumber;
+    // Auth & balance listener
+    firebase.auth().onAuthStateChanged(user => {
+      if (!user) { alert("Please login first"); return; }
+      currentUserUid = user.uid;
 
-      if (chance < 0.7) {
-        finalNumber = (1 + Math.random() * 1.99).toFixed(2);
-      } else {
-        finalNumber = (3 + Math.random() * 3.5).toFixed(2);
-      }
+      // Real-time balance listener
+      db.ref("users/" + currentUserUid + "/balance").on("value", snap => {
+        const val = snap.val();
+        balanceDisplay.innerText = val != null ? Math.floor(val) : 0;
+      });
+    });
 
-      display.textContent = finalNumber + "x";
+    // Generate Lucky Jet signal
+    function generateSignal() {
+      if (!currentUserUid) return alert("User not logged in!");
+
+      const userBalanceRef = db.ref("users/" + currentUserUid + "/balance");
+
+      // Deduct 1 coin per signal
+      userBalanceRef.transaction(current => {
+        current = current || 0;
+        if (current < 1) { alert("Insufficient balance!"); return; }
+        return current - 1;
+      }, (err, committed, snapshot) => {
+        if (!committed) return; // Stop if transaction failed (not enough balance)
+
+        // Start animation after deduction
+        let count = 0;
+        const anim = setInterval(() => {
+          let fake = (Math.random() * 6.5).toFixed(2);
+          display.textContent = fake + "x";
+          count++;
+          if (count > 15) {
+            clearInterval(anim);
+
+            let chance = Math.random();
+            let finalNumber;
+            if (chance < 0.7) finalNumber = (1 + Math.random() * 1.99).toFixed(2);
+            else finalNumber = (3 + Math.random() * 3.5).toFixed(2);
+
+            display.textContent = finalNumber + "x";
+          }
+        }, 80);
+      });
     }
-  }, 80);
-}
-</script>
+  </script>
 
 </body>
 </html>

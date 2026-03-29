@@ -29,6 +29,18 @@
     text-shadow: 0 0 15px yellow;
   }
 
+  #balanceContainer {
+    position: fixed;
+    top: 10px;
+    right: 15px;
+    background: #1a1a1a;
+    padding: 5px 12px;
+    border-radius: 20px;
+    color: #fff;
+    font-weight: bold;
+    z-index: 9999;
+  }
+
   #coefficient {
     font-size: 55px;
     font-weight: 900;
@@ -88,7 +100,6 @@
     color: darkgreen;
   }
 
-  /* Smooth slow blinking (not too bright, not too fast) */
   .blink {
     animation: blink 4s infinite alternate ease-in-out;
   }
@@ -98,7 +109,6 @@
     to { opacity: 1.0; }
   }
 
-  /* Toast popup style */
   #toast {
     visibility: hidden;
     min-width: 240px;
@@ -138,6 +148,11 @@
 
   <h1>𝐂𝐇𝐈𝐂𝐊𝐄𝐍 𝐑𝐔𝐍</h1>
 
+  <!-- Balance -->
+  <div id="balanceContainer">
+      Balance: <span id="balanceAmount">0</span> COINS
+  </div>
+
   <!-- Coefficient above the chicken -->
   <div id="coefficient" class="blink"></div>
 
@@ -158,14 +173,52 @@
   <!-- Toast message -->
   <div id="toast"></div>
 
+<!-- Firebase -->
+<script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-app.js"></script>
+<script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-auth.js"></script>
+<script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-database.js"></script>
+
 <script>
   const options = document.querySelectorAll(".option");
   const predictBtn = document.getElementById("predictBtn");
   const coeff = document.getElementById("coefficient");
   const chicken = document.getElementById("chicken");
   const toast = document.getElementById("toast");
+  const balanceDisplay = document.getElementById("balanceAmount");
 
   let selected = null;
+  let currentUserUid = null;
+
+  // Firebase config
+  const firebaseConfig = {
+    apiKey: "AIzaSyDvFDByPPo9zgwKLdPaREz1OVMQCXmPfrs",
+    authDomain: "bets-d795d.firebaseapp.com",
+    projectId: "bets-d795d",
+    storageBucket: "bets-d795d.appspot.com",
+    messagingSenderId: "384386108287",
+    appId: "1:384386108287:android:d238a5ec8068d9bb9be84a",
+    databaseURL: "https://bets-d795d-default-rtdb.firebaseio.com"
+  };
+  firebase.initializeApp(firebaseConfig);
+  const db = firebase.database();
+
+  // Auth check
+  firebase.auth().onAuthStateChanged(user => {
+    if (!user) { alert("Please login first"); return; }
+    currentUserUid = user.uid;
+
+    // Fetch balance
+    db.ref("users/" + currentUserUid + "/balance").once("value").then(snap => {
+      const val = snap.val();
+      balanceDisplay.innerText = val != null ? Math.floor(val) : 0;
+    });
+
+    // Real-time listener
+    db.ref("users/" + currentUserUid + "/balance").on("value", snap => {
+      const val = snap.val();
+      balanceDisplay.innerText = val != null ? Math.floor(val) : 0;
+    });
+  });
 
   // Difficulty selection
   options.forEach(opt => {
@@ -192,25 +245,32 @@
       return;
     }
 
-    let values = [];
-
-    if (selected === "easy") {
-      values = ["1.3X", "1.4X", "1.5X", "1.6X", "1.7X", "1.8X", "1.9X", "2.0X", "2.2X", "2.4X", "2.6X", "2.8X", "3.0X", "3.5X"];
-    } 
-    else if (selected === "medium") {
-      values = ["1.4X", "1.6X", "1.8X", "2.0X", "2.2X", "2.4X", "2.7X", "3.0X"];
-    } 
-    else if (selected === "hard") {
-      values = ["1.5X", "1.7X", "2.0X", "3.0X", "4.5X"];
-    } 
-    else if (selected === "hardcore") {
-      values = ["2.5X", "5.0X", "10.0X"];
+    if (!currentUserUid) {
+      showToast("Please login first!");
+      return;
     }
 
-    const randomCoeff = values[Math.floor(Math.random() * values.length)];
-    coeff.textContent = randomCoeff;
-    coeff.style.display = "block";
-    chicken.style.display = "block";
+    // Deduct 1 coin
+    const userBalanceRef = db.ref("users/" + currentUserUid + "/balance");
+    userBalanceRef.transaction(current => {
+      current = current || 0;
+      if (current < 1) { showToast("Insufficient balance!"); return; }
+      return current - 1;
+    }, (err, committed, snapshot) => {
+      if (!committed) return;
+
+      // Proceed with coefficient
+      let values = [];
+      if (selected === "easy") values = ["1.3X","1.4X","1.5X","1.6X","1.7X","1.8X","1.9X","2.0X","2.2X","2.4X","2.6X","2.8X","3.0X","3.5X"];
+      else if (selected === "medium") values = ["1.4X","1.6X","1.8X","2.0X","2.2X","2.4X","2.7X","3.0X"];
+      else if (selected === "hard") values = ["1.5X","1.7X","2.0X","3.0X","4.5X"];
+      else if (selected === "hardcore") values = ["2.5X","5.0X","10.0X"];
+
+      const randomCoeff = values[Math.floor(Math.random() * values.length)];
+      coeff.textContent = randomCoeff;
+      coeff.style.display = "block";
+      chicken.style.display = "block";
+    });
   });
 </script>
 

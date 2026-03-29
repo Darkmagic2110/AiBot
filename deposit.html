@@ -1,0 +1,212 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1" />
+<title>Deposit Coins - Dark Magic Ai Bot</title>
+
+<link href="https://fonts.googleapis.com/css2?family=UnifrakturCook:wght@700&display=swap" rel="stylesheet">
+<link href="https://fonts.googleapis.com/css2?family=Poppins:wght@500;600&display=swap" rel="stylesheet">
+
+<style>
+body {
+    background: black;
+    color: white;
+    font-family: Arial, sans-serif;
+    text-align: center;
+    padding: 10px;
+}
+h1 {
+    font-family: 'UnifrakturCook', cursive;
+    font-size: 35px;
+    color: red;
+    margin-bottom: 5px;
+}
+input[type="number"], input[type="text"] {
+    width: 90%;
+    padding: 12px;
+    font-size: 18px;
+    margin-top: 10px;
+    border-radius: 8px;
+    border: none;
+}
+button {
+    width: 92%;
+    padding: 14px;
+    background: #e60000;
+    font-family: 'Poppins', sans-serif;
+    font-size: 18px;
+    color: #ffffff;
+    font-weight: 600;
+    border-radius: 10px;
+    border: none;
+    margin-top: 12px;
+    cursor: pointer;
+    letter-spacing: 0.5px;
+    transition: 0.3s ease-in-out;
+    box-shadow: 0 0 18px rgba(255, 0, 0, 0.7);
+}
+button:hover {
+    box-shadow: 0 0 25px rgba(255, 0, 0, 1);
+}
+#toast {
+    visibility: hidden;
+    min-width: 240px;
+    background-color: red;
+    font-family: 'Poppins', sans-serif;
+    color: black;
+    text-align: center;
+    border-radius: 10px;
+    padding: 12px;
+    position: fixed;
+    bottom: 30px;
+    left: 50%;
+    transform: translateX(-50%);
+    font-size: 18px;
+    z-index: 99999;
+    opacity: 0;
+    transition: opacity 0.3s, bottom 0.3s;
+}
+#toast.show {
+    visibility: visible;
+    opacity: 1;
+    bottom: 50px;
+}
+#depositStatus {
+    margin-top: 15px;
+    font-size: 18px;
+    color: yellow;
+}
+#coinRate {
+    font-size: 16px;
+    color: cyan;
+    margin-top: 5px;
+}
+#refreshNotice {
+    font-size: 14px;
+    color: orange;
+    margin-top: 12px;
+}
+</style>
+</head>
+<body>
+
+<h1>Deposit Coins</h1>
+
+<input type="number" id="depositAmount" placeholder="Enter deposit amount (₦)" min="100" />
+<div id="coinRate">₦100 = 20 coins</div>
+<button id="submitDepositBtn">💰 Buy Coins</button>
+
+<div id="depositStatus"></div>
+<div id="refreshNotice">🔄 Refresh the main page after successful payment</div>
+<div id="toast"></div>
+
+<!-- Firebase -->
+<script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-app.js"></script>
+<script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-auth.js"></script>
+<script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-database.js"></script>
+<script src="https://js.paystack.co/v1/inline.js"></script>
+
+<script>
+/* ---------------------------
+   Firebase initialization
+   --------------------------- */
+const firebaseConfig = {
+    apiKey: "AIzaSyDvFDByPPo9zgwKLdPaREz1OVMQCXmPfrs",
+    authDomain: "bets-d795d.firebaseapp.com",
+    projectId: "bets-d795d",
+    storageBucket: "bets-d795d.appspot.com",
+    messagingSenderId: "384386108287",
+    appId: "1:384386108287:android:d238a5ec8068d9bb9be84a",
+    databaseURL: "https://bets-d795d-default-rtdb.firebaseio.com"
+};
+firebase.initializeApp(firebaseConfig);
+const db = firebase.database();
+
+/* ---------------------------
+   DOM refs
+   --------------------------- */
+const depositStatus = document.getElementById("depositStatus");
+const submitBtn = document.getElementById("submitDepositBtn");
+const depositInput = document.getElementById("depositAmount");
+
+/* ---------------------------
+   Toast helper
+   --------------------------- */
+function toast(msg) {
+    const t = document.getElementById("toast");
+    t.innerHTML = msg;
+    t.className = "show";
+    setTimeout(() => { t.className = t.className.replace("show", ""); }, 3000);
+}
+
+/* ---------------------------
+   Auth check
+   --------------------------- */
+firebase.auth().onAuthStateChanged(user => {
+    if (!user) {
+        window.location.href = "login.html";
+        return;
+    }
+});
+
+/* ---------------------------
+   Fetch Paystack public key from Firebase
+   --------------------------- */
+let paystackPublicKey = null;
+db.ref("settings/paystackKeys/public").once("value").then(snap => {
+    paystackPublicKey = snap.val() || "";
+});
+
+/* ---------------------------
+   Validate deposit amount
+   --------------------------- */
+function validateAmount(amount) {
+    const min = 100; // temporary testing
+    const coinsPer100 = 20;
+    if (amount < min) return { valid: false, msg: `Minimum deposit is ₦${min}` };
+    const coins = Math.floor(amount / 100) * coinsPer100; // 100 naira = 20 coins
+    return { valid: true, coins };
+}
+
+/* ---------------------------
+   Submit deposit & Paystack
+   --------------------------- */
+submitBtn.onclick = () => {
+    const user = firebase.auth().currentUser;
+    if (!user) return toast("Please login again");
+
+    const amountRaw = Number(depositInput.value);
+    if (!amountRaw) return toast("Enter a valid deposit amount");
+
+    const validation = validateAmount(amountRaw);
+    if (!validation.valid) return toast(validation.msg);
+
+    const coins = validation.coins;
+    depositStatus.innerHTML = `You will receive ${coins} coin(s) for ₦${amountRaw}`;
+
+    if (!paystackPublicKey) return toast("Payment key not loaded — try again");
+
+    const handler = PaystackPop.setup({
+        key: paystackPublicKey,
+        email: user.email,
+        amount: amountRaw * 100, // Paystack expects kobo
+        currency: "NGN",
+        callback: function(response){
+            toast("Payment successful! Ref: " + response.reference);
+            depositStatus.innerHTML = `Payment complete! Coins added: ${coins}`;
+
+            // ✅ Update main page balance key
+            const userBalanceRef = db.ref("users/" + user.uid + "/balance");
+            userBalanceRef.transaction(current => (current || 0) + coins);
+        },
+        onClose: function(){
+            toast("Payment cancelled");
+        }
+    });
+    handler.openIframe();
+};
+</script>
+
+</body>
+</html>
