@@ -82,7 +82,7 @@ video {
     margin-top: 5px;
 }
 
-/* STAKE & BUTTON BELOW VIDEO */
+/* STAKE & BUTTON */
 .controls {
     display: flex;
     flex-direction: column;
@@ -134,12 +134,14 @@ video {
 
 <div class="header">
     <h1>BOTTLE MANIA</h1>
-    <img src="bottle.jpg">
+    <img src="bottle.jpg" alt="Bottle">
 </div>
 
 <div class="game-area">
+
     <div id="videoContainer">
-        <video id="video" src="bottle.mp4" loop muted></video>
+        <!-- Mobile friendly: muted + playsinline -->
+        <video id="video" src="bottle.mp4" loop muted playsinline preload="auto"></video>
     </div>
 
     <div class="controls">
@@ -216,7 +218,7 @@ function predict() {
         return;
     }
 
-    // disable button to prevent multiple clicks
+    // Disable button to prevent multiple clicks
     predictBtn.disabled = true;
 
     const userBalanceRef = db.ref("users/" + currentUserUid + "/balance");
@@ -227,7 +229,7 @@ function predict() {
 
         if (current < 1) {
             showToast("Insufficient balance");
-            predictBtn.disabled = false; // re-enable button
+            predictBtn.disabled = false;
             return;
         }
 
@@ -251,7 +253,7 @@ function predict() {
 
             runGame(stake);
         } else {
-            // Re-enable if not committed
+            // re-enable button if transaction failed
             predictBtn.disabled = false;
         }
     });
@@ -259,9 +261,17 @@ function predict() {
 
 /* GAME */
 function runGame(stake) {
-    videoContainer.style.display = "block"; // show video when predict clicked
+    videoContainer.style.display = "block"; // show video
     video.currentTime = 0;
-    video.play().catch(()=>{}); // ensure autoplay works
+
+    // Autoplay with user click (required on mobile)
+    const playPromise = video.play();
+    if (playPromise !== undefined) {
+        playPromise.catch(error => {
+            console.log("Video play failed:", error);
+            showToast("Tap video to start playback");
+        });
+    }
 
     let multiplier = 1.00;
     let chance = Math.random();
@@ -275,7 +285,6 @@ function runGame(stake) {
 
     let interval = setInterval(() => {
         multiplier += 0.02;
-
         let amount = (stake * multiplier).toFixed(2);
 
         multiplierText.innerText = multiplier.toFixed(2) + "x";
@@ -283,16 +292,11 @@ function runGame(stake) {
 
         if (multiplier >= target) {
             clearInterval(interval);
-
             let final = (stake * target).toFixed(2);
-
             multiplierText.innerText = "CASHOUT 💰";
             resultText.innerText = "₦" + final;
-
             video.pause();
-
-            // Re-enable predict button after game ends
-            predictBtn.disabled = false;
+            predictBtn.disabled = false; // re-enable button after game ends
         }
     }, 60);
 }
