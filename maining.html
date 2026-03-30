@@ -25,7 +25,6 @@
     #registrationContainer { margin-bottom: 20px; }
     .small-muted { font-size: 13px; color: #aaa; margin-top: 6px; }
 
-    /* Balance Display Top Right */
     #balanceContainer { position: fixed; top: 10px; right: 15px; background: #1a1a1a; padding: 4px 10px; border-radius: 20px; display: flex; align-items: center; font-family: 'Poppins', sans-serif; color: #fff; z-index: 9999; box-shadow: 0 0 12px rgba(255, 0, 0, 0.6); font-size: 14px; }
     #balanceAmount { font-size: 14px; margin-right: 6px; }
     #addBalanceBtn { font-size: 14px; background: red; border: none; color: white; border-radius: 50%; width: 22px; height: 22px; cursor: pointer; box-shadow: 0 0 6px rgba(255,0,0,0.8); display: flex; justify-content: center; align-items: center; transition: 0.2s ease-in-out; }
@@ -58,16 +57,16 @@
 </div>
 
 <div class="grid">
-    <div class="game-button" id="luckyJetBtn"><img src="lucky.jpg" alt="Lucky Jet"><div class="label">Lucky Jet</div></div>
-    <div class="game-button" id="aviatorBtn"><img src="aviator.jpg" alt="Aviator"><div class="label">Aviator</div></div>
-    <div class="game-button" id="diceBtn"><img src="dice.jpg" alt="Dice"><div class="label">Dice</div></div>
-    <div class="game-button" id="thimbleBtn"><img src="thimble.jpg" alt="King Thimble"><div class="label">King Thimble</div></div>
-    <div class="game-button" id="coinBtn"><img src="coin.jpg" alt="CoinFlip"><div class="label">CoinFlip</div></div>
-    <div class="game-button" id="minesBtn"><img src="mine.jpg" alt="Mines"><div class="label">Mines</div></div>
-    <div class="game-button" id="luckyBtn"><img src="luckys.jpg" alt="Lucky jet Pro"><div class="label">Lucky Jet Pro</div></div>
-    <div class="game-button" id="rocketBtn"><img src="rocket.jpg" alt="Rocket Queen"><div class="label">Rocket Queen</div></div>
-    <div class="game-button" id="towerBtn"><img src="tower.jpg" alt="Tower"><div class="label">Tower</div></div>
-    <div class="game-button" id="chickenBtn"><img src="chick.jpg" alt="Chicken Run"><div class="label">Chicken Run</div></div>
+    <div class="game-button" id="luckyJetBtn"><img src="lucky.jpg"><div class="label">Lucky Jet</div></div>
+    <div class="game-button" id="aviatorBtn"><img src="aviator.jpg"><div class="label">Aviator</div></div>
+    <div class="game-button" id="diceBtn"><img src="dice.jpg"><div class="label">Dice</div></div>
+    <div class="game-button" id="thimbleBtn"><img src="thimble.jpg"><div class="label">King Thimble</div></div>
+    <div class="game-button" id="coinBtn"><img src="coin.jpg"><div class="label">CoinFlip</div></div>
+    <div class="game-button" id="minesBtn"><img src="mine.jpg"><div class="label">Mines</div></div>
+    <div class="game-button" id="luckyBtn"><img src="luckys.jpg"><div class="label">Lucky Jet Pro</div></div>
+    <div class="game-button" id="rocketBtn"><img src="rocket.jpg"><div class="label">Rocket Queen</div></div>
+    <div class="game-button" id="towerBtn"><img src="tower.jpg"><div class="label">Tower</div></div>
+    <div class="game-button" id="chickenBtn"><img src="chick.jpg"><div class="label">Chicken Run</div></div>
 </div>
 
 <div id="toast"></div>
@@ -135,10 +134,15 @@ function submitID(){
     const idRaw = (document.getElementById("oneWinID").value||"").trim();
     if(!idRaw) return toast("Enter your 1Win ID");
 
+    // ✅ ADDED VALIDATION ONLY
+    if(isNaN(idRaw)) return toast("ID must be numbers only");
+    if(Number(idRaw) < 335000000){
+        return toast("Invalid ID ❌ Use a newly created 1Win ID");
+    }
+
     statusMessage.innerHTML = "⏳ Validating ID...";
     lockButtons();
 
-    // Delay 5 seconds to simulate validation
     setTimeout(()=>{
         statusMessage.innerHTML = `⏳ Connecting to 1Win ID: ${idRaw}...`;
         setTimeout(()=>{

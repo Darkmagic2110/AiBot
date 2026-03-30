@@ -82,10 +82,25 @@ button:hover {
     color: cyan;
     margin-top: 5px;
 }
+
+/* ✅ UPDATED NOTICE WITH BLINK + GLOW */
 #refreshNotice {
     font-size: 14px;
-    color: orange;
+    color: yellow;
     margin-top: 12px;
+    font-weight: bold;
+    animation: blinkGlow 1s infinite alternate;
+}
+
+@keyframes blinkGlow {
+    0% {
+        opacity: 1;
+        text-shadow: 0 0 5px yellow, 0 0 10px orange;
+    }
+    100% {
+        opacity: 0.4;
+        text-shadow: 0 0 20px yellow, 0 0 30px red;
+    }
 }
 
 /* Transaction UI */
@@ -118,7 +133,9 @@ button:hover {
 <button id="submitDepositBtn">💰 Buy Coins</button>
 
 <div id="depositStatus"></div>
-<div id="refreshNotice">🔄 Refresh the main page after successful payment</div>
+
+<!-- ✅ UPDATED TEXT ONLY -->
+<div id="refreshNotice">⚡ Make sure to return back to the site immediately after payment ⚡</div>
 
 <div id="historyBox">
     <h3>📜 Transactions</h3>
@@ -164,7 +181,6 @@ firebase.auth().onAuthStateChanged(user => {
         return;
     }
 
-    // ✅ FIXED TRANSACTION LOADING
     db.ref("users/" + user.uid + "/transactions").once("value").then(snap => {
 
         historyList.innerHTML = "";
@@ -244,13 +260,11 @@ submitBtn.onclick = () => {
 
             const userRef = db.ref("users/" + user.uid);
 
-            // ✅ FIXED BALANCE UPDATE
             userRef.child("balance").once("value").then(snap => {
                 let current = snap.val() || 0;
                 userRef.child("balance").set(current + coins);
             });
 
-            // SAVE TRANSACTION
             userRef.child("transactions").push({
                 type: "deposit",
                 coins: coins,
