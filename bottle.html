@@ -11,13 +11,14 @@
 body {
     margin: 0;
     font-family: 'Poppins', sans-serif;
-    background: #00aaff; 
+    background: #00aaff; /* consistent background */
     color: white;
     display: flex;
     flex-direction: column;
     align-items: center;
 }
 
+/* BALANCE */
 #balanceContainer {
     position: fixed;
     top: 10px;
@@ -29,6 +30,7 @@ body {
     z-index: 1000;
 }
 
+/* HEADER */
 .header {
     text-align: center;
     margin-top: 40px;
@@ -45,18 +47,21 @@ h1 {
     margin-top: 10px;
 }
 
+/* GAME AREA */
 .game-area {
     text-align: center;
     margin-top: 20px;
 }
 
+/* VIDEO */
 #videoContainer {
     width: 240px;
     height: 160px;
     border-radius: 15px;
     overflow: hidden;
     background: rgba(0,0,0,0.2);
-    display: none;
+    display: none; /* hidden by default */
+    margin-bottom: 15px;
 }
 
 video {
@@ -65,6 +70,7 @@ video {
     object-fit: cover;
 }
 
+/* TEXT */
 #multiplier {
     font-size: 36px;
     font-family: 'Orbitron';
@@ -76,16 +82,17 @@ video {
     margin-top: 5px;
 }
 
+/* STAKE & BUTTON BELOW VIDEO */
 .controls {
     display: flex;
     flex-direction: column;
     align-items: center;
-    margin-top: 15px;
+    margin-top: 10px;
     gap: 10px;
 }
 
 .controls input {
-    width: 180px;
+    width: 180px; /* reduced width */
     padding: 10px;
     border-radius: 12px;
     border: none;
@@ -93,7 +100,7 @@ video {
 }
 
 .controls button {
-    width: 150px;
+    width: 150px; /* reduced width */
     padding: 12px;
     border-radius: 15px;
     border: none;
@@ -104,11 +111,7 @@ video {
     cursor: pointer;
 }
 
-.controls button:disabled {
-    background: gray;
-    cursor: not-allowed;
-}
-
+/* TOAST */
 #toast {
     position: fixed;
     bottom: 30px;
@@ -136,7 +139,7 @@ video {
 
 <div class="game-area">
     <div id="videoContainer">
-        <video id="video" src="bottle.mp4" loop></video>
+        <video id="video" src="bottle.mp4" loop muted></video>
     </div>
 
     <div class="controls">
@@ -150,6 +153,7 @@ video {
 
 <div id="toast"></div>
 
+<!-- FIREBASE -->
 <script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-app.js"></script>
 <script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-auth.js"></script>
 <script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-database.js"></script>
@@ -179,12 +183,14 @@ const firebaseConfig = {
 firebase.initializeApp(firebaseConfig);
 const db = firebase.database();
 
+/* TOAST */
 function showToast(msg){
     toast.innerText = msg;
     toast.style.opacity = 1;
     setTimeout(()=> toast.style.opacity = 0, 2000);
 }
 
+/* AUTH */
 firebase.auth().onAuthStateChanged(user => {
   if (!user) { showToast("Login required"); return; }
 
@@ -196,6 +202,7 @@ firebase.auth().onAuthStateChanged(user => {
   });
 });
 
+/* PREDICT */
 function predict() {
     let stake = parseFloat(document.getElementById("stake").value);
 
@@ -209,16 +216,18 @@ function predict() {
         return;
     }
 
-    predictBtn.disabled = true; // disable button on click
+    // disable button to prevent multiple clicks
+    predictBtn.disabled = true;
 
     const userBalanceRef = db.ref("users/" + currentUserUid + "/balance");
 
+    // Deduct ONLY 1 coin per click
     userBalanceRef.transaction(current => {
         current = current || 0;
 
         if (current < 1) {
             showToast("Insufficient balance");
-            predictBtn.disabled = false; // re-enable if failed
+            predictBtn.disabled = false; // re-enable button
             return;
         }
 
@@ -241,14 +250,18 @@ function predict() {
             db.ref("transactions").push(tx);
 
             runGame(stake);
+        } else {
+            // Re-enable if not committed
+            predictBtn.disabled = false;
         }
     });
 }
 
+/* GAME */
 function runGame(stake) {
-    videoContainer.style.display = "block";
+    videoContainer.style.display = "block"; // show video when predict clicked
     video.currentTime = 0;
-    video.play();
+    video.play().catch(()=>{}); // ensure autoplay works
 
     let multiplier = 1.00;
     let chance = Math.random();
@@ -278,7 +291,8 @@ function runGame(stake) {
 
             video.pause();
 
-            predictBtn.disabled = false; // re-enable button after game
+            // Re-enable predict button after game ends
+            predictBtn.disabled = false;
         }
     }, 60);
 }
