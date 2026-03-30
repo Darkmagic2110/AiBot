@@ -87,6 +87,26 @@ button:hover {
     color: orange;
     margin-top: 12px;
 }
+
+/* Transaction UI */
+#historyBox {
+    margin-top: 25px;
+    text-align: left;
+}
+.history-item {
+    background: #111;
+    border-radius: 10px;
+    padding: 12px;
+    margin: 10px 0;
+    display: flex;
+    justify-content: space-between;
+    font-family: 'Poppins', sans-serif;
+}
+.history-left { text-align: left; }
+.history-right { text-align: right; }
+.history-title { color: lime; }
+.history-sub { font-size: 12px; color: #aaa; }
+.history-naira { color: cyan; font-size: 13px; }
 </style>
 </head>
 <body>
@@ -99,6 +119,12 @@ button:hover {
 
 <div id="depositStatus"></div>
 <div id="refreshNotice">🔄 Refresh the main page after successful payment</div>
+
+<div id="historyBox">
+    <h3>📜 Transactions</h3>
+    <div id="historyList"></div>
+</div>
+
 <div id="toast"></div>
 
 <!-- Firebase -->
@@ -108,9 +134,6 @@ button:hover {
 <script src="https://js.paystack.co/v1/inline.js"></script>
 
 <script>
-/* ---------------------------
-   Firebase initialization
-   --------------------------- */
 const firebaseConfig = {
     apiKey: "AIzaSyDvFDByPPo9zgwKLdPaREz1OVMQCXmPfrs",
     authDomain: "bets-d795d.firebaseapp.com",
@@ -123,16 +146,11 @@ const firebaseConfig = {
 firebase.initializeApp(firebaseConfig);
 const db = firebase.database();
 
-/* ---------------------------
-   DOM refs
-   --------------------------- */
 const depositStatus = document.getElementById("depositStatus");
 const submitBtn = document.getElementById("submitDepositBtn");
 const depositInput = document.getElementById("depositAmount");
+const historyList = document.getElementById("historyList");
 
-/* ---------------------------
-   Toast helper
-   --------------------------- */
 function toast(msg) {
     const t = document.getElementById("toast");
     t.innerHTML = msg;
@@ -140,30 +158,57 @@ function toast(msg) {
     setTimeout(() => { t.className = t.className.replace("show", ""); }, 3000);
 }
 
-/* ---------------------------
-   Auth check
-   --------------------------- */
 firebase.auth().onAuthStateChanged(user => {
     if (!user) {
         window.location.href = "login.html";
         return;
     }
+
+    // ✅ FIXED TRANSACTION LOADING
+    db.ref("users/" + user.uid + "/transactions").once("value").then(snap => {
+
+        historyList.innerHTML = "";
+
+        let arr = [];
+
+        snap.forEach(child => {
+            let tx = child.val();
+            tx.key = child.key;
+            arr.push(tx);
+        });
+
+        arr.sort((a,b)=> b.time - a.time);
+
+        arr.forEach(tx => {
+            if(tx.type === "deposit"){
+                const d = new Date(tx.time).toLocaleString();
+
+                historyList.innerHTML += `
+                <div class="history-item">
+                    <div class="history-left">
+                        <div class="history-title">+${tx.coins} Coins</div>
+                        <div class="history-sub">Ref: ${tx.ref}</div>
+                        <div class="history-sub">${d}</div>
+                    </div>
+                    <div class="history-right">
+                        <div>+${tx.coins}</div>
+                        <div class="history-naira">₦${tx.amount}</div>
+                    </div>
+                </div>`;
+            }
+        });
+
+    });
 });
 
-/* ---------------------------
-   Fetch Paystack public key from Firebase
-   --------------------------- */
 let paystackPublicKey = null;
 db.ref("settings/paystackKeys/public").once("value").then(snap => {
     paystackPublicKey = snap.val() || "";
 });
 
-/* ---------------------------
-   Validate deposit amount
-   --------------------------- */
 function validateAmount(amount) {
     const min = 1000;
-    const rate = 200; // ₦200 per coin
+    const rate = 200;
     if (amount < min) return { valid: false, msg: `Minimum deposit is ₦${min}` };
     if (amount % rate !== 0) {
         const lower = amount - (amount % rate);
@@ -173,9 +218,6 @@ function validateAmount(amount) {
     return { valid: true, coins: amount / rate };
 }
 
-/* ---------------------------
-   Submit deposit & Paystack
-   --------------------------- */
 submitBtn.onclick = () => {
     const user = firebase.auth().currentUser;
     if (!user) return toast("Please login again");
@@ -194,15 +236,32 @@ submitBtn.onclick = () => {
     const handler = PaystackPop.setup({
         key: paystackPublicKey,
         email: user.email,
-        amount: amountRaw * 100, // Paystack expects kobo
+        amount: amountRaw * 100,
         currency: "NGN",
         callback: function(response){
             toast("Payment successful! Ref: " + response.reference);
             depositStatus.innerHTML = `Payment complete! Coins added: ${coins}`;
 
-            // ✅ Update the same key as main page
-            const userBalanceRef = db.ref("users/" + user.uid + "/balance");
-            userBalanceRef.transaction(current => (current || 0) + coins);
+            const userRef = db.ref("users/" + user.uid);
+
+            // ✅ FIXED BALANCE UPDATE
+            userRef.child("balance").once("value").then(snap => {
+                let current = snap.val() || 0;
+                userRef.child("balance").set(current + coins);
+            });
+
+            // SAVE TRANSACTION
+            userRef.child("transactions").push({
+                type: "deposit",
+                coins: coins,
+                amount: amountRaw,
+                ref: response.reference,
+                time: Date.now()
+            });
+
+            setTimeout(()=>{
+                window.location.href = "maining.html";
+            },1500);
         },
         onClose: function(){
             toast("Payment cancelled");

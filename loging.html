@@ -47,6 +47,13 @@
         cursor: pointer;
         margin-top: 10px;
     }
+
+    /* NEW: Disabled style */
+    button:disabled {
+        opacity: 0.6;
+        cursor: not-allowed;
+    }
+
     a {
         color: cyan;
     }
@@ -61,7 +68,8 @@
 <input type="email" id="email" placeholder="𝗘𝗻𝘁𝗲𝗿 𝗘𝗺𝗮𝗶𝗹" required>
 <input type="password" id="password" placeholder="𝗘𝗻𝘁𝗲𝗿 𝗣𝗮𝘀𝘀𝘄𝗼𝗿𝗱" required>
 
-<button onclick="login()">𝐋𝐨𝐠𝐢𝐧</button>
+<!-- ADDED ID -->
+<button id="loginBtn" onclick="login()">𝐋𝐨𝐠𝐢𝐧</button>
 
 <p>𝗗𝗼𝗻𝘁 𝗵𝗮𝘃𝗲 𝗮𝗻 𝗮𝗰𝗰𝗼𝘂𝗻𝘁? <a href="index.html">𝗥𝗲𝗴𝗶𝘀𝘁𝗲𝗿 𝗡𝗼𝘄</a></p>
 
@@ -84,14 +92,23 @@ firebase.initializeApp(firebaseConfig);
 function login() {
     const email = document.getElementById("email").value;
     const pass = document.getElementById("password").value;
+    const btn = document.getElementById("loginBtn");
+
+    // START LOADING
+    btn.disabled = true;
+    btn.innerText = "Logging in...";
 
     firebase.auth().signInWithEmailAndPassword(email, pass)
     .then(() => {
         alert("𝐋𝐨𝐠𝐢𝐧 𝐒𝐮𝐜𝐜𝐞𝐬𝐬𝐟𝐮𝐥");
-        window.location.href = "maning.html"; // ← Change later to your main bot page
+        window.location.href = "maining.html";
     })
     .catch(error => {
         alert(error.message);
+
+        // RESET BUTTON
+        btn.disabled = false;
+        btn.innerText = "𝐋𝐨𝐠𝐢𝐧";
     });
 }
 </script>
