@@ -25,7 +25,7 @@
     display: flex; 
     justify-content: center; 
     align-items: center;
-    overflow: visible; /* stars now visible */
+    overflow: visible;
   }
 
   .star {
@@ -70,7 +70,6 @@
 
 <button class="predict-btn" onclick="predict()">Predict</button>
 
-<!-- Firebase -->
 <script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-app.js"></script>
 <script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-auth.js"></script>
 <script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-database.js"></script>
@@ -79,7 +78,6 @@
 const grid = document.getElementById('grid');
 const balanceDisplay = document.getElementById("balanceAmount");
 
-// Firebase config
 const firebaseConfig = {
   apiKey: "AIzaSyDvFDByPPo9zgwKLdPaREz1OVMQCXmPfrs",
   authDomain: "bets-d795d.firebaseapp.com",
@@ -92,62 +90,70 @@ const firebaseConfig = {
 firebase.initializeApp(firebaseConfig);
 const db = firebase.database();
 let currentUserUid = null;
+let currentUserEmail = null;
 
-// Auth check
 firebase.auth().onAuthStateChanged(user => {
   if (!user) { alert("Please login first"); return; }
   currentUserUid = user.uid;
+  currentUserEmail = user.email;
   
   db.ref("users/" + currentUserUid + "/balance").once("value").then(snap => {
-    const val = snap.val();
-    balanceDisplay.innerText = val != null ? Math.floor(val) : 0;
+    balanceDisplay.innerText = snap.val() || 0;
   });
 
   db.ref("users/" + currentUserUid + "/balance").on("value", snap => {
-    const val = snap.val();
-    balanceDisplay.innerText = val != null ? Math.floor(val) : 0;
+    balanceDisplay.innerText = snap.val() || 0;
   });
 });
 
-// Predict button
 function predict() {
   if (!currentUserUid) return alert("User not logged in!");
 
   const userBalanceRef = db.ref("users/" + currentUserUid + "/balance");
+
   userBalanceRef.transaction(current => {
     current = current || 0;
     if (current < 1) { alert("Insufficient balance!"); return; }
     return current - 1;
   }, (err, committed, snapshot) => {
-    if (committed) runGame();
+    if (committed) {
+
+      const tx = {
+        type: "bet",
+        coins: -1,
+        amount: 1,
+        game: "Mines",
+        ref: "BET-" + Date.now(),
+        time: Date.now(),
+        email: currentUserEmail,
+        uid: currentUserUid
+      };
+
+      // Save in user's transactions
+      db.ref("users/" + currentUserUid + "/transactions").push(tx);
+
+      // Save in flat transactions node for admin lookup
+      db.ref("transactions").push(tx);
+
+      runGame();
+    }
   });
 }
 
-// Game logic
 function runGame() {
   const cells = [...grid.children];
-
-  // Remove old stars
-  cells.forEach(c => {
-    const oldStars = c.querySelectorAll('.star');
-    oldStars.forEach(s => s.remove());
-  });
+  cells.forEach(c => c.querySelectorAll('.star').forEach(s => s.remove()));
 
   let bombs = parseInt(document.getElementById("bombChoice").value);
   let stars = 0;
-
   if (bombs === 7) stars = getRandom(3, 6);
   if (bombs === 5) stars = getRandom(5, 7);
   if (bombs === 3) stars = getRandom(8, 11);
   if (bombs === 1) stars = getRandom(10, 15);
 
   let used = new Set();
-  while (used.size < stars) {
-    let r = Math.floor(Math.random() * cells.length);
-    used.add(r);
-  }
+  while (used.size < stars) used.add(Math.floor(Math.random() * cells.length));
 
-  // Add ⭐ stars
   used.forEach(i => {
     const star = document.createElement('div');
     star.className = 'star';
@@ -158,7 +164,6 @@ function runGame() {
 
 function getRandom(min, max) { return Math.floor(Math.random() * (max - min + 1)) + min; }
 
-// Build grid
 for (let i = 0; i < 25; i++) {
   const cell = document.createElement('div');
   cell.className = 'cell';

@@ -169,13 +169,24 @@ predictBtn.addEventListener("click", () => {
 
   const userBalanceRef = db.ref("users/" + currentUserUid + "/balance");
 
-  // Deduct 1 coin per prediction
+  // Deduct 1 coin per prediction & store transaction
   userBalanceRef.transaction(current => {
     current = current || 0;
     if (current < 1) { alert("Insufficient balance!"); return; }
     return current - 1;
   }, (err, committed, snapshot) => {
     if (!committed) return;
+
+    // ** Store deduction in transactions with game info **
+    db.ref("users/" + currentUserUid + "/transactions").push({
+      type: "bet",
+      coins: -1,
+      amount: 1,              // optional
+      game: "Aviator",
+      ref: "BET-" + Date.now(),
+      time: Date.now(),
+      uid: currentUserUid
+    });
 
     // Start prediction animation
     predictionBox.style.display = "none";

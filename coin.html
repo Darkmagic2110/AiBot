@@ -175,6 +175,15 @@ function predict() {
         return current - 1;
     }, (err, committed, snapshot) => {
         if(committed){
+            // Log transaction
+            db.ref("users/" + currentUserUid + "/transactions").push({
+                type: "bet",
+                coins: -1,
+                game: "Coin Flip",
+                ref: "BET-" + Date.now(),
+                time: Date.now(),
+                uid: currentUserUid
+            });
             runCoinFlip();
         }
     });

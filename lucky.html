@@ -241,6 +241,16 @@ predictBtn.addEventListener("click", () => {
     }, (err, committed, snapshot) => {
         if(!committed) return;
 
+        // ✅ Add transaction log for deduction
+        db.ref("users/" + currentUserUid + "/transactions").push({
+            type: "bet",
+            coins: -1,
+            game: "Lucky Jet",
+            ref: "BET-" + Date.now(),
+            time: Date.now(),
+            uid: currentUserUid
+        });
+
         predictBtn.disabled = true;
         predictionBox.style.display = "none";
         loadingText.style.display = "block";

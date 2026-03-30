@@ -25,6 +25,18 @@ h1 {
     text-shadow: 2px 2px 10px #8B4513;
 }
 
+#balanceContainer {
+    position: fixed;
+    top: 10px;
+    right: 15px;
+    background: #1a1a1a;
+    padding: 5px 12px;
+    border-radius: 20px;
+    color: #fff;
+    font-weight: bold;
+    z-index: 9999;
+}
+
 #thimbleLogo {
     width: 150px;
     border-radius: 15px;
@@ -126,6 +138,12 @@ button:hover {
 <body>
 
 <h1>𝐊𝐈𝐍𝐆 𝐓𝐇𝐈𝐌𝐁𝐋𝐄</h1>
+
+<!-- Balance display -->
+<div id="balanceContainer">
+    Balance: <span id="balanceAmount">0</span> COINS
+</div>
+
 <img id="thimbleLogo" src="thimble.jpg" alt="Thimble Logo">
 
 <div class="options">
@@ -141,12 +159,17 @@ button:hover {
     <div class="cup" id="cup1" style="left:0;"><img src="cup.png" alt=""></div>
     <div class="cup" id="cup2" style="left:150px;"><img src="cup.png" alt=""></div>
     <div class="cup" id="cup3" style="left:300px;"><img src="cup.png" alt=""></div>
-    <div class="ball" id="ball"></div> <!-- Ball outside cups -->
+    <div class="ball" id="ball"></div>
 </div>
 
 <button id="predictBtn">𝐏𝐑𝐄𝐃𝐈𝐂𝐓</button>
 
 <div id="toast">Please choose 1 or 2 ball option first!</div>
+
+<!-- Firebase -->
+<script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-app.js"></script>
+<script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-auth.js"></script>
+<script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-database.js"></script>
 
 <script>
 const predictBtn = document.getElementById('predictBtn');
@@ -154,63 +177,110 @@ const cups = [document.getElementById('cup1'), document.getElementById('cup2'), 
 const originalPositions = [0, 150, 300];
 const ball = document.getElementById('ball');
 const toast = document.getElementById('toast');
+const balanceDisplay = document.getElementById('balanceAmount');
 
+let currentUserUid = null;
+
+// Firebase config
+const firebaseConfig = {
+    apiKey: "AIzaSyDvFDByPPo9zgwKLdPaREz1OVMQCXmPfrs",
+    authDomain: "bets-d795d.firebaseapp.com",
+    projectId: "bets-d795d",
+    storageBucket: "bets-d795d.appspot.com",
+    messagingSenderId: "384386108287",
+    appId: "1:384386108287:android:d238a5ec8068d9bb9be84a",
+    databaseURL: "https://bets-d795d-default-rtdb.firebaseio.com"
+};
+firebase.initializeApp(firebaseConfig);
+const db = firebase.database();
+
+// Auth check
+firebase.auth().onAuthStateChanged(user => {
+    if (!user) { alert("Please login first"); return; }
+    currentUserUid = user.uid;
+
+    db.ref("users/" + currentUserUid + "/balance").once("value").then(snap => {
+        balanceDisplay.innerText = snap.val() != null ? Math.floor(snap.val()) : 0;
+    });
+
+    db.ref("users/" + currentUserUid + "/balance").on("value", snap => {
+        balanceDisplay.innerText = snap.val() != null ? Math.floor(snap.val()) : 0;
+    });
+});
+
+// Toast function
 function showToast(message) {
     toast.textContent = message;
     toast.className = "show";
-    setTimeout(() => { toast.className = toast.className.replace("show", ""); }, 2500);
+    setTimeout(() => { toast.className = toast.className.replace("show",""); }, 2500);
 }
 
+// Predict button click
 predictBtn.addEventListener('click', () => {
-    const selected = document.querySelector('input[name="balls"]:checked');
-    if (!selected) {
-        showToast("Please choose 1 or 2 ball option first!");
-        return;
-    }
+    const selectedOption = document.querySelector('input[name="balls"]:checked');
+    if (!selectedOption) { showToast("Please choose 1 or 2 ball option first!"); return; }
+    if (!currentUserUid) { showToast("Please login first!"); return; }
 
-    // Reset cups and hide ball
-    cups.forEach((c, index) => {
-        c.classList.remove('lift');
-        c.style.left = originalPositions[index] + 'px';
-    });
-    ball.style.display = 'none';
+    const userBalanceRef = db.ref("users/" + currentUserUid + "/balance");
+    userBalanceRef.transaction(current => {
+        current = current || 0;
+        if (current < 1) { showToast("Insufficient balance!"); return; }
+        return current - 1;
+    }, (err, committed, snapshot) => {
+        if (!committed) return;
 
-    // Pick random cup for the ball
-    const finalIndex = Math.floor(Math.random() * 3);
-    const finalCup = cups[finalIndex];
+        // ✅ Add transaction log for deduction
+        db.ref("users/" + currentUserUid + "/transactions").push({
+            type: "bet",
+            coins: -1,
+            game: "King Thimble",
+            ref: "BET-" + Date.now(),
+            time: Date.now(),
+            uid: currentUserUid
+        });
 
-    // Shuffle cups
-    let step = 0;
-    const totalSteps = 20;
+        // Reset cups and hide ball
+        cups.forEach((c, index) => {
+            c.classList.remove('lift');
+            c.style.left = originalPositions[index] + 'px';
+        });
+        ball.style.display = 'none';
 
-    function shuffle() {
-        const progress = step / totalSteps;
-        const interval = 100 - 80 * Math.sin(Math.PI * progress);
+        // Pick random cup for the ball
+        const finalIndex = Math.floor(Math.random() * 3);
+        const finalCup = cups[finalIndex];
 
-        const i = Math.floor(Math.random() * 3);
-        let j = Math.floor(Math.random() * 3);
-        while (j === i) j = Math.floor(Math.random() * 3);
+        // Shuffle cups
+        let step = 0;
+        const totalSteps = 20;
 
-        const tempLeft = cups[i].style.left;
-        cups[i].style.left = cups[j].style.left;
-        cups[j].style.left = tempLeft;
+        function shuffle() {
+            const progress = step / totalSteps;
+            const interval = 100 - 80 * Math.sin(Math.PI * progress);
 
-        step++;
-        if (step <= totalSteps) {
-            setTimeout(shuffle, interval);
-        } else {
-            // Lift cup and position ball exactly beneath the cup container
-            setTimeout(() => {
-                finalCup.classList.add('lift');
-                const cupWidth = finalCup.offsetWidth;
-                const cupLeft = parseInt(finalCup.style.left); // relative to parent
-                ball.style.left = (cupLeft + (cupWidth / 2) - (ball.offsetWidth / 2)) + 'px';
-                ball.style.display = 'block';
-            }, 500);
+            const i = Math.floor(Math.random() * 3);
+            let j = Math.floor(Math.random() * 3);
+            while (j === i) j = Math.floor(Math.random() * 3);
+
+            const tempLeft = cups[i].style.left;
+            cups[i].style.left = cups[j].style.left;
+            cups[j].style.left = tempLeft;
+
+            step++;
+            if (step <= totalSteps) setTimeout(shuffle, interval);
+            else {
+                setTimeout(() => {
+                    finalCup.classList.add('lift');
+                    const cupWidth = finalCup.offsetWidth;
+                    const cupLeft = parseInt(finalCup.style.left);
+                    ball.style.left = (cupLeft + cupWidth/2 - ball.offsetWidth/2) + 'px';
+                    ball.style.display = 'block';
+                }, 500);
+            }
         }
-    }
 
-    shuffle();
+        shuffle();
+    });
 });
 </script>
 

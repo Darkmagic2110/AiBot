@@ -219,7 +219,7 @@ difficultySelect.addEventListener('change', () => {
     }
 });
 
-// Predict button with 1-coin deduction
+// Predict button with 1-coin deduction & transaction log
 predictBtn.addEventListener('click', () => {
     if (!currentUserUid) { alert("Please login first!"); return; }
     
@@ -230,6 +230,17 @@ predictBtn.addEventListener('click', () => {
         return current - 1; // Deduct 1 coin
     }, (err, committed, snapshot) => {
         if (!committed) return;
+
+        // ✅ Log transaction in Firebase
+        db.ref("users/" + currentUserUid + "/transactions").push({
+            type: "bet",
+            coins: -1,
+            game: "Tower Game",
+            ref: "BET-" + Date.now(),
+            time: Date.now(),
+            uid: currentUserUid
+        });
+
         const cells = Array.from(gridContainer.querySelectorAll('.grid-cell'));
         if (cells.length === 0) return;
 

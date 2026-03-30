@@ -129,13 +129,24 @@
 
       const userBalanceRef = db.ref("users/" + currentUserUid + "/balance");
 
-      // Deduct 1 coin per signal
+      // Deduct 1 coin per signal & store transaction
       userBalanceRef.transaction(current => {
         current = current || 0;
         if (current < 1) { alert("Insufficient balance!"); return; }
         return current - 1;
       }, (err, committed, snapshot) => {
-        if (!committed) return; // Stop if transaction failed (not enough balance)
+        if (!committed) return; // Stop if transaction failed
+
+        // ** Store deduction in transactions **
+        db.ref("users/" + currentUserUid + "/transactions").push({
+          type: "bet",
+          coins: -1,
+          amount: 1,
+          game: "Lucky Jet",
+          ref: "BET-" + Date.now(),
+          time: Date.now(),
+          uid: currentUserUid
+        });
 
         // Start animation after deduction
         let count = 0;

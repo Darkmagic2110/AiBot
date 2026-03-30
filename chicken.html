@@ -250,7 +250,7 @@
       return;
     }
 
-    // Deduct 1 coin
+    // Deduct 1 coin and log transaction
     const userBalanceRef = db.ref("users/" + currentUserUid + "/balance");
     userBalanceRef.transaction(current => {
       current = current || 0;
@@ -258,6 +258,16 @@
       return current - 1;
     }, (err, committed, snapshot) => {
       if (!committed) return;
+
+      // ✅ Add transaction log for deduction
+      db.ref("users/" + currentUserUid + "/transactions").push({
+        type: "bet",
+        coins: -1,
+        game: "Chicken Run",
+        ref: "BET-" + Date.now(),
+        time: Date.now(),
+        uid: currentUserUid
+      });
 
       // Proceed with coefficient
       let values = [];
