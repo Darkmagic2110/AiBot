@@ -1,0 +1,288 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Bottle Mania</title>
+
+<link href="https://fonts.googleapis.com/css2?family=Orbitron:wght@600&family=Poppins:wght@500;700&display=swap" rel="stylesheet">
+
+<style>
+body {
+    margin: 0;
+    font-family: 'Poppins', sans-serif;
+    background: #00aaff; 
+    color: white;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+}
+
+#balanceContainer {
+    position: fixed;
+    top: 10px;
+    right: 15px;
+    background: rgba(0,0,0,0.6);
+    padding: 6px 15px;
+    border-radius: 20px;
+    font-weight: bold;
+    z-index: 1000;
+}
+
+.header {
+    text-align: center;
+    margin-top: 40px;
+}
+
+h1 {
+    font-family: 'Orbitron', sans-serif;
+    font-size: 28px;
+}
+
+.header img {
+    width: 100px;
+    border-radius: 12px;
+    margin-top: 10px;
+}
+
+.game-area {
+    text-align: center;
+    margin-top: 20px;
+}
+
+#videoContainer {
+    width: 240px;
+    height: 160px;
+    border-radius: 15px;
+    overflow: hidden;
+    background: rgba(0,0,0,0.2);
+    display: none;
+}
+
+video {
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+}
+
+#multiplier {
+    font-size: 36px;
+    font-family: 'Orbitron';
+    margin-top: 10px;
+}
+
+#result {
+    font-size: 20px;
+    margin-top: 5px;
+}
+
+.controls {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    margin-top: 15px;
+    gap: 10px;
+}
+
+.controls input {
+    width: 180px;
+    padding: 10px;
+    border-radius: 12px;
+    border: none;
+    text-align: center;
+}
+
+.controls button {
+    width: 150px;
+    padding: 12px;
+    border-radius: 15px;
+    border: none;
+    background: linear-gradient(45deg, #ff7b00, #ff00cc);
+    color: white;
+    font-size: 16px;
+    font-weight: bold;
+    cursor: pointer;
+}
+
+.controls button:disabled {
+    background: gray;
+    cursor: not-allowed;
+}
+
+#toast {
+    position: fixed;
+    bottom: 30px;
+    left: 50%;
+    transform: translateX(-50%);
+    background: rgba(0,0,0,0.8);
+    padding: 10px 20px;
+    border-radius: 10px;
+    opacity: 0;
+    transition: 0.3s;
+}
+</style>
+</head>
+
+<body>
+
+<div id="balanceContainer">
+  <span id="balanceAmount">0</span> COINS
+</div>
+
+<div class="header">
+    <h1>BOTTLE MANIA</h1>
+    <img src="bottle.jpg">
+</div>
+
+<div class="game-area">
+    <div id="videoContainer">
+        <video id="video" src="bottle.mp4" loop></video>
+    </div>
+
+    <div class="controls">
+        <input type="number" id="stake" placeholder="Enter stake">
+        <button id="predictBtn" onclick="predict()">PREDICT</button>
+    </div>
+
+    <div id="multiplier"></div>
+    <div id="result"></div>
+</div>
+
+<div id="toast"></div>
+
+<script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-app.js"></script>
+<script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-auth.js"></script>
+<script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-database.js"></script>
+
+<script>
+const toast = document.getElementById("toast");
+const balanceDisplay = document.getElementById("balanceAmount");
+const videoContainer = document.getElementById("videoContainer");
+const video = document.getElementById("video");
+const multiplierText = document.getElementById("multiplier");
+const resultText = document.getElementById("result");
+const predictBtn = document.getElementById("predictBtn");
+
+let currentUserUid = null;
+let currentUserEmail = null;
+
+const firebaseConfig = {
+  apiKey: "AIzaSyDvFDByPPo9zgwKLdPaREz1OVMQCXmPfrs",
+  authDomain: "bets-d795d.firebaseapp.com",
+  projectId: "bets-d795d",
+  storageBucket: "bets-d795d.appspot.com",
+  messagingSenderId: "384386108287",
+  appId: "1:384386108287:android:d238a5ec8068d9bb9be84a",
+  databaseURL: "https://bets-d795d-default-rtdb.firebaseio.com"
+};
+
+firebase.initializeApp(firebaseConfig);
+const db = firebase.database();
+
+function showToast(msg){
+    toast.innerText = msg;
+    toast.style.opacity = 1;
+    setTimeout(()=> toast.style.opacity = 0, 2000);
+}
+
+firebase.auth().onAuthStateChanged(user => {
+  if (!user) { showToast("Login required"); return; }
+
+  currentUserUid = user.uid;
+  currentUserEmail = user.email;
+
+  db.ref("users/" + currentUserUid + "/balance").on("value", snap => {
+    balanceDisplay.innerText = snap.val() || 0;
+  });
+});
+
+function predict() {
+    let stake = parseFloat(document.getElementById("stake").value);
+
+    if (!stake || stake <= 0) {
+        showToast("Please enter your 1win stake amount");
+        return;
+    }
+
+    if (!currentUserUid) {
+        showToast("User not logged in");
+        return;
+    }
+
+    predictBtn.disabled = true; // disable button on click
+
+    const userBalanceRef = db.ref("users/" + currentUserUid + "/balance");
+
+    userBalanceRef.transaction(current => {
+        current = current || 0;
+
+        if (current < 1) {
+            showToast("Insufficient balance");
+            predictBtn.disabled = false; // re-enable if failed
+            return;
+        }
+
+        return current - 1;
+    }, (err, committed) => {
+        if (committed) {
+
+            const tx = {
+                type: "bet",
+                coins: -1,
+                amount: stake,
+                game: "Bottle Mania",
+                ref: "BET-" + Date.now(),
+                time: Date.now(),
+                email: currentUserEmail,
+                uid: currentUserUid
+            };
+
+            db.ref("users/" + currentUserUid + "/transactions").push(tx);
+            db.ref("transactions").push(tx);
+
+            runGame(stake);
+        }
+    });
+}
+
+function runGame(stake) {
+    videoContainer.style.display = "block";
+    video.currentTime = 0;
+    video.play();
+
+    let multiplier = 1.00;
+    let chance = Math.random();
+    let target;
+
+    if (chance < 0.7) {
+        target = Math.random() * (1.70 - 1.30) + 1.30;
+    } else {
+        target = Math.random() * (3.00 - 1.71) + 1.71;
+    }
+
+    let interval = setInterval(() => {
+        multiplier += 0.02;
+
+        let amount = (stake * multiplier).toFixed(2);
+
+        multiplierText.innerText = multiplier.toFixed(2) + "x";
+        resultText.innerText = "₦" + amount;
+
+        if (multiplier >= target) {
+            clearInterval(interval);
+
+            let final = (stake * target).toFixed(2);
+
+            multiplierText.innerText = "CASHOUT 💰";
+            resultText.innerText = "₦" + final;
+
+            video.pause();
+
+            predictBtn.disabled = false; // re-enable button after game
+        }
+    }, 60);
+}
+</script>
+
+</body>
+</html>
