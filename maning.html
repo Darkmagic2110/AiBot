@@ -66,6 +66,7 @@
     <div class="game-button" id="luckyBtn"><img src="luckys.jpg"><div class="label">Lucky Jet Pro</div></div>
     <div class="game-button" id="rocketBtn"><img src="rocket.jpg"><div class="label">Rocket Queen</div></div>
     <div class="game-button" id="towerBtn"><img src="tower.jpg"><div class="label">Tower</div></div>
+    <div class="game-button" id="bottleBtn"><img src="bottle.jpg"><div class="label">Bottle</div></div>
     <div class="game-button" id="chickenBtn"><img src="chick.jpg"><div class="label">Chicken Run</div></div>
 </div>
 
@@ -120,8 +121,8 @@ function handleGameClick(page){
 
 const gamePages = {
     luckyJetBtn:"lucky.html", aviatorBtn:"aviator.html", diceBtn:"",
-    luckyBtn:"luckys.html", coinBtn:"coin.html", minesBtn:"mines.html",
-    towerBtn:"tower.html", chickenBtn:"chicken.html", thimbleBtn:"thimble.html", rocketBtn:null
+    luckyBtn:"luckys.html", coinBtn:"coin.html", minesBtn:"mines.html", bottleBtn:"bottle.html",
+    towerBtn:"tower.html", chickenBtn:"chicken.html",  thimbleBtn:"thimble.html", rocketBtn:null
 };
 Object.keys(gamePages).forEach(id=>{
     const page = gamePages[id];
