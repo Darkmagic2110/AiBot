@@ -11,7 +11,7 @@
 body {
     margin: 0;
     font-family: 'Poppins', sans-serif;
-    background: #00aaff; /* consistent background */
+    background: #00aaff; /* single consistent color */
     color: white;
     display: flex;
     flex-direction: column;
@@ -33,7 +33,7 @@ body {
 /* HEADER */
 .header {
     text-align: center;
-    margin-top: 40px;
+    margin-top: 30px;
 }
 
 h1 {
@@ -53,61 +53,80 @@ h1 {
     margin-top: 20px;
 }
 
-/* VIDEO */
-#videoContainer {
-    width: 240px;
-    height: 160px;
-    border-radius: 15px;
-    overflow: hidden;
-    background: rgba(0,0,0,0.2);
-    display: none; /* hidden until predict clicked */
-    margin-bottom: 15px;
-}
-
-video {
-    width: 100%;
-    height: 100%;
-    object-fit: cover;
-}
-
-/* TEXT */
+/* MULTIPLIER & CASHOUT TEXT */
 #multiplier {
-    font-size: 36px;
+    font-size: 40px;
     font-family: 'Orbitron';
-    margin-top: 10px;
+    margin-bottom: 15px;
+    transition: transform 0.2s;
 }
 
 #result {
-    font-size: 20px;
-    margin-top: 5px;
+    font-size: 22px;
+    margin-bottom: 15px;
 }
 
-/* STAKE & BUTTON BELOW VIDEO */
+/* BOTTLE IMAGE */
+#imageContainer {
+    width: 220px;
+    height: 220px;
+    border-radius: 50%;
+    overflow: hidden;
+    background: rgba(255,255,255,0.1);
+    display: none;
+    margin-bottom: 20px;
+    box-shadow: 0 0 20px #ff00cc, 0 0 40px #ff7b00;
+    animation: glow 2s infinite alternate;
+}
+
+#imageContainer img {
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+    border-radius: 50%;
+}
+
+/* Glow animation */
+@keyframes glow {
+    0% { box-shadow: 0 0 10px #ff00cc, 0 0 20px #ff7b00; }
+    50% { box-shadow: 0 0 25px #ff00cc, 0 0 50px #ff7b00; }
+    100% { box-shadow: 0 0 10px #ff00cc, 0 0 20px #ff7b00; }
+}
+
+/* STAKE & PREDICT BUTTON */
 .controls {
     display: flex;
     flex-direction: column;
     align-items: center;
-    gap: 10px;
+    gap: 12px;
+    margin-bottom: 30px;
 }
 
 .controls input {
-    width: 150px; /* reduced width */
+    width: 160px;
     padding: 10px;
     border-radius: 12px;
     border: none;
     text-align: center;
+    font-size: 16px;
 }
 
 .controls button {
-    width: 120px; /* reduced width */
+    width: 140px;
     padding: 12px;
     border-radius: 15px;
     border: none;
-    background: linear-gradient(45deg, #ff7b00, #ff00cc);
+    background: #007BFF; /* solid blue button */
     color: white;
     font-size: 16px;
     font-weight: bold;
     cursor: pointer;
+    transition: transform 0.2s, box-shadow 0.2s;
+}
+
+.controls button:hover {
+    transform: scale(1.05);
+    box-shadow: 0 0 15px #0056b3, 0 0 25px #007BFF;
 }
 
 /* TOAST */
@@ -137,17 +156,18 @@ video {
 </div>
 
 <div class="game-area">
-    <div id="videoContainer">
-        <video id="video" src="bottle.mp4" muted playsinline loop></video>
+
+    <div id="multiplier"></div>
+    <div id="result"></div>
+
+    <div id="imageContainer">
+        <img src="bottle.jpg" alt="Bottle Image">
     </div>
 
     <div class="controls">
         <input type="number" id="stake" placeholder="Enter stake">
-        <button id="predictBtn">PREDICT</button>
+        <button id="predictBtn" onclick="predict()">PREDICT</button>
     </div>
-
-    <div id="multiplier"></div>
-    <div id="result"></div>
 </div>
 
 <div id="toast"></div>
@@ -160,8 +180,7 @@ video {
 <script>
 const toast = document.getElementById("toast");
 const balanceDisplay = document.getElementById("balanceAmount");
-const videoContainer = document.getElementById("videoContainer");
-const video = document.getElementById("video");
+const imageContainer = document.getElementById("imageContainer");
 const multiplierText = document.getElementById("multiplier");
 const resultText = document.getElementById("result");
 const predictBtn = document.getElementById("predictBtn");
@@ -178,19 +197,19 @@ const firebaseConfig = {
   appId: "1:384386108287:android:d238a5ec8068d9bb9be84a",
   databaseURL: "https://bets-d795d-default-rtdb.firebaseio.com"
 };
+
 firebase.initializeApp(firebaseConfig);
 const db = firebase.database();
 
-/* TOAST */
 function showToast(msg){
     toast.innerText = msg;
     toast.style.opacity = 1;
     setTimeout(()=> toast.style.opacity = 0, 2000);
 }
 
-/* AUTH */
 firebase.auth().onAuthStateChanged(user => {
   if (!user) { showToast("Login required"); return; }
+
   currentUserUid = user.uid;
   currentUserEmail = user.email;
 
@@ -199,8 +218,7 @@ firebase.auth().onAuthStateChanged(user => {
   });
 });
 
-/* PREDICT */
-predictBtn.addEventListener("click", () => {
+function predict() {
     let stake = parseFloat(document.getElementById("stake").value);
 
     if (!stake || stake <= 0) {
@@ -213,37 +231,24 @@ predictBtn.addEventListener("click", () => {
         return;
     }
 
-    // Disable predict button immediately to prevent multi-click
     predictBtn.disabled = true;
-
-    // Show video immediately (mobile browsers require video to be visible before play)
-    videoContainer.style.display = "block";
-    video.currentTime = 0;
-    video.muted = true;
-    video.playsInline = true;
-
-    // Attempt to play video
-    const playPromise = video.play();
-    if (playPromise !== undefined) {
-        playPromise.catch(err => {
-            console.log("Video autoplay failed:", err);
-            showToast("Tap video to start playback");
-        });
-    }
+    imageContainer.style.display = "block"; // show bottle image
 
     const userBalanceRef = db.ref("users/" + currentUserUid + "/balance");
 
-    // Deduct ONLY 1 coin
     userBalanceRef.transaction(current => {
         current = current || 0;
+
         if (current < 1) {
             showToast("Insufficient balance");
             predictBtn.disabled = false;
             return;
         }
+
         return current - 1;
     }, (err, committed) => {
         if (committed) {
+
             const tx = {
                 type: "bet",
                 coins: -1,
@@ -260,14 +265,13 @@ predictBtn.addEventListener("click", () => {
 
             runGame(stake);
         } else {
-            predictBtn.disabled = false; // re-enable if transaction fails
+            predictBtn.disabled = false;
         }
     });
-});
+}
 
-/* GAME */
 function runGame(stake) {
-    let multiplier = 1.00;
+    let multiplier = 1.0;
     let chance = Math.random();
     let target = chance < 0.7 ? Math.random() * (1.70 - 1.30) + 1.30 : Math.random() * (3.00 - 1.71) + 1.71;
 
@@ -276,7 +280,10 @@ function runGame(stake) {
         let amount = (stake * multiplier).toFixed(2);
 
         multiplierText.innerText = multiplier.toFixed(2) + "x";
+        multiplierText.style.transform = "scale(1.2)";
         resultText.innerText = "₦" + amount;
+
+        setTimeout(()=> multiplierText.style.transform = "scale(1)", 100);
 
         if (multiplier >= target) {
             clearInterval(interval);
@@ -284,9 +291,7 @@ function runGame(stake) {
 
             multiplierText.innerText = "CASHOUT 💰";
             resultText.innerText = "₦" + final;
-
-            video.pause();
-            predictBtn.disabled = false; // re-enable after game ends
+            predictBtn.disabled = false;
         }
     }, 60);
 }
