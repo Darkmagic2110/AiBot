@@ -129,10 +129,7 @@ function predict() {
         uid: currentUserUid
       };
 
-      // Save in user's transactions
       db.ref("users/" + currentUserUid + "/transactions").push(tx);
-
-      // Save in flat transactions node for admin lookup
       db.ref("transactions").push(tx);
 
       runGame();
@@ -144,12 +141,14 @@ function runGame() {
   const cells = [...grid.children];
   cells.forEach(c => c.querySelectorAll('.star').forEach(s => s.remove()));
 
-  let bombs = parseInt(document.getElementById("bombChoice").value);
+  const bombs = parseInt(document.getElementById("bombChoice").value);
   let stars = 0;
-  if (bombs === 7) stars = getRandom(3, 6);
-  if (bombs === 5) stars = getRandom(5, 7);
-  if (bombs === 3) stars = getRandom(8, 11);
-  if (bombs === 1) stars = getRandom(10, 15);
+
+  // Updated random ranges
+  if (bombs === 1) stars = getRandom(5, 10);
+  else if (bombs === 3) stars = getRandom(5, 7);
+  else if (bombs === 5) stars = getRandom(3, 5);
+  else if (bombs === 7) stars = getRandom(2, 4);
 
   let used = new Set();
   while (used.size < stars) used.add(Math.floor(Math.random() * cells.length));

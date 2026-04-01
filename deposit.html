@@ -96,14 +96,8 @@ button:hover {
     animation: blinkGlow 1s infinite alternate;
 }
 @keyframes blinkGlow {
-    0% {
-        opacity: 1;
-        text-shadow: 0 0 5px yellow, 0 0 10px orange;
-    }
-    100% {
-        opacity: 0.4;
-        text-shadow: 0 0 20px yellow, 0 0 30px red;
-    }
+    0% { opacity: 1; text-shadow: 0 0 5px yellow, 0 0 10px orange; }
+    100% { opacity: 0.4; text-shadow: 0 0 20px yellow, 0 0 30px red; }
 }
 /* Transaction UI */
 #historyBox {
@@ -131,7 +125,6 @@ button:hover {
 <h1>Deposit Coins</h1>
 
 <input type="number" id="depositAmount" placeholder="Enter deposit amount (₦)" min="1000" />
-<input type="number" id="accountNumber" placeholder="Enter your account number" />
 <input type="text" id="accountName" placeholder="Enter your account name" />
 
 <div id="coinRate">₦200 = 1 coin</div>
@@ -171,8 +164,16 @@ const db = firebase.database();
 const depositStatus = document.getElementById("depositStatus");
 const submitBtn = document.getElementById("submitDepositBtn");
 const depositInput = document.getElementById("depositAmount");
+const accountNameInput = document.getElementById("accountName");
 const historyList = document.getElementById("historyList");
 const paymentInstruction = document.getElementById("paymentInstruction");
+
+let isBlocked = false;
+
+// Check admin block status
+db.ref("admin/blockDeposit").on("value", snap => {
+    isBlocked = snap.val() === true;
+});
 
 function toast(msg) {
     const t = document.getElementById("toast");
@@ -201,7 +202,7 @@ firebase.auth().onAuthStateChanged(user => {
         snap.forEach(child => {
             let tx = child.val();
             if(tx.type !== "deposit") return;
-            if(tx.status !== "approved") return; // only show approved
+            if(tx.status !== "approved") return;
             tx.key = child.key;
             arr.push(tx);
         });
@@ -238,18 +239,18 @@ function validateAmount(amount) {
 }
 
 submitBtn.onclick = () => {
+    if(isBlocked) {
+        return toast("Deposit not available, try again");
+    }
+
     const user = firebase.auth().currentUser;
     if (!user) return toast("Please login again");
 
     const amountRaw = Number(depositInput.value);
-    const accountNumber = document.getElementById("accountNumber").value.trim();
-    const accountName = document.getElementById("accountName").value.trim();
+    const accountName = accountNameInput.value.trim();
 
     if (!amountRaw) return toast("Enter a valid deposit amount");
-    if (!accountNumber) return toast("Enter your account number");
     if (!accountName) return toast("Enter your account name");
-
-    if (accountNumber.length !== 10) return toast("Enter a valid account number");
 
     const validation = validateAmount(amountRaw);
     if (!validation.valid) return toast(validation.msg);
@@ -261,10 +262,9 @@ submitBtn.onclick = () => {
         type: "deposit",
         coins: coins,
         amount: amountRaw,
-        accountNumber: accountNumber,
         accountName: accountName,
         time: Date.now(),
-        status: "pending", // deposit is pending until admin approval
+        status: "pending",
         ref: generateRef()
     };
 
@@ -277,8 +277,7 @@ function saveDeposit(depositData) {
     .then(() => {
         toast("Send payment to the account below!");
         depositInput.value = "";
-        document.getElementById("accountNumber").value = "";
-        document.getElementById("accountName").value = "";
+        accountNameInput.value = "";
 
         paymentInstruction.innerHTML = `
             SEND PAYMENT TO:<br><br>
