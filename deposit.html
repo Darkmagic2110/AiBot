@@ -2,7 +2,7 @@
 <html lang="en">
 <head>
 <meta charset="UTF-8" />
-<meta name="viewport" content="width=device-width, initial-scale=1" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>Deposit Coins - Dark Magic Ai Bot</title>
 
 <link href="https://fonts.googleapis.com/css2?family=UnifrakturCook:wght@700&display=swap" rel="stylesheet">
@@ -29,6 +29,10 @@ input[type="number"], input[type="text"] {
     margin-top: 10px;
     border-radius: 8px;
     border: none;
+    color: #000;
+}
+input::placeholder {
+    color: #888;
 }
 button {
     width: 92%;
@@ -125,7 +129,7 @@ button:hover {
 <h1>Deposit Coins</h1>
 
 <input type="number" id="depositAmount" placeholder="Enter deposit amount (₦)" min="1000" />
-<input type="text" id="accountName" placeholder="Enter your account name" />
+<input type="text" id="accountName" placeholder="Enter your account name (e.g., John Joe)" />
 
 <div id="coinRate">₦200 = 1 coin</div>
 <button id="submitDepositBtn">💰 Pay Now</button>
@@ -170,9 +174,21 @@ const paymentInstruction = document.getElementById("paymentInstruction");
 
 let isBlocked = false;
 
-// Check admin block status
+// Listen for admin blockDeposit status
 db.ref("admin/blockDeposit").on("value", snap => {
     isBlocked = snap.val() === true;
+
+    if (isBlocked) {
+        submitBtn.disabled = true;
+        submitBtn.style.background = "#555";
+        submitBtn.style.cursor = "not-allowed";
+        depositStatus.innerHTML = "Deposits are temporarily blocked by admin.";
+    } else {
+        submitBtn.disabled = false;
+        submitBtn.style.background = "#e60000";
+        submitBtn.style.cursor = "pointer";
+        depositStatus.innerHTML = "";
+    }
 });
 
 function toast(msg) {
@@ -250,7 +266,7 @@ submitBtn.onclick = () => {
     const accountName = accountNameInput.value.trim();
 
     if (!amountRaw) return toast("Enter a valid deposit amount");
-    if (!accountName) return toast("Enter your account name");
+    if (!accountName) return toast("Enter your account name (e.g., John Joe)");
 
     const validation = validateAmount(amountRaw);
     if (!validation.valid) return toast(validation.msg);
