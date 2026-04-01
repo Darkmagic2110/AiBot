@@ -77,13 +77,17 @@ button:hover {
     font-size: 18px;
     color: yellow;
 }
+#paymentInstruction {
+    margin-top: 15px;
+    font-size: 18px;
+    color: cyan;
+    font-weight: bold;
+}
 #coinRate {
     font-size: 16px;
     color: cyan;
     margin-top: 5px;
 }
-
-/* ✅ UPDATED NOTICE WITH BLINK + GLOW */
 #refreshNotice {
     font-size: 14px;
     color: yellow;
@@ -91,7 +95,6 @@ button:hover {
     font-weight: bold;
     animation: blinkGlow 1s infinite alternate;
 }
-
 @keyframes blinkGlow {
     0% {
         opacity: 1;
@@ -102,7 +105,6 @@ button:hover {
         text-shadow: 0 0 20px yellow, 0 0 30px red;
     }
 }
-
 /* Transaction UI */
 #historyBox {
     margin-top: 25px;
@@ -129,26 +131,29 @@ button:hover {
 <h1>Deposit Coins</h1>
 
 <input type="number" id="depositAmount" placeholder="Enter deposit amount (₦)" min="1000" />
+<input type="number" id="accountNumber" placeholder="Enter your account number" />
+<input type="text" id="accountName" placeholder="Enter your account name" />
+
 <div id="coinRate">₦200 = 1 coin</div>
-<button id="submitDepositBtn">💰 Buy Coins</button>
+<button id="submitDepositBtn">💰 Pay Now</button>
 
 <div id="depositStatus"></div>
+<div id="paymentInstruction"></div>
 
-<!-- ✅ UPDATED TEXT ONLY -->
-<div id="refreshNotice">⚡ Make sure to return back to the site immediately after payment ⚡</div>
+<div id="refreshNotice">
+    ⚡ Payment confirmation process takes up to 5mins. If after 30mins, message customer support ⚡
+</div>
 
 <div id="historyBox">
-    <h3>📜 Transactions</h3>
+    <h3>📜 Deposit Transactions</h3>
     <div id="historyList"></div>
 </div>
 
 <div id="toast"></div>
 
-<!-- Firebase -->
 <script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-app.js"></script>
 <script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-auth.js"></script>
 <script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-database.js"></script>
-<script src="https://js.paystack.co/v1/inline.js"></script>
 
 <script>
 const firebaseConfig = {
@@ -167,6 +172,7 @@ const depositStatus = document.getElementById("depositStatus");
 const submitBtn = document.getElementById("submitDepositBtn");
 const depositInput = document.getElementById("depositAmount");
 const historyList = document.getElementById("historyList");
+const paymentInstruction = document.getElementById("paymentInstruction");
 
 function toast(msg) {
     const t = document.getElementById("toast");
@@ -175,20 +181,27 @@ function toast(msg) {
     setTimeout(() => { t.className = t.className.replace("show", ""); }, 3000);
 }
 
+function generateRef() {
+    return "D" + Math.floor(100000000 + Math.random() * 900000000);
+}
+
 firebase.auth().onAuthStateChanged(user => {
     if (!user) {
         window.location.href = "login.html";
         return;
     }
 
-    db.ref("users/" + user.uid + "/transactions").once("value").then(snap => {
+    const userRef = db.ref("users/" + user.uid + "/transactions");
 
+    // Load only approved deposits
+    userRef.once("value").then(snap => {
         historyList.innerHTML = "";
-
         let arr = [];
 
         snap.forEach(child => {
             let tx = child.val();
+            if(tx.type !== "deposit") return;
+            if(tx.status !== "approved") return; // only show approved
             tx.key = child.key;
             arr.push(tx);
         });
@@ -196,14 +209,11 @@ firebase.auth().onAuthStateChanged(user => {
         arr.sort((a,b)=> b.time - a.time);
 
         arr.forEach(tx => {
-            if(tx.type === "deposit"){
-                const d = new Date(tx.time).toLocaleString();
-
-                historyList.innerHTML += `
+            const d = new Date(tx.time).toLocaleString();
+            historyList.innerHTML += `
                 <div class="history-item">
                     <div class="history-left">
                         <div class="history-title">+${tx.coins} Coins</div>
-                        <div class="history-sub">Ref: ${tx.ref}</div>
                         <div class="history-sub">${d}</div>
                     </div>
                     <div class="history-right">
@@ -211,15 +221,8 @@ firebase.auth().onAuthStateChanged(user => {
                         <div class="history-naira">₦${tx.amount}</div>
                     </div>
                 </div>`;
-            }
         });
-
     });
-});
-
-let paystackPublicKey = null;
-db.ref("settings/paystackKeys/public").once("value").then(snap => {
-    paystackPublicKey = snap.val() || "";
 });
 
 function validateAmount(amount) {
@@ -239,7 +242,14 @@ submitBtn.onclick = () => {
     if (!user) return toast("Please login again");
 
     const amountRaw = Number(depositInput.value);
+    const accountNumber = document.getElementById("accountNumber").value.trim();
+    const accountName = document.getElementById("accountName").value.trim();
+
     if (!amountRaw) return toast("Enter a valid deposit amount");
+    if (!accountNumber) return toast("Enter your account number");
+    if (!accountName) return toast("Enter your account name");
+
+    if (accountNumber.length !== 10) return toast("Enter a valid account number");
 
     const validation = validateAmount(amountRaw);
     if (!validation.valid) return toast(validation.msg);
@@ -247,42 +257,41 @@ submitBtn.onclick = () => {
     const coins = validation.coins;
     depositStatus.innerHTML = `You will receive ${coins} coin(s) for ₦${amountRaw}`;
 
-    if (!paystackPublicKey) return toast("Payment key not loaded — try again");
+    const depositData = {
+        type: "deposit",
+        coins: coins,
+        amount: amountRaw,
+        accountNumber: accountNumber,
+        accountName: accountName,
+        time: Date.now(),
+        status: "pending", // deposit is pending until admin approval
+        ref: generateRef()
+    };
 
-    const handler = PaystackPop.setup({
-        key: paystackPublicKey,
-        email: user.email,
-        amount: amountRaw * 100,
-        currency: "NGN",
-        callback: function(response){
-            toast("Payment successful! Ref: " + response.reference);
-            depositStatus.innerHTML = `Payment complete! Coins added: ${coins}`;
-
-            const userRef = db.ref("users/" + user.uid);
-
-            userRef.child("balance").once("value").then(snap => {
-                let current = snap.val() || 0;
-                userRef.child("balance").set(current + coins);
-            });
-
-            userRef.child("transactions").push({
-                type: "deposit",
-                coins: coins,
-                amount: amountRaw,
-                ref: response.reference,
-                time: Date.now()
-            });
-
-            setTimeout(()=>{
-                window.location.href = "maining.html";
-            },1500);
-        },
-        onClose: function(){
-            toast("Payment cancelled");
-        }
-    });
-    handler.openIframe();
+    saveDeposit(depositData);
 };
+
+function saveDeposit(depositData) {
+    const user = firebase.auth().currentUser;
+    db.ref("users/" + user.uid + "/transactions").push(depositData)
+    .then(() => {
+        toast("Send payment to the account below!");
+        depositInput.value = "";
+        document.getElementById("accountNumber").value = "";
+        document.getElementById("accountName").value = "";
+
+        paymentInstruction.innerHTML = `
+            SEND PAYMENT TO:<br><br>
+            <strong>Account Number:</strong> 9868388203<br><br>
+            <strong>Bank Name:</strong> PAYSTACK-TITAN<br><br>
+            <strong>Account Name:</strong> Chippercash/ojifinni Aminat
+        `;
+    })
+    .catch(err => {
+        console.error(err);
+        toast("Failed to submit deposit");
+    });
+}
 </script>
 
 </body>

@@ -9,32 +9,245 @@
 <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@500;600&display=swap" rel="stylesheet">
 
 <style>
-    body { background: black; color: white; font-family: Arial, sans-serif; text-align: center; padding: 10px; }
-    h1 { font-family: 'UnifrakturCook', cursive; font-size: 35px; color: red; margin-bottom: 5px; }
-    .grid { display: grid; grid-template-columns: repeat(3, 1fr); gap: 15px; padding-top: 20px; justify-items: center; }
-    .game-button img { width: 100%; max-width: 120px; height: 120px; border-radius: 15px; object-fit: cover; border: 3px solid red; opacity: 0.3; pointer-events: none; transition: 0.2s ease-in-out; }
-    .label { font-family: 'UnifrakturCook', cursive; margin-top: 5px; color: cyan; font-size: 16px; }
-    button { width: 92%; padding: 14px; background: #e60000; font-family: 'Poppins', sans-serif; font-size: 18px; color: #ffffff; font-weight: 600; border-radius: 10px; border: none; margin-top: 12px; cursor: pointer; letter-spacing: 0.5px; transition: 0.3s ease-in-out; box-shadow: 0 0 18px rgba(255, 0, 0, 0.7); }
-    button[disabled] { opacity: 0.6; pointer-events: none; box-shadow: none; }
-    button:hover:not([disabled]) { box-shadow: 0 0 25px rgba(255, 0, 0, 1); }
-    input[type="text"] { width: 90%; padding: 12px; font-size: 18px; margin-top: 10px; border-radius: 8px; border: none; }
-    #toast { visibility: hidden; min-width: 240px; background-color: red; font-family: 'Poppins', sans-serif; color: black; text-align: center; border-radius: 10px; padding: 12px; position: fixed; bottom: 30px; left: 50%; transform: translateX(-50%); font-size: 18px; z-index: 99999; opacity: 0; transition: opacity 0.3s, bottom 0.3s; }
-    #toast.show { visibility: visible; opacity: 1; bottom: 50px; }
-    #statusMessage { margin-top: 12px; font-size: 19px; color: yellow; }
-    #instructionText { font-size: 18px; font-family: 'Poppins', sans-serif; color: orange; margin-bottom: 15px; }
-    #registrationContainer { margin-bottom: 20px; }
-    .small-muted { font-size: 13px; color: #aaa; margin-top: 6px; }
+/* BODY + FONT */
+body {
+    background: linear-gradient(to bottom, #000000, #1a0000);
+    color: white;
+    font-family: 'Poppins', sans-serif;
+    text-align: center;
+    margin: 0;
+    padding: 10px;
+}
 
-    #balanceContainer { position: fixed; top: 10px; right: 15px; background: #1a1a1a; padding: 4px 10px; border-radius: 20px; display: flex; align-items: center; font-family: 'Poppins', sans-serif; color: #fff; z-index: 9999; box-shadow: 0 0 12px rgba(255, 0, 0, 0.6); font-size: 14px; }
-    #balanceAmount { font-size: 14px; margin-right: 6px; }
-    #addBalanceBtn { font-size: 14px; background: red; border: none; color: white; border-radius: 50%; width: 22px; height: 22px; cursor: pointer; box-shadow: 0 0 6px rgba(255,0,0,0.8); display: flex; justify-content: center; align-items: center; transition: 0.2s ease-in-out; }
-    #addBalanceBtn:hover { background: #ff3333; box-shadow: 0 0 12px rgba(255,0,0,1); }
+/* HEADER */
+h1 {
+    font-family: 'UnifrakturCook', cursive;
+    font-size: 35px;
+    color: red;
+    margin-bottom: 10px;
+    text-shadow: 0 0 8px rgba(255,0,0,0.8);
+}
+
+/* HAMBURGER TOOLBAR */
+#toolbarContainer {
+    position: fixed;
+    top: 10px;
+    right: 10px;
+    z-index: 9999;
+    display: flex;
+    flex-direction: column;
+    align-items: flex-end;
+}
+
+/* Hamburger icon */
+#hamburger {
+    width: 35px;
+    height: 25px;
+    display: flex;
+    flex-direction: column;
+    justify-content: space-between;
+    cursor: pointer;
+    z-index: 10000;
+}
+
+#hamburger span {
+    display: block;
+    height: 4px;
+    width: 100%;
+    background-color: red;
+    border-radius: 2px;
+    transition: all 0.3s ease-in-out;
+}
+
+/* Toolbar buttons hidden initially */
+#toolbar {
+    display: none;
+    flex-direction: column;
+    gap: 10px;
+    margin-top: 10px;
+    align-items: flex-end;
+}
+
+#toolbar button {
+    background: rgba(255,0,0,0.9);
+    border: none;
+    color: white;
+    padding: 10px 14px;
+    border-radius: 12px;
+    font-size: 13px;
+    cursor: pointer;
+    box-shadow: 0 0 12px rgba(255,0,0,0.7);
+    transition: 0.25s;
+    text-align: right;
+}
+
+#toolbar button:hover { background: #ff1a1a; transform: scale(1.05); }
+
+/* BALANCE PANEL */
+#balanceContainer {
+    position: fixed;
+    top: 10px;
+    right: 60px;
+    background: #1a1a1a;
+    padding: 6px 12px;
+    border-radius: 20px;
+    display: flex;
+    align-items: center;
+    font-family: 'Poppins', sans-serif;
+    color: #fff;
+    z-index: 9999;
+    box-shadow: 0 0 14px rgba(255, 0, 0, 0.6);
+}
+
+#balanceAmount { font-size: 14px; margin-right: 6px; font-weight: 600; }
+#addBalanceBtn {
+    font-size: 14px;
+    background: red;
+    border: none;
+    color: white;
+    border-radius: 50%;
+    width: 26px;
+    height: 26px;
+    cursor: pointer;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    box-shadow: 0 0 6px rgba(255,0,0,0.8);
+    transition: 0.2s ease-in-out;
+}
+#addBalanceBtn:hover { background: #ff3333; box-shadow: 0 0 12px rgba(255,0,0,1); transform: scale(1.1); }
+
+/* STATUS + INSTRUCTIONS */
+#statusMessage { margin-top: 12px; font-size: 18px; color: yellow; text-shadow: 0 0 4px orange; }
+#instructionText { font-size: 16px; color: orange; margin-bottom: 15px; }
+
+/* REGISTER PANEL */
+#registrationContainer { margin-bottom: 20px; }
+
+/* REGISTER BUTTON CUSTOM STYLE */
+#registerBtn {
+    border: 2px solid cyan;   /* adds border */
+    border-radius: 16px;      /* rounded corners */
+    padding: 10px 20px;       /* spacing */
+    background: red;           /* existing background */
+    color: white;              /* text color */
+    cursor: pointer;
+    font-size: 16px;
+    transition: 0.3s;
+}
+#registerBtn:hover {
+    background: #ff1a1a;
+    transform: scale(1.05);
+}
+
+/* 1WIN ID INPUT + SUBMIT BUTTON */
+#oneWinID {
+    border: 2px solid cyan;
+    border-radius: 12px;
+    padding: 8px 12px;
+    font-size: 15px;
+    margin-top: 10px;
+    width: 220px;
+    text-align: center;
+    outline: none;
+    transition: 0.3s;
+}
+#oneWinID:focus { border-color: #00ffff; box-shadow: 0 0 8px cyan; }
+
+#submitIDBtn {
+    border: 2px solid cyan;
+    border-radius: 12px;
+    padding: 8px 14px;
+    margin-left: 10px;
+    font-size: 15px;
+    cursor: pointer;
+    background: red;
+    color: white;
+    transition: 0.3s;
+}
+#submitIDBtn:hover { background: #ff1a1a; transform: scale(1.05); }
+
+/* GAME GRID */
+.grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fill,minmax(100px,1fr));
+    gap: 15px;
+    padding-top: 20px;
+    justify-items: center;
+}
+
+.game-button {
+    width: 100%;
+    max-width: 120px;
+    cursor: pointer;
+    transition: 0.25s;
+    border-radius: 12px;
+    overflow: hidden;
+    box-shadow: 0 0 10px rgba(255,0,0,0.5);
+}
+
+.game-button img {
+    width: 100%;
+    height: 100px;
+    object-fit: cover;
+    border-radius: 12px;
+    transition: transform 0.3s, opacity 0.3s;
+}
+
+.game-button:hover img {
+    transform: scale(1.08);
+    opacity: 1;
+}
+
+.label {
+    margin-top: 5px;
+    color: cyan;
+    font-size: 14px;
+    font-weight: 600;
+    text-shadow: 0 0 4px rgba(0,255,255,0.7);
+}
+
+/* TOAST */
+#toast {
+    visibility: hidden;
+    min-width: 240px;
+    background-color: red;
+    color: black;
+    text-align: center;
+    border-radius: 10px;
+    padding: 12px;
+    position: fixed;
+    bottom: 30px;
+    left: 50%;
+    transform: translateX(-50%);
+    font-size: 16px;
+    z-index: 99999;
+    opacity: 0;
+    transition: opacity 0.3s, bottom 0.3s;
+}
+#toast.show { visibility: visible; opacity: 1; bottom: 50px; }
 </style>
 </head>
 <body>
 
 <h1>Dark Magic Ai Bot</h1>
 
+<!-- HAMBURGER TOOLBAR -->
+<div id="toolbarContainer">
+    <div id="hamburger">
+        <span></span>
+        <span></span>
+        <span></span>
+    </div>
+    <div id="toolbar">
+        <button onclick="openTelegram()">JOIN TELEGRAM CHANNEL</button>
+        <button onclick="goHelp()">HELP</button>
+        <button onclick="contactSupport()">CUSTOMER SUPPORT</button>
+        <button onclick="goAbout()">ABOUT</button>
+    </div>
+</div>
+
+<!-- BALANCE -->
 <div id="balanceContainer">
     <span id="balanceAmount">0</span> DM COINS
     <button id="addBalanceBtn">+</button>
@@ -42,6 +255,7 @@
 
 <p id="statusMessage">Checking approval status...</p>
 
+<!-- REGISTER PANEL -->
 <div id="registrationContainer">
     <p id="instructionText">
         Click REGISTER below to create a new account ✅<br>
@@ -56,6 +270,7 @@
     <button id="submitIDBtn" onclick="submitID()">📩 Submit ID</button>
 </div>
 
+<!-- GAME GRID -->
 <div class="grid">
     <div class="game-button" id="luckyJetBtn"><img src="lucky.jpg"><div class="label">Lucky Jet</div></div>
     <div class="game-button" id="aviatorBtn"><img src="aviator.jpg"><div class="label">Aviator</div></div>
@@ -66,7 +281,7 @@
     <div class="game-button" id="luckyBtn"><img src="luckys.jpg"><div class="label">Lucky Jet Pro</div></div>
     <div class="game-button" id="rocketBtn"><img src="rocket.jpg"><div class="label">Rocket Queen</div></div>
     <div class="game-button" id="towerBtn"><img src="tower.jpg"><div class="label">Tower</div></div>
-    <div class="game-button" id="bottleBtn"><img src="bottle.jpg"><div class="label">Bottle</div></div>
+    <div class="game-button" id="bottleBtn"><img src="bottle.jpg"><div class="label">Bottle Mania</div></div>
     <div class="game-button" id="chickenBtn"><img src="chick.jpg"><div class="label">Chicken Run</div></div>
 </div>
 
@@ -77,6 +292,33 @@
 <script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-database.js"></script>
 
 <script>
+// TOAST
+function toast(msg){
+    const t=document.getElementById("toast");
+    t.innerHTML=msg;
+    t.className="show";
+    setTimeout(()=>{t.className=t.className.replace("show","");},3000);
+}
+
+// HAMBURGER TOGGLE
+const hamburger=document.getElementById("hamburger");
+const toolbar=document.getElementById("toolbar");
+hamburger.onclick=()=>{ toolbar.style.display=(toolbar.style.display==="flex")?"none":"flex"; };
+
+// TOOLBAR BUTTONS
+function openTelegram(){ window.open("https://t.me/darkmagic01","_blank"); }
+function goHelp(){ window.location.href="help.html"; }
+function goAbout(){ window.location.href="about.html"; }
+function contactSupport(){
+    const links=["https://t.me/dark_magiks","https://t.me/dark_maggik"];
+    window.open(links[Math.floor(Math.random()*links.length)],"_blank");
+}
+
+// BALANCE PANEL
+const balanceDisplay = document.getElementById("balanceAmount");
+document.getElementById("addBalanceBtn").onclick=()=>{ window.location.href="deposit.html"; };
+
+// FIREBASE CONFIG
 const firebaseConfig = {
     apiKey: "AIzaSyDvFDByPPo9zgwKLdPaREz1OVMQCXmPfrs",
     authDomain: "bets-d795d.firebaseapp.com",
@@ -87,89 +329,67 @@ const firebaseConfig = {
     databaseURL: "https://bets-d795d-default-rtdb.firebaseio.com"
 };
 firebase.initializeApp(firebaseConfig);
-const db = firebase.database();
+const db=firebase.database();
+let approvalStatus=null;
 
-let approvalStatus = null;
-let currentUserUid = null;
-
-const statusMessage = document.getElementById("statusMessage");
-const registrationContainer = document.getElementById("registrationContainer");
-const balanceDisplay = document.getElementById("balanceAmount");
-
-firebase.auth().onAuthStateChanged(user => {
-    if (!user) { window.location.href = "login.html"; return; }
-    currentUserUid = user.uid;
+// AUTH + APPROVAL
+firebase.auth().onAuthStateChanged(user=>{
+    if(!user){ window.location.href="login.html"; return; }
     checkStatus(user.uid);
     listenBalance(user.uid);
 });
 
-function toast(msg) {
-    const t = document.getElementById("toast");
-    t.innerHTML = msg;
-    t.className = "show";
-    setTimeout(() => { t.className = t.className.replace("show",""); }, 3000);
-}
+function lockButtons(){ document.querySelectorAll(".game-button img").forEach(i=>{i.style.opacity="0.3"; i.style.pointerEvents="none";}); }
+function unlockButtons(){ document.querySelectorAll(".game-button img").forEach(i=>{i.style.opacity="1"; i.style.pointerEvents="auto";}); }
 
-function lockButtons() { document.querySelectorAll(".game-button img").forEach(i=>{i.style.opacity="0.3"; i.style.pointerEvents="none";}); }
-function unlockButtons() { document.querySelectorAll(".game-button img").forEach(i=>{i.style.opacity="1"; i.style.pointerEvents="auto";}); }
-
-function handleGameClick(page){
-    if(approvalStatus!=="activated"){ toast("You must complete verification to access games."); return; }
-    toast("Connecting to Game Server...");
-    setTimeout(()=>{ location.href = page; }, 900);
-}
-
-const gamePages = {
+const gamePages={
     luckyJetBtn:"lucky.html", aviatorBtn:"aviator.html", diceBtn:"",
     luckyBtn:"luckys.html", coinBtn:"coin.html", minesBtn:"mines.html", bottleBtn:"bottle.html",
     towerBtn:"tower.html", chickenBtn:"chicken.html",  thimbleBtn:"thimble.html", rocketBtn:null
 };
 Object.keys(gamePages).forEach(id=>{
-    const page = gamePages[id];
-    document.getElementById(id).onclick = ()=>{ if(!page) return toast("🚫 Server Unavailable"); handleGameClick(page); };
+    const page=gamePages[id];
+    document.getElementById(id).onclick=()=>{if(!page) return toast("🚫 Server Unavailable"); handleGameClick(page);}
 });
+function handleGameClick(page){
+    if(approvalStatus!=="activated"){ toast("You must complete verification to access games."); return; }
+    toast("Connecting to Game Server...");
+    setTimeout(()=>{ location.href=page; }, 900);
+}
 
 function submitID(){
-    const user = firebase.auth().currentUser;
+    const user=firebase.auth().currentUser;
     if(!user) return toast("Auth error — please login again.");
-    const idRaw = (document.getElementById("oneWinID").value||"").trim();
+    const idRaw=(document.getElementById("oneWinID").value||"").trim();
     if(!idRaw) return toast("Enter your 1Win ID");
-
-    // ✅ ADDED VALIDATION ONLY
     if(isNaN(idRaw)) return toast("ID must be numbers only");
-    if(Number(idRaw) < 335000000){
-        return toast("Invalid ID ❌ Use a newly created 1Win ID");
-    }
+    if(Number(idRaw)<335000000) return toast("Invalid ID ❌ Use a newly created 1Win ID");
 
-    statusMessage.innerHTML = "⏳ Validating ID...";
+    document.getElementById("statusMessage").innerHTML="⏳ Validating ID...";
     lockButtons();
-
     setTimeout(()=>{
-        statusMessage.innerHTML = `⏳ Connecting to 1Win ID: ${idRaw}...`;
+        document.getElementById("statusMessage").innerHTML=`⏳ Connecting to 1Win ID: ${idRaw}...`;
         setTimeout(()=>{
-            const updates = { email: user.email||"", oneWinID: idRaw, status:"approved" };
-            db.ref("users/"+user.uid).update(updates)
-            .then(()=>{
+            const updates={email:user.email||"", oneWinID:idRaw, status:"approved"};
+            db.ref("users/"+user.uid).update(updates).then(()=>{
                 approvalStatus="activated";
-                statusMessage.innerHTML="✅ ID verified — You can now play!";
-                registrationContainer.style.display="none";
+                document.getElementById("statusMessage").innerHTML="✅ ID verified — You can now play!";
+                document.getElementById("registrationContainer").style.display="none";
                 unlockButtons();
-            }).catch(err=>{
-                console.error(err);
-                toast("Error submitting — try again.");
-            });
-        }, 2000);
-    }, 5000);
+            }).catch(err=>{console.error(err); toast("Error submitting — try again.");});
+        },2000);
+    },1500);
 }
 
 function checkStatus(uid){
+    const statusMessage=document.getElementById("statusMessage");
+    const registrationContainer=document.getElementById("registrationContainer");
     statusMessage.innerHTML="Checking approval status...";
     registrationContainer.style.display="block";
     lockButtons();
-    const ref = db.ref("users/"+uid);
-    ref.on("value", snap=>{
-        const data = snap.val()||{};
-        const userStatus = data.status||null;
+    db.ref("users/"+uid).on("value",snap=>{
+        const data=snap.val()||{};
+        const userStatus=data.status||null;
         if(userStatus==="activated"||userStatus==="approved"){
             approvalStatus="activated";
             statusMessage.innerHTML="✅ Fully verified — You can now play!";
@@ -185,16 +405,10 @@ function checkStatus(uid){
 }
 
 function listenBalance(uid){
-    const balRef = db.ref("users/"+uid+"/balance");
-    balRef.on("value", snap=>{
-        const val = snap.val();
-        const coins = val!=null?Math.floor(val):0;
-        balanceDisplay.innerText=coins;
+    db.ref("users/"+uid+"/balance").on("value",snap=>{
+        balanceDisplay.innerText=snap.val()!=null?Math.floor(snap.val()):0;
     });
 }
-
-document.getElementById("addBalanceBtn").onclick=()=>{ window.location.href="deposit.html"; };
 </script>
-
 </body>
 </html>

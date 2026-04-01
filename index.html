@@ -3,112 +3,227 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>Dark Magic Ai Bot - Register</title>
+<title>Register - Dark Magic AI</title>
 
-<link href="https://fonts.googleapis.com/css2?family=UnifrakturCook:wght@700&display=swap" rel="stylesheet">
+<link href="https://fonts.googleapis.com/css2?family=Orbitron:wght@600&family=Poppins:wght@400;500;600&display=swap" rel="stylesheet">
+
+<script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-app.js"></script>
+<script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-database.js"></script>
 
 <style>
-    body {
-        background: black;
-        color: white;
-        font-family: Arial, sans-serif;
-        text-align: center;
-        padding: 20px;
-    }
-    h1 {
-        font-family: 'UnifrakturCook', cursive;
-        font-size: 32px;
-        margin-bottom: 20px;
-        color: red;
-    }
-    img {
-        width: 100px;
-        height: 100px;
-        border-radius: 50%;
-        margin-bottom: 20px;
-    }
-    input {
-        width: 90%;
-        padding: 12px;
-        margin: 10px 0;
-        border-radius: 8px;
-        border: none;
-        font-size: 16px;
-    }
-    button {
-        background: red;
-        font-family: 'UnifrakturCook', cursive;
-        width: 95%;
-        padding: 14px;
-        border: none;
-        font-size: 20px;
-        color: black;
-        border-radius: 8px;
-        cursor: pointer;
-        margin-top: 10px;
-    }
+body {
+    margin: 0;
+    height: 100vh;
+    background: radial-gradient(circle at top, #000000, #1a0000);
+    font-family: 'Poppins', sans-serif;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    color: white;
+}
 
-    /* NEW: Disabled button style */
-    button:disabled {
-        opacity: 0.6;
-        cursor: not-allowed;
-    }
+.container {
+    width: 360px;
+    padding: 30px;
+    border-radius: 15px;
+    background: rgba(255, 0, 0, 0.05);
+    backdrop-filter: blur(12px);
+    box-shadow: 0 0 30px rgba(255, 0, 0, 0.4);
+    border: 1px solid rgba(255,0,0,0.2);
+    animation: fadeIn 0.8s ease;
+}
 
-    a {
-        color: cyan;
-    }
+h1 {
+    font-family: 'Orbitron', sans-serif;
+    text-align: center;
+    color: #ff1a1a;
+    margin-bottom: 20px;
+}
+
+input {
+    width: 100%;
+    padding: 12px;
+    margin: 8px 0;
+    border-radius: 8px;
+    border: none;
+    background: rgba(255,0,0,0.08);
+    color: white;
+    outline: none;
+}
+
+input::placeholder {
+    color: #ff9999;
+}
+
+.checkbox {
+    display: flex;
+    align-items: center;
+    font-size: 13px;
+    margin-top: 8px;
+}
+
+.checkbox input {
+    width: auto;
+    margin-right: 8px;
+}
+
+button {
+    width: 100%;
+    padding: 12px;
+    margin-top: 15px;
+    border-radius: 8px;
+    border: none;
+    background: linear-gradient(45deg, #ff0000, #990000);
+    color: white;
+    font-weight: bold;
+    cursor: pointer;
+    transition: 0.3s;
+}
+
+button:hover {
+    transform: scale(1.05);
+}
+
+.error {
+    color: #ff4d4d;
+    font-size: 13px;
+    text-align: center;
+    margin-top: 10px;
+}
+
+.loader {
+    display: none;
+    text-align: center;
+    margin-top: 10px;
+    color: #ff6666;
+}
+
+.bottom-text {
+    text-align: center;
+    margin-top: 15px;
+    font-size: 13px;
+}
+
+.bottom-text a {
+    color: #ff6666;
+    text-decoration: none;
+}
+
+.bottom-text a:hover {
+    text-decoration: underline;
+}
+
+@keyframes fadeIn {
+    from {opacity: 0; transform: translateY(20px);}
+    to {opacity: 1; transform: translateY(0);}
+}
 </style>
 </head>
 
 <body>
 
-<h1>Dark Magic Ai Bot</h1>
-<img src="dark.jpg" alt="Logo">
+<div class="container">
+    <h1>Create Account</h1>
 
-<input type="email" id="email" placeholder="𝗘𝗻𝘁𝗲𝗿 𝗘𝗺𝗮𝗶𝗹" required>
-<input type="password" id="password" placeholder="𝗘𝗻𝘁𝗲𝗿 𝗣𝗮𝘀𝘀𝘄𝗼𝗿𝗱" required>
+    <input type="text" id="name" placeholder="Full Name">
+    <input type="email" id="email" placeholder="Email Address">
+    <input type="password" id="password" placeholder="Password">
+    <input type="password" id="confirmPassword" placeholder="Confirm Password">
 
-<!-- ADDED ID -->
-<button id="registerBtn" onclick="register()">𝐂𝐫𝐞𝐚𝐭𝐞 𝐀𝐜𝐜𝐨𝐮𝐧𝐭</button>
+    <div class="checkbox">
+        <input type="checkbox" id="humanCheck">
+        <label>I confirm I am not a bot</label>
+    </div>
 
-<p>𝗔𝗹𝗿𝗲𝗮𝗱𝘆 𝗵𝗮𝘃𝗲 𝗮𝗻 𝗮𝗰𝗰𝗼𝘂𝗻𝘁? <a href="loging.html">𝗟𝗼𝗴𝗶𝗻 𝗻𝗼𝘄</a></p>
+    <button onclick="register()">Create Account</button>
 
-<!-- Firebase -->
-<script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-app.js"></script>
-<script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-auth.js"></script>
+    <div class="loader" id="loader">Creating account...</div>
+    <div class="error" id="error"></div>
+
+    <div class="bottom-text">
+        Already have an account? <a href="loging.html">Login</a>
+    </div>
+</div>
 
 <script>
-const firebaseConfig = {
+// 🔥 YOUR FIREBASE CONFIG (UNCHANGED)
+var firebaseConfig = {
     apiKey: "AIzaSyDvFDByPPo9zgwKLdPaREz1OVMQCXmPfrs",
     authDomain: "bets-d795d.firebaseapp.com",
+    databaseURL: "https://bets-d795d-default-rtdb.firebaseio.com",
     projectId: "bets-d795d",
     storageBucket: "bets-d795d.appspot.com",
     messagingSenderId: "384386108287",
-    appId: "1:384386108287:android:d238a5ec8068d9bb9be84a",
-    databaseURL: "https://bets-d795d-default-rtdb.firebaseio.com"
+    appId: "1:384386108287:android:d238a5ec8068d9bb9be84a"
 };
+
 firebase.initializeApp(firebaseConfig);
+var db = firebase.database();
 
+// 🔥 REGISTER FUNCTION
 function register() {
-    const email = document.getElementById("email").value;
-    const pass = document.getElementById("password").value;
-    const btn = document.getElementById("registerBtn");
+    let name = document.getElementById("name").value.trim();
+    let email = document.getElementById("email").value.trim().toLowerCase();
+    let password = document.getElementById("password").value;
+    let confirmPassword = document.getElementById("confirmPassword").value;
+    let humanCheck = document.getElementById("humanCheck").checked;
+    let error = document.getElementById("error");
+    let loader = document.getElementById("loader");
 
-    // START LOADING
-    btn.disabled = true;
-    btn.innerText = "Creating...";
+    error.innerText = "";
 
-    firebase.auth().createUserWithEmailAndPassword(email, pass)
-    .then(() => {
-        alert("Account created successfully!");
-        window.location.href = "maining.html";
-    })
-    .catch(error => {
-        alert(error.message);
+    if (!name || !email || !password || !confirmPassword) {
+        error.innerText = "Please fill all fields";
+        return;
+    }
 
-        // RESET BUTTON IF ERROR
-        btn.disabled = false;
-        btn.innerText = "𝐂𝐫𝐞𝐚𝐭𝐞 𝐀𝐜𝐜𝐨𝐮𝐧𝐭";
+    if (password !== confirmPassword) {
+        error.innerText = "Passwords do not match";
+        return;
+    }
+
+    if (!humanCheck) {
+        error.innerText = "Confirm you are human";
+        return;
+    }
+
+    loader.style.display = "block";
+
+    // 🔥 CHECK IF EMAIL EXISTS
+    db.ref("users").once("value", function(snapshot) {
+        let exists = false;
+
+        snapshot.forEach(function(child) {
+            let user = child.val();
+
+            if (user.email && user.email.toLowerCase() === email) {
+                exists = true;
+            }
+        });
+
+        if (exists) {
+            loader.style.display = "none";
+            error.innerText = "Email already exists";
+            return;
+        }
+
+        // 🔥 CREATE ACCOUNT
+        let userId = Date.now();
+
+        db.ref("users/" + userId).set({
+            name: name,
+            email: email,
+            password: password,
+            balance: 0
+        }).then(() => {
+            loader.style.display = "none";
+            alert("Account created successfully!");
+            window.location.href = "loging.html";
+        }).catch((err) => {
+            loader.style.display = "none";
+            error.innerText = err.message;
+        });
+
     });
 }
 </script>
