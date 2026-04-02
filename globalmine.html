@@ -1,0 +1,234 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>GLOBAL MINES PREDICTOR</title>
+<style>
+*{box-sizing:border-box;font-family:system-ui,-apple-system,Segoe UI,Roboto,Arial}
+body{margin:0;height:100vh;background:#071023;color:#e6eef8;display:flex;flex-direction:column;}
+.app{flex:1;display:flex;flex-direction:column;align-items:center;padding:20px;}
+h1{font-size:20px;margin-bottom:10px;}
+#timerText{font-size:22px;font-weight:bold;color:#00ffcc;margin-bottom:10px;}
+#statusText{font-size:18px;color:#ffdd00;margin-bottom:10px;}
+.controls{margin-bottom:10px;}
+select{padding:6px;border-radius:6px;border:1px solid #233042;background:#071024;color:#e6eef8;}
+.grid{display:grid;grid-template-columns:repeat(5,60px);gap:8px;margin-top:15px;}
+.cell{width:60px;height:60px;border-radius:10px;display:flex;align-items:center;justify-content:center;background:linear-gradient(180deg,#0f2a46,#08182a);border:1px solid #22384e;position:relative;}
+.star{position:absolute;font-size:26px;animation:pop 0.3s ease forwards;}
+@keyframes pop{0%{transform:scale(0);opacity:0;}100%{transform:scale(1);opacity:1;}}
+.predict-btn{margin-top:20px;padding:14px 30px;border:none;border-radius:12px;background:#2d89ff;color:white;font-size:16px;font-weight:bold;cursor:pointer;}
+.predict-btn:disabled{background:#555;cursor:not-allowed;}
+#balanceContainer { position:fixed; top:10px; right:15px; background:#1a1a1a; padding:5px 12px; border-radius:20px; color:#fff; font-weight:bold; z-index:9999; }
+</style>
+</head>
+<body>
+
+<div id="balanceContainer">
+  <span id="balanceAmount">0</span> COINS
+</div>
+
+<div class="app">
+<h1>🌍 GLOBAL MINES PREDICTOR</h1>
+<div id="timerText">READY</div>
+<div id="statusText"></div>
+<div class="controls">
+  <select id="bombChoice">
+    <option value="2">2 Bombs</option>
+    <option value="3">3 Bombs</option>
+    <option value="5">5 Bombs</option>
+    <option value="7">7 Bombs</option>
+  </select>
+</div>
+
+<div class="grid" id="grid"></div>
+
+<button id="predictBtn" class="predict-btn" onclick="predict()">Predict</button>
+</div>
+
+<script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-app.js"></script>
+<script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-auth.js"></script>
+<script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-database.js"></script>
+
+<script>
+const grid = document.getElementById("grid");
+const timerText = document.getElementById("timerText");
+const statusText = document.getElementById("statusText");
+const predictBtn = document.getElementById("predictBtn");
+const balanceDisplay = document.getElementById("balanceAmount");
+
+// FIREBASE CONFIG
+const firebaseConfig = {
+  apiKey: "AIzaSyDvFDByPPo9zgwKLdPaREz1OVMQCXmPfrs",
+  authDomain: "bets-d795d.firebaseapp.com",
+  projectId: "bets-d795d",
+  storageBucket: "bets-d795d.appspot.com",
+  messagingSenderId: "384386108287",
+  appId: "1:384386108287:android:d238a5ec8068d9bb9be84a",
+  databaseURL: "https://bets-d795d-default-rtdb.firebaseio.com"
+};
+firebase.initializeApp(firebaseConfig);
+const db = firebase.database();
+
+let currentUserUid = null;
+let currentUserEmail = null;
+
+// CREATE GRID
+for (let i = 0; i < 25; i++) {
+    const cell = document.createElement("div");
+    cell.className = "cell";
+    grid.appendChild(cell);
+}
+
+// CHECK USER LOGIN
+firebase.auth().onAuthStateChanged(user => {
+    if (!user) { alert("Please login first"); return; }
+    currentUserUid = user.uid;
+    currentUserEmail = user.email;
+
+    // LOAD BALANCE
+    db.ref("users/" + currentUserUid + "/balance").once("value").then(snap => {
+        balanceDisplay.innerText = snap.val() || 0;
+    });
+
+    db.ref("users/" + currentUserUid + "/balance").on("value", snap => {
+        balanceDisplay.innerText = snap.val() || 0;
+    });
+
+    // RESTORE GAME IF EXISTS
+    const saved = JSON.parse(localStorage.getItem("minesData"));
+    if (saved) {
+        const now = Date.now();
+        if (now < saved.expireTime) {
+            restoreGame(saved);
+            timerText.innerText = "STAKE AT " + saved.displayTime;
+            predictBtn.disabled = true;
+            statusText.innerText = "Prediction locked";
+
+            const remaining = saved.expireTime - now;
+            setTimeout(() => {
+                predictBtn.disabled = false;
+                timerText.innerText = "READY";
+                statusText.innerText = "";
+                localStorage.removeItem("minesData");
+            }, remaining);
+        } else localStorage.removeItem("minesData");
+    }
+});
+
+// PREDICT FUNCTION WITH FIREBASE TRANSACTION
+function predict() {
+    if (!currentUserUid) return alert("User not logged in!");
+
+    const userBalanceRef = db.ref("users/" + currentUserUid + "/balance");
+
+    userBalanceRef.transaction(current => {
+        current = current || 0;
+        if (current < 1) { alert("Insufficient balance!"); return; }
+        return current - 1; // Deduct 1 coin per prediction
+    }, (err, committed, snapshot) => {
+        if (committed) {
+            // SAVE TRANSACTION
+            const tx = {
+                type: "bet",
+                coins: -1,
+                amount: 1,
+                game: "Mines",
+                ref: "BET-" + Date.now(),
+                time: Date.now(),
+                email: currentUserEmail,
+                uid: currentUserUid
+            };
+            db.ref("users/" + currentUserUid + "/transactions").push(tx);
+            db.ref("transactions").push(tx);
+
+            runPrediction();
+        }
+    });
+}
+
+// RUN PREDICTION
+function runPrediction() {
+    const bombs = parseInt(document.getElementById("bombChoice").value);
+    const cells = [...grid.children];
+    cells.forEach(c => c.innerHTML = "");
+
+    // ANIMATION TEXT
+    const messages = ["Generating prediction...", "Analyzing mines...", "Calculating safe spots..."];
+    let index = 0;
+    statusText.innerText = messages[index];
+    const animInterval = setInterval(() => {
+        index = (index + 1) % messages.length;
+        statusText.innerText = messages[index];
+    }, 600);
+
+    predictBtn.disabled = true;
+
+    // SHOW STARS AFTER 2–3 SECONDS
+    setTimeout(() => {
+        clearInterval(animInterval);
+        statusText.innerText = "Prediction complete!";
+
+        let stars = 0;
+        if (bombs === 2) stars = getRandom(6, 10);
+        else if (bombs === 3) stars = getRandom(5, 7);
+        else if (bombs === 5) stars = getRandom(3, 5);
+        else if (bombs === 7) stars = getRandom(2, 4);
+
+        let used = new Set();
+        while (used.size < stars) {
+            used.add(Math.floor(Math.random() * cells.length));
+        }
+        used.forEach(i => {
+            const star = document.createElement("div");
+            star.className = "star";
+            star.innerText = "⭐";
+            cells[i].appendChild(star);
+        });
+
+        // FUTURE TIME 1–2 MIN AHEAD
+        const now = new Date();
+        const addMinutes = getRandom(1,2);
+        now.setMinutes(now.getMinutes() + addMinutes);
+        let hours = now.getHours();
+        let minutes = now.getMinutes();
+        if (minutes < 10) minutes = "0" + minutes;
+        if (hours < 10) hours = "0" + hours;
+        const displayTime = `${hours}:${minutes}`;
+        timerText.innerText = "STAKE AT " + displayTime;
+
+        const expireTime = Date.now() + addMinutes*60*1000;
+        localStorage.setItem("minesData", JSON.stringify({
+            stars: [...used],
+            expireTime: expireTime,
+            displayTime: displayTime
+        }));
+
+        setTimeout(() => {
+            predictBtn.disabled = false;
+            timerText.innerText = "READY";
+            statusText.innerText = "";
+            localStorage.removeItem("minesData");
+        }, addMinutes*60*1000);
+
+    }, getRandom(2000,3000));
+}
+
+// RESTORE GAME
+function restoreGame(data) {
+    const cells = [...grid.children];
+    data.stars.forEach(i => {
+        const star = document.createElement("div");
+        star.className = "star";
+        star.innerText = "⭐";
+        cells[i].appendChild(star);
+    });
+}
+
+// RANDOM HELPER
+function getRandom(min, max) {
+    return Math.floor(Math.random() * (max - min + 1)) + min;
+}
+</script>
+</body>
+</html>
