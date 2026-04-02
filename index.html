@@ -7,7 +7,9 @@
 
 <link href="https://fonts.googleapis.com/css2?family=Orbitron:wght@600&family=Poppins:wght@400;500;600&display=swap" rel="stylesheet">
 
+<!-- Firebase -->
 <script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-app.js"></script>
+<script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-auth.js"></script>
 <script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-database.js"></script>
 
 <style>
@@ -146,7 +148,7 @@ button:hover {
 </div>
 
 <script>
-// 🔥 YOUR FIREBASE CONFIG (UNCHANGED)
+// FIREBASE CONFIG (UNCHANGED)
 var firebaseConfig = {
     apiKey: "AIzaSyDvFDByPPo9zgwKLdPaREz1OVMQCXmPfrs",
     authDomain: "bets-d795d.firebaseapp.com",
@@ -160,7 +162,7 @@ var firebaseConfig = {
 firebase.initializeApp(firebaseConfig);
 var db = firebase.database();
 
-// 🔥 REGISTER FUNCTION
+// REGISTER FUNCTION (FIXED)
 function register() {
     let name = document.getElementById("name").value.trim();
     let email = document.getElementById("email").value.trim().toLowerCase();
@@ -189,41 +191,34 @@ function register() {
 
     loader.style.display = "block";
 
-    // 🔥 CHECK IF EMAIL EXISTS
-    db.ref("users").once("value", function(snapshot) {
-        let exists = false;
+    firebase.auth().createUserWithEmailAndPassword(email, password)
+    .then((userCredential) => {
 
-        snapshot.forEach(function(child) {
-            let user = child.val();
+        let uid = userCredential.user.uid;
 
-            if (user.email && user.email.toLowerCase() === email) {
-                exists = true;
-            }
-        });
-
-        if (exists) {
-            loader.style.display = "none";
-            error.innerText = "Email already exists";
-            return;
-        }
-
-        // 🔥 CREATE ACCOUNT
-        let userId = Date.now();
-
-        db.ref("users/" + userId).set({
+        return db.ref("users/" + uid).set({
             name: name,
             email: email,
-            password: password,
-            balance: 0
-        }).then(() => {
-            loader.style.display = "none";
-            alert("Account created successfully!");
-            window.location.href = "loging.html";
-        }).catch((err) => {
-            loader.style.display = "none";
-            error.innerText = err.message;
+            balance: 0,
+            createdAt: Date.now()
         });
 
+    })
+    .then(() => {
+        loader.style.display = "none";
+        alert("Account created successfully ✅");
+        window.location.href = "loging.html";
+    })
+    .catch((err) => {
+        loader.style.display = "none";
+
+        if (err.code === "auth/email-already-in-use") {
+            error.innerText = "Email already exists ❌";
+        } else if (err.code === "auth/weak-password") {
+            error.innerText = "Password must be at least 6 characters";
+        } else {
+            error.innerText = err.message;
+        }
     });
 }
 </script>
