@@ -103,6 +103,13 @@ button:hover {
     0% { opacity: 1; text-shadow: 0 0 5px yellow, 0 0 10px orange; }
     100% { opacity: 0.4; text-shadow: 0 0 20px yellow, 0 0 30px red; }
 }
+
+/* NEW GLOW EFFECT */
+@keyframes glowText {
+    0% { opacity: 1; text-shadow: 0 0 5px yellow, 0 0 10px orange; }
+    100% { opacity: 0.5; text-shadow: 0 0 20px yellow, 0 0 30px red; }
+}
+
 /* Transaction UI */
 #historyBox {
     margin-top: 25px;
@@ -129,7 +136,13 @@ button:hover {
 <h1>Deposit Coins</h1>
 
 <input type="number" id="depositAmount" placeholder="Enter deposit amount (₦)" min="1000" />
-<input type="text" id="accountName" placeholder="Enter your account name (e.g., John Joe)" />
+
+<!-- GLOWING TEXT ADDED -->
+<div style="color: yellow; font-size: 14px; margin-top: 10px; animation: glowText 1s infinite alternate;">
+    This name must match your bank account name
+</div>
+
+<input type="text" id="accountName" placeholder="Enter your bank account name (e.g., John Joe)" />
 
 <div id="coinRate">₦200 = 1 coin</div>
 <button id="submitDepositBtn">💰 Pay Now</button>
@@ -174,7 +187,6 @@ const paymentInstruction = document.getElementById("paymentInstruction");
 
 let isBlocked = false;
 
-// Listen for admin blockDeposit status
 db.ref("admin/blockDeposit").on("value", snap => {
     isBlocked = snap.val() === true;
 
@@ -210,7 +222,6 @@ firebase.auth().onAuthStateChanged(user => {
 
     const userRef = db.ref("users/" + user.uid + "/transactions");
 
-    // Load only approved deposits
     userRef.once("value").then(snap => {
         historyList.innerHTML = "";
         let arr = [];
@@ -255,9 +266,7 @@ function validateAmount(amount) {
 }
 
 submitBtn.onclick = () => {
-    if(isBlocked) {
-        return toast("Deposit not available, try again");
-    }
+    if(isBlocked) return toast("Deposit not available, try again");
 
     const user = firebase.auth().currentUser;
     if (!user) return toast("Please login again");
@@ -266,7 +275,7 @@ submitBtn.onclick = () => {
     const accountName = accountNameInput.value.trim();
 
     if (!amountRaw) return toast("Enter a valid deposit amount");
-    if (!accountName) return toast("Enter your account name (e.g., John Joe)");
+    if (!accountName) return toast("Enter your bank account name");
 
     const validation = validateAmount(amountRaw);
     if (!validation.valid) return toast(validation.msg);
