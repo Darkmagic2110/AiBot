@@ -110,6 +110,24 @@ button:hover {
     100% { opacity: 0.5; text-shadow: 0 0 20px yellow, 0 0 30px red; }
 }
 
+/* ADDED HOW TO DEPOSIT STYLE */
+#howToDeposit {
+    width: 92%;
+    margin: 10px auto 0;
+    text-align: right;
+    color: cyan;
+    font-size: 14px;
+    cursor: pointer;
+}
+#howToContent {
+    width: 92%;
+    margin: 10px auto;
+    text-align: left;
+    font-size: 14px;
+    color: yellow;
+    display: none;
+}
+
 /* Transaction UI */
 #historyBox {
     margin-top: 25px;
@@ -137,7 +155,6 @@ button:hover {
 
 <input type="number" id="depositAmount" placeholder="Enter deposit amount (₦)" min="1000" />
 
-<!-- GLOWING TEXT ADDED -->
 <div style="color: yellow; font-size: 14px; margin-top: 10px; animation: glowText 1s infinite alternate;">
     This name must match your bank account name
 </div>
@@ -145,6 +162,18 @@ button:hover {
 <input type="text" id="accountName" placeholder="Enter your bank account name (e.g., John Joe)" />
 
 <div id="coinRate">₦200 = 1 coin</div>
+
+<!-- ADDED -->
+<div id="howToDeposit"><b>HOW TO DEPOSIT</b></div>
+
+<!-- ADDED -->
+<div id="howToContent">
+<b>
+- INPUT THE AMOUNT YOU WANT TO IN NAIRA <br><br>
+- INPUT YOUR BANK ACCOUNT NAME (e.g John Joe ) Do NOT input your Bank Name (e.g Opay)
+</b>
+</div>
+
 <button id="submitDepositBtn">💰 Pay Now</button>
 
 <div id="depositStatus"></div>
@@ -184,6 +213,12 @@ const depositInput = document.getElementById("depositAmount");
 const accountNameInput = document.getElementById("accountName");
 const historyList = document.getElementById("historyList");
 const paymentInstruction = document.getElementById("paymentInstruction");
+
+/* ADDED */
+document.getElementById("howToDeposit").onclick = function() {
+    const box = document.getElementById("howToContent");
+    box.style.display = (box.style.display === "block") ? "none" : "block";
+};
 
 let isBlocked = false;
 
