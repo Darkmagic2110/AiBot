@@ -194,6 +194,8 @@ button:hover {
 <script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-auth.js"></script>
 <script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-database.js"></script>
 
+<!-- EVERYTHING ABOVE REMAINS EXACTLY THE SAME -->
+
 <script>
 const firebaseConfig = {
     apiKey: "AIzaSyDvFDByPPo9zgwKLdPaREz1OVMQCXmPfrs",
@@ -213,6 +215,42 @@ const depositInput = document.getElementById("depositAmount");
 const accountNameInput = document.getElementById("accountName");
 const historyList = document.getElementById("historyList");
 const paymentInstruction = document.getElementById("paymentInstruction");
+
+/* ================== ✅ NEWLY ADDED (DO NOT REMOVE YOUR CODE) ================== */
+let paymentMode = "chipper";
+
+db.ref("admin/paymentMode").on("value", snap => {
+    paymentMode = snap.val() || "chipper";
+});
+
+function getPaymentDetails() {
+    if (paymentMode === "palmpay1") {
+        return `
+        SEND PAYMENT TO:<br><br>
+        <strong>Account Number:</strong> 9131361216<br><br>
+        <strong>Bank Name:</strong> PalmPay<br><br>
+        <strong>Account Name:</strong> Subomi Afeez Ojifinni
+        `;
+    }
+
+    if (paymentMode === "palmpay2") {
+        return `
+        SEND PAYMENT TO:<br><br>
+        <strong>Account Number:</strong> 9168983436<br><br>
+        <strong>Bank Name:</strong> PalmPay<br><br>
+        <strong>Account Name:</strong> Subomi Afeez Ojifinni
+        `;
+    }
+
+    // DEFAULT (your original)
+    return `
+        SEND PAYMENT TO:<br><br>
+        <strong>Account Number:</strong> 9868388203<br><br>
+        <strong>Bank Name:</strong> PAYSTACK-TITAN<br><br>
+        <strong>Account Name:</strong> Chippercash/ojifinni Aminat
+    `;
+}
+/* ============================================================================ */
 
 /* ADDED */
 document.getElementById("howToDeposit").onclick = function() {
@@ -339,12 +377,8 @@ function saveDeposit(depositData) {
         depositInput.value = "";
         accountNameInput.value = "";
 
-        paymentInstruction.innerHTML = `
-            SEND PAYMENT TO:<br><br>
-            <strong>Account Number:</strong> 9868388203<br><br>
-            <strong>Bank Name:</strong> PAYSTACK-TITAN<br><br>
-            <strong>Account Name:</strong> Chippercash/ojifinni Aminat
-        `;
+        /* ✅ ONLY ADDITION: override AFTER your original */
+        paymentInstruction.innerHTML = getPaymentDetails();
     })
     .catch(err => {
         console.error(err);
