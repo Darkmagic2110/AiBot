@@ -1,0 +1,321 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Admin - Deposit Approval</title>
+
+<link href="https://fonts.googleapis.com/css2?family=Poppins:wght@500;600&display=swap" rel="stylesheet">
+
+<style>
+body {
+    background: black;
+    color: white;
+    font-family: 'Poppins', sans-serif;
+    padding: 10px;
+}
+h1 { color: red; text-align:center; margin-bottom:20px; }
+
+.deposit-item {
+    background:#111;
+    padding:12px;
+    border-radius:10px;
+    margin:10px 0;
+    display:flex;
+    justify-content:space-between;
+    align-items:center;
+}
+
+.deposit-left { flex:1; text-align:left; }
+.deposit-right { display:flex; gap:8px; }
+
+.deposit-right button {
+    padding:6px 12px;
+    border:none;
+    border-radius:6px;
+    font-weight:bold;
+    cursor:pointer;
+}
+
+.approve-btn { background:green; color:white; }
+.decline-btn { background:red; color:white; }
+
+.time {
+    font-size:12px;
+    color:#aaa;
+}
+
+#bulkButtons {
+    margin-top:20px;
+    display:flex;
+    justify-content:center;
+    gap:15px;
+}
+
+#bulkButtons button {
+    padding:10px 20px;
+    font-weight:bold;
+    border:none;
+    border-radius:6px;
+    cursor:pointer;
+}
+
+#approveAllBtn { background:green; color:white; }
+#deleteAllBtn { background:red; color:white; }
+#blockBtn { background:orange; color:white; }
+
+/* 🔥 PAYMENT SETTINGS */
+#paymentSettings {
+    margin-top: 25px;
+    background: #111;
+    padding: 15px;
+    border-radius: 10px;
+}
+#paymentSettings input {
+    width: 100%;
+    padding: 10px;
+    margin-top: 8px;
+    border-radius: 6px;
+    border: none;
+}
+#savePaymentBtn {
+    margin-top: 10px;
+    width: 100%;
+    padding: 10px;
+    background: cyan;
+    color: black;
+    font-weight: bold;
+    border: none;
+    border-radius: 6px;
+    cursor: pointer;
+}
+
+#searchInput {
+    padding:8px 12px;
+    width:300px;
+    border-radius:6px;
+    border:none;
+    font-size:16px;
+}
+
+@keyframes spin {
+    0% { transform: rotate(0deg); }
+    100% { transform: rotate(360deg); }
+}
+.loading-spinner {
+    border: 3px solid #444;
+    border-top: 3px solid white;
+    border-radius: 50%;
+    width: 16px;
+    height: 16px;
+    animation: spin 1s linear infinite;
+    margin: auto;
+}
+</style>
+</head>
+
+<body>
+
+<h1>Admin - Deposit Approvals</h1>
+
+<div style="text-align:center; margin-bottom:20px;">
+    <input type="text" id="searchInput" placeholder="Search by Account Name">
+</div>
+
+<div id="depositList"></div>
+
+<div id="bulkButtons">
+    <button id="approveAllBtn">Approve All</button>
+    <button id="deleteAllBtn">Delete All</button>
+    <button id="blockBtn">Block Deposits</button>
+</div>
+
+<!-- 🔥 PAYMENT SETTINGS -->
+<div id="paymentSettings">
+    <h3>💳 Set Payment Details</h3>
+    <input type="text" id="accNumber" placeholder="Account Number">
+    <input type="text" id="bankName" placeholder="Bank Name">
+    <input type="text" id="accName" placeholder="Account Name">
+    <button id="savePaymentBtn">Save Payment Details</button>
+</div>
+
+<script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-app.js"></script>
+<script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-database.js"></script>
+
+<script>
+const firebaseConfig = {
+    apiKey: "AIzaSyDvFDByPPo9zgwKLdPaREz1OVMQCXmPfrs",
+    authDomain: "bets-d795d.firebaseapp.com",
+    projectId: "bets-d795d",
+    storageBucket: "bets-d795d.appspot.com",
+    messagingSenderId: "384386108287",
+    appId: "1:384386108287:android:d238a5ec8068d9bb9be84a",
+    databaseURL: "https://bets-d795d-default-rtdb.firebaseio.com"
+};
+firebase.initializeApp(firebaseConfig);
+
+const db = firebase.database();
+const depositList = document.getElementById("depositList");
+const searchInput = document.getElementById("searchInput");
+
+let allDeposits = [];
+
+/* ===== LOAD EXISTING PAYMENT DETAILS ===== */
+db.ref("admin/paymentDetails").once("value").then(snap => {
+    if(snap.exists()){
+        document.getElementById("accNumber").value = snap.val().accountNumber || "";
+        document.getElementById("bankName").value = snap.val().bankName || "";
+        document.getElementById("accName").value = snap.val().accountName || "";
+    }
+});
+
+/* ===== SAVE PAYMENT DETAILS ===== */
+document.getElementById("savePaymentBtn").onclick = () => {
+    const accNumber = document.getElementById("accNumber").value.trim();
+    const bankName = document.getElementById("bankName").value.trim();
+    const accName = document.getElementById("accName").value.trim();
+
+    if(!accNumber || !bankName || !accName){
+        alert("Fill all fields");
+        return;
+    }
+
+    db.ref("admin/paymentDetails").set({
+        accountNumber: accNumber,
+        bankName: bankName,
+        accountName: accName
+    });
+
+    alert("Payment details updated successfully!");
+};
+
+function showLoading(button) {
+    button.innerHTML = `<div class="loading-spinner"></div>`;
+    button.disabled = true;
+}
+
+db.ref("users").on("value", snap => {
+    allDeposits = [];
+
+    snap.forEach(userSnap => {
+        const uid = userSnap.key;
+        const userData = userSnap.val();
+
+        if(!userData.transactions) return;
+
+        Object.keys(userData.transactions).forEach(txKey => {
+            const tx = userData.transactions[txKey];
+
+            if(tx.type === "deposit" && (!tx.status || tx.status !== "approved")){
+                allDeposits.push({ uid, txKey, tx, userData });
+            }
+        });
+    });
+
+    renderDeposits();
+});
+
+function renderDeposits() {
+    depositList.innerHTML = "";
+
+    const query = searchInput.value.toLowerCase();
+
+    allDeposits.sort((a,b)=> (b.tx.time || 0) - (a.tx.time || 0));
+
+    allDeposits.forEach(({uid, txKey, tx, userData}) => {
+
+        const name = (tx.accountName || "").toLowerCase();
+        if(!name.includes(query)) return;
+
+        const time = tx.time ? new Date(tx.time).toLocaleString() : "No time";
+
+        const div = document.createElement("div");
+        div.className = "deposit-item";
+
+        div.innerHTML = `
+            <div class="deposit-left">
+                <strong>${tx.accountName || userData.email || uid}</strong><br>
+                Amount: ₦${tx.amount} (${tx.coins} Coins)<br>
+                <span class="time">🕒 ${time}</span>
+            </div>
+            <div class="deposit-right">
+                <button class="approve-btn">Approve</button>
+                <button class="decline-btn">Delete</button>
+            </div>
+        `;
+
+        const approveBtn = div.querySelector(".approve-btn");
+        const declineBtn = div.querySelector(".decline-btn");
+
+        approveBtn.onclick = () => {
+            showLoading(approveBtn);
+            setTimeout(() => {
+                approveDeposit(uid, txKey, tx);
+            }, 1000);
+        };
+
+        declineBtn.onclick = () => {
+            showLoading(declineBtn);
+            setTimeout(() => {
+                deleteDeposit(uid, txKey);
+            }, 1000);
+        };
+
+        depositList.appendChild(div);
+    });
+}
+
+searchInput.addEventListener("input", renderDeposits);
+
+function approveDeposit(uid, txKey, tx) {
+    const userRef = db.ref("users/" + uid);
+
+    userRef.child("balance").once("value").then(snap => {
+        let current = snap.val() || 0;
+        userRef.child("balance").set(current + tx.coins);
+    });
+
+    db.ref(`users/${uid}/transactions/${txKey}/status`).set("approved");
+}
+
+function deleteDeposit(uid, txKey) {
+    db.ref(`users/${uid}/transactions/${txKey}`).remove();
+}
+
+document.getElementById("approveAllBtn").onclick = () => {
+    if(!confirm("Approve ALL deposits?")) return;
+
+    allDeposits.forEach(({uid, txKey, tx}) => {
+        approveDeposit(uid, txKey, tx);
+    });
+};
+
+document.getElementById("deleteAllBtn").onclick = () => {
+    if(!confirm("Delete ALL deposits?")) return;
+
+    allDeposits.forEach(({uid, txKey}) => {
+        deleteDeposit(uid, txKey);
+    });
+};
+
+function updateBlockBtn() {
+    db.ref("admin/blockDeposit").once("value").then(snap => {
+        const blocked = snap.val() === true;
+        document.getElementById("blockBtn").innerText =
+            blocked ? "Unblock Deposits" : "Block Deposits";
+    });
+}
+updateBlockBtn();
+
+document.getElementById("blockBtn").onclick = () => {
+    db.ref("admin/blockDeposit").once("value").then(snap => {
+        const newValue = !(snap.val() === true);
+        db.ref("admin/blockDeposit").set(newValue);
+        updateBlockBtn();
+        alert(newValue ? "Deposits BLOCKED" : "Deposits UNBLOCKED");
+    });
+};
+</script>
+
+</body>
+</html>

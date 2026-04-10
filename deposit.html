@@ -104,13 +104,11 @@ button:hover {
     100% { opacity: 0.4; text-shadow: 0 0 20px yellow, 0 0 30px red; }
 }
 
-/* NEW GLOW EFFECT */
 @keyframes glowText {
     0% { opacity: 1; text-shadow: 0 0 5px yellow, 0 0 10px orange; }
     100% { opacity: 0.5; text-shadow: 0 0 20px yellow, 0 0 30px red; }
 }
 
-/* ADDED HOW TO DEPOSIT STYLE */
 #howToDeposit {
     width: 92%;
     margin: 10px auto 0;
@@ -128,7 +126,6 @@ button:hover {
     display: none;
 }
 
-/* Transaction UI */
 #historyBox {
     margin-top: 25px;
     text-align: left;
@@ -163,10 +160,8 @@ button:hover {
 
 <div id="coinRate">₦200 = 1 coin</div>
 
-<!-- ADDED -->
 <div id="howToDeposit"><b>HOW TO DEPOSIT</b></div>
 
-<!-- ADDED -->
 <div id="howToContent">
 <b>
 - INPUT THE AMOUNT YOU WANT TO IN NAIRA <br><br>
@@ -194,8 +189,6 @@ button:hover {
 <script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-auth.js"></script>
 <script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-database.js"></script>
 
-<!-- EVERYTHING ABOVE REMAINS EXACTLY THE SAME -->
-
 <script>
 const firebaseConfig = {
     apiKey: "AIzaSyDvFDByPPo9zgwKLdPaREz1OVMQCXmPfrs",
@@ -216,43 +209,29 @@ const accountNameInput = document.getElementById("accountName");
 const historyList = document.getElementById("historyList");
 const paymentInstruction = document.getElementById("paymentInstruction");
 
-/* ================== ✅ NEWLY ADDED (DO NOT REMOVE YOUR CODE) ================== */
-let paymentMode = "chipper";
+/* ================== ✅ UPDATED (FETCH FROM FIREBASE) ================== */
+let paymentDetails = {
+    accountNumber: "",
+    bankName: "",
+    accountName: ""
+};
 
-db.ref("admin/paymentMode").on("value", snap => {
-    paymentMode = snap.val() || "chipper";
+db.ref("admin/paymentDetails").on("value", snap => {
+    if (snap.exists()) {
+        paymentDetails = snap.val();
+    }
 });
 
 function getPaymentDetails() {
-    if (paymentMode === "palmpay1") {
-        return `
-        SEND PAYMENT TO:<br><br>
-        <strong>Account Number:</strong> 9131361216<br><br>
-        <strong>Bank Name:</strong> PalmPay<br><br>
-        <strong>Account Name:</strong> Subomi Afeez Ojifinni
-        `;
-    }
-
-    if (paymentMode === "palmpay2") {
-        return `
-        SEND PAYMENT TO:<br><br>
-        <strong>Account Number:</strong> 9168983436<br><br>
-        <strong>Bank Name:</strong> PalmPay<br><br>
-        <strong>Account Name:</strong> Subomi Afeez Ojifinni
-        `;
-    }
-
-    // DEFAULT (your original)
     return `
-        SEND PAYMENT TO:<br><br>
-        <strong>Account Number:</strong> 9868388203<br><br>
-        <strong>Bank Name:</strong> PAYSTACK-TITAN<br><br>
-        <strong>Account Name:</strong> Chippercash/ojifinni Aminat
+    SEND PAYMENT TO:<br><br>
+    <strong>Account Number:</strong> ${paymentDetails.accountNumber || "Loading..."}<br><br>
+    <strong>Bank Name:</strong> ${paymentDetails.bankName || "Loading..."}<br><br>
+    <strong>Account Name:</strong> ${paymentDetails.accountName || "Loading..."}
     `;
 }
-/* ============================================================================ */
+/* ===================================================================== */
 
-/* ADDED */
 document.getElementById("howToDeposit").onclick = function() {
     const box = document.getElementById("howToContent");
     box.style.display = (box.style.display === "block") ? "none" : "block";
@@ -377,7 +356,6 @@ function saveDeposit(depositData) {
         depositInput.value = "";
         accountNameInput.value = "";
 
-        /* ✅ ONLY ADDITION: override AFTER your original */
         paymentInstruction.innerHTML = getPaymentDetails();
     })
     .catch(err => {
