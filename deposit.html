@@ -246,16 +246,16 @@ let amount=Number(depositInput.value);
 let v=validateAmount(amount);
 if(!v.valid) return toast(v.msg);
 
-/* 🔥 CHECK AVAILABLE LINKS FROM FIREBASE */
+/* 🔥 FIXED STRING KEY ISSUE */
 const snap = await db.ref("paymentLinks").once("value");
 
-if(!snap.hasChild(amount)){
+if(!snap.hasChild(String(amount))){
     let available=[];
     snap.forEach(c=> available.push("₦"+c.key));
     return toast("Deposit Amount Link Not Available for ₦"+amount+" | Available: "+available.join(", "));
 }
 
-let selar = snap.child(amount).val();
+let selar = snap.child(String(amount)).val();
 
 let txId=generateTxId();
 
