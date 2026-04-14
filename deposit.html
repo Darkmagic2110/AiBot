@@ -22,7 +22,7 @@ h1 {
     color: red;
     margin-bottom: 5px;
 }
-input[type="number"] {
+input[type="number"], input[type="text"] {
     width: 90%;
     padding: 12px;
     font-size: 18px;
@@ -42,11 +42,18 @@ button {
     border: none;
     margin-top: 12px;
     cursor: pointer;
+    letter-spacing: 0.5px;
+    transition: 0.3s ease-in-out;
+    box-shadow: 0 0 18px rgba(255, 0, 0, 0.7);
+}
+button:hover {
+    box-shadow: 0 0 25px rgba(255, 0, 0, 1);
 }
 #toast {
     visibility: hidden;
     min-width: 240px;
     background-color: red;
+    font-family: 'Poppins', sans-serif;
     color: black;
     text-align: center;
     border-radius: 10px;
@@ -55,13 +62,36 @@ button {
     bottom: 30px;
     left: 50%;
     transform: translateX(-50%);
+    font-size: 18px;
+    z-index: 99999;
     opacity: 0;
-    transition: 0.3s;
+    transition: opacity 0.3s, bottom 0.3s;
 }
 #toast.show {
     visibility: visible;
     opacity: 1;
     bottom: 50px;
+}
+#depositStatus {
+    margin-top: 15px;
+    font-size: 18px;
+    color: yellow;
+}
+#coinRate {
+    font-size: 16px;
+    color: cyan;
+    margin-top: 5px;
+}
+#refreshNotice {
+    font-size: 14px;
+    color: yellow;
+    margin-top: 12px;
+    font-weight: bold;
+    animation: blinkGlow 1s infinite alternate;
+}
+@keyframes blinkGlow {
+    0% { opacity: 1; text-shadow: 0 0 5px yellow, 0 0 10px orange; }
+    100% { opacity: 0.4; text-shadow: 0 0 20px yellow, 0 0 30px red; }
 }
 #historyBox { margin-top: 25px; text-align: left; }
 .history-item {
@@ -74,16 +104,20 @@ button {
 }
 .history-title { color: lime; }
 .history-sub { font-size: 12px; color: #aaa; }
-.history-naira { color: cyan; }
+.history-naira { color: cyan; font-size: 13px; }
 </style>
 </head>
-
 <body>
 
 <h1>Deposit Coins</h1>
 
-<input type="number" id="depositAmount" placeholder="Enter deposit amount (₦)" />
+<input type="number" id="depositAmount" placeholder="Enter deposit amount (₦)" min="1000" />
+<div id="coinRate">₦200 = 1 coin</div>
 <button id="submitDepositBtn">💰 Buy Coins</button>
+
+<div id="depositStatus"></div>
+
+<div id="refreshNotice">⚡ Make sure to return back to the site immediately after payment ⚡</div>
 
 <div id="historyBox">
     <h3>📜 Transactions</h3>
@@ -98,8 +132,9 @@ button {
 
 <script>
 const firebaseConfig = {
-    apiKey: "AIzaSy...",
+    apiKey: "AIzaSyDvFDByPPo9zgwKLdPaREz1OVMQCXmPfrs",
     authDomain: "bets-d795d.firebaseapp.com",
+    projectId: "bets-d795d",
     databaseURL: "https://bets-d795d-default-rtdb.firebaseio.com"
 };
 firebase.initializeApp(firebaseConfig);
@@ -109,22 +144,12 @@ const depositInput = document.getElementById("depositAmount");
 const submitBtn = document.getElementById("submitDepositBtn");
 const historyList = document.getElementById("historyList");
 
-let availableAmounts = [];
-
 function toast(msg){
     const t=document.getElementById("toast");
     t.innerHTML=msg;
     t.className="show";
     setTimeout(()=>t.className="",3000);
 }
-
-/* LOAD AVAILABLE AMOUNTS */
-db.ref("settings/amountLinks").once("value").then(snap=>{
-    availableAmounts=[];
-    snap.forEach(c=>{
-        availableAmounts.push(Number(c.key));
-    });
-});
 
 /* TX ID */
 function generateTxId(){
@@ -133,19 +158,8 @@ function generateTxId(){
 
 /* VALIDATION */
 function validateAmount(amount){
-
-    if(amount < 1000) return {valid:false,msg:"Minimum ₦1000"};
-
-    if(amount % 200 !== 0) return {valid:false,msg:"Use multiples of ₦200"};
-
-    if(!availableAmounts.includes(amount)){
-        let list = availableAmounts.sort((a,b)=>a-b).join(", ₦");
-        return {
-            valid:false,
-            msg:`Deposit Amount Link Not Available For ₦${amount}<br><br>Available: ₦${list}`
-        };
-    }
-
+    if(amount<1000) return {valid:false,msg:"Minimum ₦1000"};
+    if(amount%200!==0) return {valid:false,msg:"Use multiples of ₦200"};
     return {valid:true,coins:amount/200};
 }
 
@@ -153,7 +167,7 @@ function validateAmount(amount){
 firebase.auth().onAuthStateChanged(async user=>{
 if(!user){ location.href="login.html"; return; }
 
-/* HANDLE RETURN */
+/* 🔥 GET TX FROM LOCAL STORAGE */
 const txId = localStorage.getItem("pending_tx");
 
 if(txId){
@@ -198,31 +212,27 @@ if(txId){
     },1500);
 }
 
-/* LOAD HISTORY (LATEST FIRST) */
+/* LOAD HISTORY (LATEST FIRST FIXED) */
 db.ref("users/"+user.uid+"/transactions").once("value").then(snap=>{
+historyList.innerHTML="";
+let arr=[];
+snap.forEach(c=>{
+    arr.push(c.val());
+});
+arr.sort((a,b)=>b.time-a.time);
 
-    historyList.innerHTML="";
-    let arr=[];
-
-    snap.forEach(c=>{
-        arr.push(c.val());
-    });
-
-    arr.sort((a,b)=> b.time - a.time);
-
-    arr.forEach(t=>{
-        if(t.type==="deposit"){
-            historyList.innerHTML+=`
-            <div class="history-item">
-            <div>
-            <div class="history-title">+${t.coins} Coins</div>
-            <div class="history-sub">${new Date(t.time).toLocaleString()}</div>
-            </div>
-            <div class="history-naira">₦${t.amount}</div>
-            </div>`;
-        }
-    });
-
+arr.forEach(t=>{
+if(t.type==="deposit"){
+historyList.innerHTML+=`
+<div class="history-item">
+<div>
+<div class="history-title">+${t.coins} Coins</div>
+<div class="history-sub">${new Date(t.time).toLocaleString()}</div>
+</div>
+<div class="history-naira">₦${t.amount}</div>
+</div>`;
+}
+});
 });
 });
 
@@ -236,8 +246,20 @@ let amount=Number(depositInput.value);
 let v=validateAmount(amount);
 if(!v.valid) return toast(v.msg);
 
+/* 🔥 CHECK AVAILABLE LINKS FROM FIREBASE */
+const snap = await db.ref("paymentLinks").once("value");
+
+if(!snap.hasChild(amount)){
+    let available=[];
+    snap.forEach(c=> available.push("₦"+c.key));
+    return toast("Deposit Amount Link Not Available for ₦"+amount+" | Available: "+available.join(", "));
+}
+
+let selar = snap.child(amount).val();
+
 let txId=generateTxId();
 
+/* SAVE TX */
 await db.ref("transactions/"+txId).set({
 uid:user.uid,
 amount:amount,
@@ -246,11 +268,11 @@ status:"pending",
 time:Date.now()
 });
 
+/* SAVE LOCAL */
 localStorage.setItem("pending_tx", txId);
 
-let selar="https://selar.com/wz7sf30yxy";
-
-window.location.href=selar+"?amount="+amount;
+/* REDIRECT */
+window.location.href=selar;
 };
 </script>
 
