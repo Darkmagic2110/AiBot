@@ -113,6 +113,7 @@ button:hover {
 .history-naira { color: cyan; font-size: 13px; }
 </style>
 </head>
+
 <body>
 
 <h1>Deposit Coins</h1>
@@ -132,6 +133,7 @@ button:hover {
 
 <div id="toast"></div>
 
+<!-- Firebase -->
 <script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-app.js"></script>
 <script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-auth.js"></script>
 <script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-database.js"></script>
@@ -143,6 +145,7 @@ const firebaseConfig = {
     projectId: "bets-d795d",
     databaseURL: "https://bets-d795d-default-rtdb.firebaseio.com"
 };
+
 firebase.initializeApp(firebaseConfig);
 const db = firebase.database();
 
@@ -157,120 +160,136 @@ function toast(msg){
     setTimeout(()=>t.className="",3000);
 }
 
-/* TX ID */
 function generateTxId(){
     return "TX-"+Date.now()+"-"+Math.floor(Math.random()*999999);
 }
 
-/* VALIDATION */
 function validateAmount(amount){
-    if(amount<1000) return {valid:false,msg:"Minimum ₦1000"};
-    if(amount%200!==0) return {valid:false,msg:"Use multiples of ₦200"};
+    if(amount < 1000) return {valid:false,msg:"Minimum ₦1000"};
+    if(amount % 200 !== 0) return {valid:false,msg:"Use multiples of ₦200"};
     return {valid:true,coins:amount/200};
 }
 
-/* AUTH */
-firebase.auth().onAuthStateChanged(user=>{
-if(!user){ location.href="login.html"; return; }
+/* AUTH + RETURN HANDLER (FIXED FLOW) */
+firebase.auth().onAuthStateChanged(user => {
 
-/* CHECK RETURN */
-const params=new URLSearchParams(location.search);
-const txId=params.get("tx");
+    if(!user){
+        location.href = "login.html";
+        return;
+    }
 
-if(txId){
+    /* LOAD HISTORY */
+    db.ref("users/" + user.uid + "/transactions").once("value").then(snap=>{
+        historyList.innerHTML="";
+        snap.forEach(c=>{
+            let t=c.val();
+            if(t.type==="deposit"){
+                historyList.innerHTML+=`
+                <div class="history-item">
+                    <div>
+                        <div class="history-title">+${t.coins} Coins</div>
+                        <div class="history-sub">${new Date(t.time).toLocaleString()}</div>
+                    </div>
+                    <div class="history-naira">₦${t.amount}</div>
+                </div>`;
+            }
+        });
+    });
 
-    const txRef=db.ref("transactions/"+txId);
+    /* HANDLE RETURN FROM SELAR */
+    const params = new URLSearchParams(window.location.search);
+    const txId = params.get("tx");
 
-    txRef.once("value").then(snap=>{
-        if(!snap.exists()) return toast("Invalid transaction");
+    if(txId){
 
-        const tx=snap.val();
+        const txRef = db.ref("transactions/" + txId);
 
-        if(tx.status==="done") return toast("Already used");
-        if(tx.uid!==user.uid) return toast("Unauthorized");
+        txRef.once("value").then(snap=>{
+            if(!snap.exists()){
+                toast("Invalid transaction");
+                return;
+            }
 
-        /* ✅ FIXED BALANCE ADD (REAL SOLUTION) */
-        let userRef = db.ref("users/" + user.uid + "/balance");
+            const tx = snap.val();
 
-        userRef.once("value").then(snap=>{
-            let current = snap.val();
-            if(current === null || current === undefined) current = 0;
+            if(tx.status === "done"){
+                toast("Already used");
+                return;
+            }
 
-            return userRef.set(Number(current) + Number(tx.coins));
-        }).then(()=>{
+            if(tx.uid !== user.uid){
+                toast("Unauthorized");
+                return;
+            }
 
-            return db.ref("users/"+user.uid+"/transactions").push({
-                type:"deposit",
-                coins:tx.coins,
-                amount:tx.amount,
-                ref:txId,
-                time:Date.now()
+            let userRef = db.ref("users/" + user.uid);
+
+            /* SAFE BALANCE UPDATE */
+            userRef.child("balance").once("value").then(bal=>{
+                let current = bal.val();
+                if(current === null || current === undefined) current = 0;
+
+                return userRef.child("balance").set(
+                    Number(current) + Number(tx.coins)
+                );
+            }).then(()=>{
+
+                return userRef.child("transactions").push({
+                    type:"deposit",
+                    coins:tx.coins,
+                    amount:tx.amount,
+                    ref:txId,
+                    time:Date.now()
+                });
+
+            }).then(()=>{
+
+                return txRef.update({status:"done"});
+
+            }).then(()=>{
+
+                toast("✅ Coins Added Successfully");
+
+                setTimeout(()=>{
+                    window.location.href="maining.html";
+                },1500);
+
+            }).catch(err=>{
+                console.log(err);
+                toast("❌ Error processing transaction");
             });
 
-        }).then(()=>{
-
-            return txRef.update({status:"done"});
-
-        }).then(()=>{
-
-            toast("✅ Coins Added");
-
-            setTimeout(()=>{
-                window.location.href="maining.html";
-            },1500);
-
         });
+    }
 
+});
+
+/* CLICK BUY */
+submitBtn.onclick = () => {
+
+    const user = firebase.auth().currentUser;
+    if(!user) return toast("Login required");
+
+    let amount = Number(depositInput.value);
+    let v = validateAmount(amount);
+    if(!v.valid) return toast(v.msg);
+
+    let txId = generateTxId();
+
+    /* SAVE TRANSACTION FIRST */
+    db.ref("transactions/" + txId).set({
+        uid:user.uid,
+        amount:amount,
+        coins:v.coins,
+        status:"pending",
+        time:Date.now()
     });
-}
 
-/* LOAD HISTORY */
-db.ref("users/"+user.uid+"/transactions").once("value").then(snap=>{
-historyList.innerHTML="";
-snap.forEach(c=>{
-let t=c.val();
-if(t.type==="deposit"){
-historyList.innerHTML+=`
-<div class="history-item">
-<div>
-<div class="history-title">+${t.coins} Coins</div>
-<div class="history-sub">${new Date(t.time).toLocaleString()}</div>
-</div>
-<div class="history-naira">₦${t.amount}</div>
-</div>`;
-}
-});
-});
-});
+    /* SELAR REDIRECT */
+    let selar = "https://selar.com/wz7sf30yxy";
+    let redirect = encodeURIComponent(location.href.split("?")[0] + "?tx=" + txId);
 
-/* CLICK */
-submitBtn.onclick=()=>{
-
-const user=firebase.auth().currentUser;
-if(!user) return;
-
-let amount=Number(depositInput.value);
-let v=validateAmount(amount);
-if(!v.valid) return toast(v.msg);
-
-let txId=generateTxId();
-
-/* SAVE TX */
-db.ref("transactions/"+txId).set({
-uid:user.uid,
-amount:amount,
-coins:v.coins,
-status:"pending",
-time:Date.now()
-});
-
-/* 🔥 SELAR PAYMENT */
-let selar="https://selar.com/wz7sf30yxy";
-
-/* REDIRECT BACK */
-let redirect=encodeURIComponent(location.href.split("?")[0]+"?tx="+txId);
-
-window.location.href=selar+"?amount="+amount+"&redirect_url="+redirect;
+    window.location.href = selar + "?amount=" + amount + "&redirect_url=" + redirect;
 };
 </script>
 
