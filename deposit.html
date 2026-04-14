@@ -16,13 +16,14 @@ body {
     text-align: center;
     padding: 10px;
 }
+
 h1 {
     font-family: 'UnifrakturCook', cursive;
     font-size: 35px;
     color: red;
-    margin-bottom: 5px;
 }
-input[type="number"], input[type="text"] {
+
+input {
     width: 90%;
     padding: 12px;
     font-size: 18px;
@@ -30,84 +31,43 @@ input[type="number"], input[type="text"] {
     border-radius: 8px;
     border: none;
 }
+
 button {
     width: 92%;
     padding: 14px;
     background: #e60000;
-    font-family: 'Poppins', sans-serif;
+    color: white;
     font-size: 18px;
-    color: #ffffff;
-    font-weight: 600;
-    border-radius: 10px;
     border: none;
+    border-radius: 10px;
     margin-top: 12px;
     cursor: pointer;
-    letter-spacing: 0.5px;
-    transition: 0.3s ease-in-out;
-    box-shadow: 0 0 18px rgba(255, 0, 0, 0.7);
 }
-button:hover {
-    box-shadow: 0 0 25px rgba(255, 0, 0, 1);
-}
+
 #toast {
     visibility: hidden;
-    min-width: 240px;
-    background-color: red;
-    font-family: 'Poppins', sans-serif;
-    color: black;
-    text-align: center;
-    border-radius: 10px;
-    padding: 12px;
     position: fixed;
     bottom: 30px;
     left: 50%;
     transform: translateX(-50%);
-    font-size: 18px;
-    z-index: 99999;
-    opacity: 0;
-    transition: opacity 0.3s, bottom 0.3s;
+    background: red;
+    padding: 12px;
+    border-radius: 10px;
+    color: black;
 }
+
 #toast.show {
     visibility: visible;
-    opacity: 1;
-    bottom: 50px;
 }
-#depositStatus {
-    margin-top: 15px;
-    font-size: 18px;
-    color: yellow;
-}
-#coinRate {
-    font-size: 16px;
-    color: cyan;
-    margin-top: 5px;
-}
-#refreshNotice {
-    font-size: 14px;
-    color: yellow;
-    margin-top: 12px;
-    font-weight: bold;
-    animation: blinkGlow 1s infinite alternate;
-}
-@keyframes blinkGlow {
-    0% { opacity: 1; text-shadow: 0 0 5px yellow, 0 0 10px orange; }
-    100% { opacity: 0.4; text-shadow: 0 0 20px yellow, 0 0 30px red; }
-}
-#historyBox {
-    margin-top: 25px;
-    text-align: left;
-}
+
 .history-item {
     background: #111;
-    border-radius: 10px;
     padding: 12px;
-    margin: 10px 0;
-    display: flex;
-    justify-content: space-between;
+    margin-top: 10px;
+    border-radius: 10px;
+    display:flex;
+    justify-content:space-between;
 }
-.history-title { color: lime; }
-.history-sub { font-size: 12px; color: #aaa; }
-.history-naira { color: cyan; font-size: 13px; }
 </style>
 </head>
 
@@ -115,18 +75,14 @@ button:hover {
 
 <h1>Deposit Coins</h1>
 
-<input type="number" id="depositAmount" placeholder="Enter deposit amount (₦)" min="1000" />
-<div id="coinRate">₦200 = 1 coin</div>
+<input type="number" id="depositAmount" placeholder="Enter amount (₦)" min="1000" />
 <button id="submitDepositBtn">💰 Buy Coins</button>
 
-<div id="depositStatus"></div>
+<button id="verifyBtn" style="display:none; background:green;">
+✅ I have made payment (Verify)
+</button>
 
-<div id="refreshNotice">⚡ Make sure to return back to the site immediately after payment ⚡</div>
-
-<div id="historyBox">
-    <h3>📜 Transactions</h3>
-    <div id="historyList"></div>
-</div>
+<div id="historyBox"></div>
 
 <div id="toast"></div>
 
@@ -138,21 +94,19 @@ button:hover {
 const firebaseConfig = {
     apiKey: "AIzaSyDvFDByPPo9zgwKLdPaREz1OVMQCXmPfrs",
     authDomain: "bets-d795d.firebaseapp.com",
-    projectId: "bets-d795d",
-    databaseURL: "https://bets-d795d-default-rtdb.firebaseio.com"
+    databaseURL: "https://bets-d795d-default-rtdb.firebaseio.com",
+    projectId: "bets-d795d"
 };
 
 firebase.initializeApp(firebaseConfig);
 const db = firebase.database();
 
-const depositInput = document.getElementById("depositAmount");
-const submitBtn = document.getElementById("submitDepositBtn");
-const historyList = document.getElementById("historyList");
+let currentTxId = null;
 
 function toast(msg){
-    const t=document.getElementById("toast");
-    t.innerHTML=msg;
-    t.className="show";
+    const t = document.getElementById("toast");
+    t.innerHTML = msg;
+    t.className = "show";
     setTimeout(()=>t.className="",3000);
 }
 
@@ -160,124 +114,104 @@ function generateTxId(){
     return "TX-"+Date.now()+"-"+Math.floor(Math.random()*999999);
 }
 
-function validateAmount(amount){
-    if(amount < 1000) return {valid:false,msg:"Minimum ₦1000"};
-    if(amount % 200 !== 0) return {valid:false,msg:"Use multiples of ₦200"};
-    return {valid:true,coins:amount/200};
+function validate(amount){
+    if(amount < 1000) return false;
+    if(amount % 200 !== 0) return false;
+    return true;
 }
 
-function getTx(){
-    return new URLSearchParams(window.location.search).get("tx");
-}
-
-/* AUTH */
+/* ================= AUTH ================= */
 firebase.auth().onAuthStateChanged(async user=>{
-if(!user){ location.href="login.html"; return; }
+if(!user) return location.href="login.html";
 
-/* =================== CREDIT ONLY ON VALID TX =================== */
-const txId = getTx();
+/* LOAD HISTORY */
+db.ref("users/"+user.uid+"/transactions").once("value").then(snap=>{
+    let box = document.getElementById("historyBox");
+    box.innerHTML = "";
 
-if(txId){
+    let arr=[];
+    snap.forEach(c=>arr.push(c.val()));
+    arr.sort((a,b)=>(b.time||0)-(a.time||0));
 
-    const txRef = db.ref("transactions/"+txId);
+    arr.forEach(t=>{
+        if(t.type==="deposit"){
+            box.innerHTML += `
+            <div class="history-item">
+                <div>+${t.coins} Coins</div>
+                <div>₦${t.amount}</div>
+            </div>`;
+        }
+    });
+});
+
+/* VERIFY BUTTON */
+document.getElementById("verifyBtn").onclick = async ()=>{
+
+    if(!currentTxId) return toast("No transaction found");
+
+    const txRef = db.ref("transactions/"+currentTxId);
     const snap = await txRef.once("value");
 
     if(!snap.exists()) return toast("Invalid transaction");
 
     const tx = snap.val();
 
-    if(tx.status === "done") return;
+    if(tx.status === "done") return toast("Already credited");
 
-    if(tx.uid !== user.uid) return toast("Unauthorized");
+    if(tx.status !== "pending") return toast("Payment not confirmed yet");
 
-    if(tx.status !== "pending") return;
-
-    /* SAFE CREDIT */
-    await db.ref("users/"+user.uid+"/balance").transaction(current=>{
-        return (current||0) + tx.coins;
+    /* CREDIT SAFE */
+    await db.ref("users/"+user.uid+"/balance").transaction(b=>{
+        return (b||0) + tx.coins;
     });
 
     await db.ref("users/"+user.uid+"/transactions").push({
         type:"deposit",
         coins:tx.coins,
         amount:tx.amount,
-        ref:txId,
         time:Date.now()
     });
 
     await txRef.update({status:"done"});
 
-    toast("✅ Coins Added");
+    toast("✅ Payment Verified & Coins Added");
 
     setTimeout(()=>{
         window.location.href="maining.html";
     },1500);
-
-    return;
-}
-
-/* =================== HISTORY (LATEST FIRST) =================== */
-db.ref("users/"+user.uid+"/transactions").once("value").then(snap=>{
-    historyList.innerHTML="";
-    let arr=[];
-
-    snap.forEach(c=>arr.push(c.val()));
-
-    arr.sort((a,b)=>(b.time||0)-(a.time||0));
-
-    arr.forEach(t=>{
-        if(t.type==="deposit"){
-            historyList.innerHTML += `
-            <div class="history-item">
-                <div>
-                    <div class="history-title">+${t.coins} Coins</div>
-                    <div class="history-sub">${new Date(t.time).toLocaleString()}</div>
-                </div>
-                <div class="history-naira">₦${t.amount}</div>
-            </div>`;
-        }
-    });
-});
+};
 });
 
-/* =================== DEPOSIT CLICK =================== */
-submitBtn.onclick = async ()=>{
+/* ================= CLICK DEPOSIT ================= */
+document.getElementById("submitDepositBtn").onclick = async ()=>{
 
 const user = firebase.auth().currentUser;
 if(!user) return;
 
-let amount = Number(depositInput.value);
-let v = validateAmount(amount);
-if(!v.valid) return toast(v.msg);
+let amount = Number(document.getElementById("depositAmount").value);
 
-/* PAYMENT LINK CHECK */
-const snap = await db.ref("paymentLinks/"+amount).once("value");
-
-if(!snap.exists()){
-    let available=[];
-    const all = await db.ref("paymentLinks").once("value");
-
-    all.forEach(c=>{
-        available.push("₦"+c.key);
-    });
-
-    return toast("No payment link for ₦"+amount+" | Available: "+available.join(", "));
+if(!validate(amount)){
+    return toast("Invalid amount");
 }
 
-let selar = snap.val();
-
 let txId = generateTxId();
+currentTxId = txId;
 
+/* SAVE TRANSACTION */
 await db.ref("transactions/"+txId).set({
     uid:user.uid,
     amount:amount,
-    coins:v.coins,
+    coins:amount/200,
     status:"pending",
     time:Date.now()
 });
 
-window.location.href = selar + "?tx=" + txId + "&amount=" + amount;
+/* SHOW VERIFY BUTTON */
+document.getElementById("verifyBtn").style.display = "block";
 
+/* REDIRECT TO SELAR */
+let selar = "https://selar.com/wz7sf30yxy";
+window.location.href = selar + "?tx=" + txId;
 };
 </script>
 
