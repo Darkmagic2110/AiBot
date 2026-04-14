@@ -22,7 +22,7 @@ h1 {
     color: red;
     margin-bottom: 5px;
 }
-input[type="number"], input[type="text"] {
+input[type="number"] {
     width: 90%;
     padding: 12px;
     font-size: 18px;
@@ -36,24 +36,17 @@ button {
     background: #e60000;
     font-family: 'Poppins', sans-serif;
     font-size: 18px;
-    color: #ffffff;
+    color: #fff;
     font-weight: 600;
     border-radius: 10px;
     border: none;
     margin-top: 12px;
     cursor: pointer;
-    letter-spacing: 0.5px;
-    transition: 0.3s ease-in-out;
-    box-shadow: 0 0 18px rgba(255, 0, 0, 0.7);
-}
-button:hover {
-    box-shadow: 0 0 25px rgba(255, 0, 0, 1);
 }
 #toast {
     visibility: hidden;
     min-width: 240px;
-    background-color: red;
-    font-family: 'Poppins', sans-serif;
+    background: red;
     color: black;
     text-align: center;
     border-radius: 10px;
@@ -62,10 +55,8 @@ button:hover {
     bottom: 30px;
     left: 50%;
     transform: translateX(-50%);
-    font-size: 18px;
-    z-index: 99999;
     opacity: 0;
-    transition: opacity 0.3s, bottom 0.3s;
+    transition: 0.3s;
 }
 #toast.show {
     visibility: visible;
@@ -74,43 +65,22 @@ button:hover {
 }
 #depositStatus {
     margin-top: 15px;
-    font-size: 18px;
     color: yellow;
 }
-#coinRate {
-    font-size: 16px;
-    color: cyan;
-    margin-top: 5px;
-}
-
-#refreshNotice {
-    font-size: 14px;
-    color: yellow;
-    margin-top: 12px;
-    font-weight: bold;
-    animation: blinkGlow 1s infinite alternate;
-}
-
-@keyframes blinkGlow {
-    0% { opacity: 1; text-shadow: 0 0 5px yellow, 0 0 10px orange; }
-    100% { opacity: 0.4; text-shadow: 0 0 20px yellow, 0 0 30px red; }
-}
-
 #historyBox {
     margin-top: 25px;
     text-align: left;
 }
 .history-item {
     background: #111;
-    border-radius: 10px;
     padding: 12px;
     margin: 10px 0;
+    border-radius: 10px;
     display: flex;
     justify-content: space-between;
 }
 .history-title { color: lime; }
-.history-sub { font-size: 12px; color: #aaa; }
-.history-naira { color: cyan; font-size: 13px; }
+.history-naira { color: cyan; }
 </style>
 </head>
 
@@ -119,12 +89,9 @@ button:hover {
 <h1>Deposit Coins</h1>
 
 <input type="number" id="depositAmount" placeholder="Enter deposit amount (₦)" min="1000" />
-<div id="coinRate">₦200 = 1 coin</div>
 <button id="submitDepositBtn">💰 Buy Coins</button>
 
 <div id="depositStatus"></div>
-
-<div id="refreshNotice">⚡ Make sure to return back to the site immediately after payment ⚡</div>
 
 <div id="historyBox">
     <h3>📜 Transactions</h3>
@@ -142,8 +109,8 @@ button:hover {
 const firebaseConfig = {
     apiKey: "AIzaSyDvFDByPPo9zgwKLdPaREz1OVMQCXmPfrs",
     authDomain: "bets-d795d.firebaseapp.com",
-    projectId: "bets-d795d",
-    databaseURL: "https://bets-d795d-default-rtdb.firebaseio.com"
+    databaseURL: "https://bets-d795d-default-rtdb.firebaseio.com",
+    projectId: "bets-d795d"
 };
 
 firebase.initializeApp(firebaseConfig);
@@ -170,15 +137,17 @@ function validateAmount(amount){
     return {valid:true,coins:amount/200};
 }
 
-/* AUTH + RETURN HANDLER (FIXED FLOW) */
-firebase.auth().onAuthStateChanged(user => {
+/* =========================
+   AUTH + RETURN HANDLER
+========================= */
+firebase.auth().onAuthStateChanged(async user => {
 
     if(!user){
-        location.href = "login.html";
+        location.href="login.html";
         return;
     }
 
-    /* LOAD HISTORY */
+    // Load history
     db.ref("users/" + user.uid + "/transactions").once("value").then(snap=>{
         historyList.innerHTML="";
         snap.forEach(c=>{
@@ -188,7 +157,7 @@ firebase.auth().onAuthStateChanged(user => {
                 <div class="history-item">
                     <div>
                         <div class="history-title">+${t.coins} Coins</div>
-                        <div class="history-sub">${new Date(t.time).toLocaleString()}</div>
+                        <div>${new Date(t.time).toLocaleString()}</div>
                     </div>
                     <div class="history-naira">₦${t.amount}</div>
                 </div>`;
@@ -196,76 +165,67 @@ firebase.auth().onAuthStateChanged(user => {
         });
     });
 
-    /* HANDLE RETURN FROM SELAR */
-    const params = new URLSearchParams(window.location.search);
-    const txId = params.get("tx");
+    // HANDLE RETURN FROM SELAR
+    const txId = new URLSearchParams(window.location.search).get("tx");
 
-    if(txId){
+    if(!txId) return;
+
+    try {
 
         const txRef = db.ref("transactions/" + txId);
+        const snap = await txRef.once("value");
 
-        txRef.once("value").then(snap=>{
-            if(!snap.exists()){
-                toast("Invalid transaction");
-                return;
-            }
+        if(!snap.exists()){
+            toast("Transaction not found");
+            return;
+        }
 
-            const tx = snap.val();
+        const tx = snap.val();
 
-            if(tx.status === "done"){
-                toast("Already used");
-                return;
-            }
+        if(tx.status === "done"){
+            toast("Already processed");
+            return;
+        }
 
-            if(tx.uid !== user.uid){
-                toast("Unauthorized");
-                return;
-            }
+        if(tx.uid !== user.uid){
+            toast("Unauthorized");
+            return;
+        }
 
-            let userRef = db.ref("users/" + user.uid);
+        let userRef = db.ref("users/" + user.uid);
 
-            /* SAFE BALANCE UPDATE */
-            userRef.child("balance").once("value").then(bal=>{
-                let current = bal.val();
-                if(current === null || current === undefined) current = 0;
+        // SAFE BALANCE UPDATE
+        const balSnap = await userRef.child("balance").once("value");
+        let current = balSnap.val() || 0;
 
-                return userRef.child("balance").set(
-                    Number(current) + Number(tx.coins)
-                );
-            }).then(()=>{
+        await userRef.child("balance").set(Number(current) + Number(tx.coins));
 
-                return userRef.child("transactions").push({
-                    type:"deposit",
-                    coins:tx.coins,
-                    amount:tx.amount,
-                    ref:txId,
-                    time:Date.now()
-                });
-
-            }).then(()=>{
-
-                return txRef.update({status:"done"});
-
-            }).then(()=>{
-
-                toast("✅ Coins Added Successfully");
-
-                setTimeout(()=>{
-                    window.location.href="maining.html";
-                },1500);
-
-            }).catch(err=>{
-                console.log(err);
-                toast("❌ Error processing transaction");
-            });
-
+        await userRef.child("transactions").push({
+            type:"deposit",
+            coins:tx.coins,
+            amount:tx.amount,
+            ref:txId,
+            time:Date.now()
         });
-    }
 
+        await txRef.update({status:"done"});
+
+        toast("✅ Deposit Successful");
+
+        setTimeout(()=>{
+            window.location.href="maining.html";
+        },1500);
+
+    } catch(err){
+        console.log(err);
+        toast("❌ Error processing deposit");
+    }
 });
 
-/* CLICK BUY */
-submitBtn.onclick = () => {
+/* =========================
+   CLICK BUY
+========================= */
+submitBtn.onclick = async () => {
 
     const user = firebase.auth().currentUser;
     if(!user) return toast("Login required");
@@ -276,8 +236,8 @@ submitBtn.onclick = () => {
 
     let txId = generateTxId();
 
-    /* SAVE TRANSACTION FIRST */
-    db.ref("transactions/" + txId).set({
+    // SAVE TX BEFORE REDIRECT (CRITICAL FIX)
+    await db.ref("transactions/" + txId).set({
         uid:user.uid,
         amount:amount,
         coins:v.coins,
@@ -285,9 +245,11 @@ submitBtn.onclick = () => {
         time:Date.now()
     });
 
-    /* SELAR REDIRECT */
-    let selar = "https://selar.com/wz7sf30yxy";
-    let redirect = encodeURIComponent(location.href.split("?")[0] + "?tx=" + txId);
+    let selar = "https://selar.co/YOUR_PRODUCT_LINK";
+
+    let redirect = encodeURIComponent(
+        location.origin + location.pathname + "?tx=" + txId
+    );
 
     window.location.href = selar + "?amount=" + amount + "&redirect_url=" + redirect;
 };
