@@ -163,14 +163,19 @@ function validateAmount(amount){
     return {valid:true,coins:amount/200};
 }
 
+/* SAFETY FLAG */
+let processedTx = false;
+
 /* AUTH */
 firebase.auth().onAuthStateChanged(async user=>{
 if(!user){ location.href="login.html"; return; }
 
-/* 🔥 GET TX FROM LOCAL STORAGE */
-const txId = localStorage.getItem("pending_tx");
+/* FIXED PAYMENT RETURN LOGIC */
+const txIdFromURL = new URLSearchParams(window.location.search).get("tx");
+const txId = txIdFromURL || localStorage.getItem("pending_tx");
 
-if(txId){
+if(txId && !processedTx){
+    processedTx = true;
 
     const txRef=db.ref("transactions/"+txId);
     const snap = await txRef.once("value");
@@ -181,6 +186,11 @@ if(txId){
 
     if(tx.status==="done"){
         localStorage.removeItem("pending_tx");
+        return;
+    }
+
+    // ❗ BLOCK FAKE BACK BUTTON PAYMENT
+    if(!txIdFromURL){
         return;
     }
 
@@ -246,7 +256,6 @@ let amount=Number(depositInput.value);
 let v=validateAmount(amount);
 if(!v.valid) return toast(v.msg);
 
-/* 🔥 FIXED STRING KEY ISSUE */
 const snap = await db.ref("paymentLinks").once("value");
 
 if(!snap.hasChild(String(amount))){
