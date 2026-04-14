@@ -20,32 +20,23 @@ h1 {
     font-family: 'UnifrakturCook', cursive;
     font-size: 35px;
     color: red;
-    margin-bottom: 5px;
 }
-input[type="number"], input[type="text"] {
+input[type="number"] {
     width: 90%;
     padding: 12px;
     font-size: 18px;
     margin-top: 10px;
     border-radius: 8px;
-    border: none;
 }
 button {
     width: 92%;
     padding: 14px;
     background: #e60000;
-    font-family: 'Poppins', sans-serif;
     font-size: 18px;
-    color: #ffffff;
-    font-weight: 600;
+    color: white;
     border-radius: 10px;
-    border: none;
     margin-top: 12px;
     cursor: pointer;
-    box-shadow: 0 0 18px rgba(255, 0, 0, 0.7);
-}
-button:hover {
-    box-shadow: 0 0 25px rgba(255, 0, 0, 1);
 }
 
 #toast {
@@ -60,12 +51,10 @@ button:hover {
     bottom: 30px;
     left: 50%;
     transform: translateX(-50%);
-    font-size: 18px;
     z-index: 99999;
 }
 #toast.show {
     visibility: visible;
-    opacity: 1;
     bottom: 50px;
 }
 
@@ -80,7 +69,7 @@ button:hover {
 }
 .history-title { color: lime; }
 .history-sub { font-size: 12px; color: #aaa; }
-.history-naira { color: cyan; font-size: 13px; }
+.history-naira { color: cyan; }
 </style>
 </head>
 
@@ -88,7 +77,7 @@ button:hover {
 
 <h1>Deposit Coins</h1>
 
-<input type="number" id="depositAmount" placeholder="Enter deposit amount (₦)" min="1000" />
+<input type="number" id="depositAmount" placeholder="Enter amount (₦)" min="1000" />
 <button id="submitDepositBtn">💰 Buy Coins</button>
 
 <div id="historyBox">
@@ -113,10 +102,6 @@ const firebaseConfig = {
 firebase.initializeApp(firebaseConfig);
 const db = firebase.database();
 
-const depositInput = document.getElementById("depositAmount");
-const submitBtn = document.getElementById("submitDepositBtn");
-const historyList = document.getElementById("historyList");
-
 function toast(msg){
     const t=document.getElementById("toast");
     t.innerHTML=msg;
@@ -140,9 +125,13 @@ if(!user){
     return;
 }
 
-/* ================= PAYMENT RETURN CHECK ================= */
-const urlParams = new URLSearchParams(window.location.search);
-const txId = urlParams.get("tx");
+/* ================= FIXED PAYMENT RETURN ================= */
+const params = new URLSearchParams(window.location.search);
+
+const txId =
+    params.get("tx") ||
+    params.get("transaction_id") ||
+    params.get("ref");
 
 if(txId){
 
@@ -150,14 +139,14 @@ if(txId){
     const snap = await txRef.once("value");
 
     if(!snap.exists()){
-        toast("Invalid transaction");
+        toast("Transaction not found");
         return;
     }
 
     const tx = snap.val();
 
     if(tx.status === "done"){
-        return; // already used
+        return; // already processed
     }
 
     if(tx.uid !== user.uid){
@@ -165,14 +154,14 @@ if(txId){
         return;
     }
 
-    const userRef = db.ref("users/"+user.uid);
+    /* 🔥 SAFE BALANCE UPDATE */
+    const balRef = db.ref("users/"+user.uid+"/balance");
 
-    const balSnap = await userRef.child("balance").once("value");
-    let current = balSnap.val() || 0;
+    await balRef.transaction(current=>{
+        return (current || 0) + tx.coins;
+    });
 
-    await userRef.child("balance").set(current + tx.coins);
-
-    await userRef.child("transactions").push({
+    await db.ref("users/"+user.uid+"/transactions").push({
         type:"deposit",
         coins:tx.coins,
         amount:tx.amount,
@@ -189,20 +178,18 @@ if(txId){
     },1500);
 }
 
-/* ================= HISTORY (LATEST FIRST) ================= */
+/* ================= HISTORY ================= */
 db.ref("users/"+user.uid+"/transactions").once("value").then(snap=>{
 historyList.innerHTML="";
 
 let arr=[];
-snap.forEach(c=>{
-    arr.push(c.val());
-});
+snap.forEach(c=> arr.push(c.val()));
 
 arr.sort((a,b)=>b.time-a.time);
 
 arr.forEach(t=>{
 if(t.type==="deposit"){
-historyList.innerHTML+=`
+historyList.innerHTML += `
 <div class="history-item">
 <div>
 <div class="history-title">+${t.coins} Coins</div>
@@ -216,18 +203,22 @@ historyList.innerHTML+=`
 });
 
 /* ================= CLICK ================= */
-submitBtn.onclick = async ()=>{
+document.getElementById("submitDepositBtn").onclick = async ()=>{
 
 const user = firebase.auth().currentUser;
 if(!user) return;
 
-let amount = Number(depositInput.value);
+let amount = Number(document.getElementById("depositAmount").value);
 let v = validateAmount(amount);
-if(!v.valid) return toast(v.msg);
+
+if(!v.valid){
+    toast(v.msg);
+    return;
+}
 
 let txId = generateTxId();
 
-/* save transaction */
+/* SAVE TX */
 await db.ref("transactions/"+txId).set({
     uid:user.uid,
     amount:amount,
@@ -236,10 +227,9 @@ await db.ref("transactions/"+txId).set({
     time:Date.now()
 });
 
-/* redirect to Selar with tx */
-let selarLink = "https://selar.com/wz7sf30yxy";
-
-window.location.href = selarLink + "?tx=" + txId;
+/* REDIRECT TO SELAR */
+let selar = "https://selar.com/wz7sf30yxy";
+window.location.href = selar + "?tx=" + txId;
 };
 </script>
 
