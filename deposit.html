@@ -42,18 +42,16 @@ button {
     border: none;
     margin-top: 12px;
     cursor: pointer;
-    letter-spacing: 0.5px;
-    transition: 0.3s ease-in-out;
     box-shadow: 0 0 18px rgba(255, 0, 0, 0.7);
 }
 button:hover {
     box-shadow: 0 0 25px rgba(255, 0, 0, 1);
 }
+
 #toast {
     visibility: hidden;
     min-width: 240px;
     background-color: red;
-    font-family: 'Poppins', sans-serif;
     color: black;
     text-align: center;
     border-radius: 10px;
@@ -64,35 +62,13 @@ button:hover {
     transform: translateX(-50%);
     font-size: 18px;
     z-index: 99999;
-    opacity: 0;
-    transition: opacity 0.3s, bottom 0.3s;
 }
 #toast.show {
     visibility: visible;
     opacity: 1;
     bottom: 50px;
 }
-#depositStatus {
-    margin-top: 15px;
-    font-size: 18px;
-    color: yellow;
-}
-#coinRate {
-    font-size: 16px;
-    color: cyan;
-    margin-top: 5px;
-}
-#refreshNotice {
-    font-size: 14px;
-    color: yellow;
-    margin-top: 12px;
-    font-weight: bold;
-    animation: blinkGlow 1s infinite alternate;
-}
-@keyframes blinkGlow {
-    0% { opacity: 1; text-shadow: 0 0 5px yellow, 0 0 10px orange; }
-    100% { opacity: 0.4; text-shadow: 0 0 20px yellow, 0 0 30px red; }
-}
+
 #historyBox { margin-top: 25px; text-align: left; }
 .history-item {
     background: #111;
@@ -107,17 +83,13 @@ button:hover {
 .history-naira { color: cyan; font-size: 13px; }
 </style>
 </head>
+
 <body>
 
 <h1>Deposit Coins</h1>
 
 <input type="number" id="depositAmount" placeholder="Enter deposit amount (₦)" min="1000" />
-<div id="coinRate">₦200 = 1 coin</div>
 <button id="submitDepositBtn">💰 Buy Coins</button>
-
-<div id="depositStatus"></div>
-
-<div id="refreshNotice">⚡ Make sure to return back to the site immediately after payment ⚡</div>
 
 <div id="historyBox">
     <h3>📜 Transactions</h3>
@@ -134,9 +106,10 @@ button:hover {
 const firebaseConfig = {
     apiKey: "AIzaSyDvFDByPPo9zgwKLdPaREz1OVMQCXmPfrs",
     authDomain: "bets-d795d.firebaseapp.com",
-    projectId: "bets-d795d",
-    databaseURL: "https://bets-d795d-default-rtdb.firebaseio.com"
+    databaseURL: "https://bets-d795d-default-rtdb.firebaseio.com",
+    projectId: "bets-d795d"
 };
+
 firebase.initializeApp(firebaseConfig);
 const db = firebase.database();
 
@@ -151,50 +124,46 @@ function toast(msg){
     setTimeout(()=>t.className="",3000);
 }
 
-/* TX ID */
 function generateTxId(){
     return "TX-"+Date.now()+"-"+Math.floor(Math.random()*999999);
 }
 
-/* VALIDATION */
 function validateAmount(amount){
-    if(amount<1000) return {valid:false,msg:"Minimum ₦1000"};
-    if(amount%200!==0) return {valid:false,msg:"Use multiples of ₦200"};
+    if(amount < 1000) return {valid:false,msg:"Minimum ₦1000"};
     return {valid:true,coins:amount/200};
 }
 
-/* SAFETY FLAG */
-let processedTx = false;
-
-/* AUTH */
+/* ================= AUTH ================= */
 firebase.auth().onAuthStateChanged(async user=>{
-if(!user){ location.href="login.html"; return; }
+if(!user){
+    location.href="login.html";
+    return;
+}
 
-/* FIXED PAYMENT RETURN LOGIC */
-const txIdFromURL = new URLSearchParams(window.location.search).get("tx");
-const txId = txIdFromURL || localStorage.getItem("pending_tx");
+/* ================= PAYMENT RETURN CHECK ================= */
+const urlParams = new URLSearchParams(window.location.search);
+const txId = urlParams.get("tx");
 
-if(txId && !processedTx){
-    processedTx = true;
+if(txId){
 
-    const txRef=db.ref("transactions/"+txId);
+    const txRef = db.ref("transactions/"+txId);
     const snap = await txRef.once("value");
 
-    if(!snap.exists()) return toast("Invalid transaction");
-
-    const tx=snap.val();
-
-    if(tx.status==="done"){
-        localStorage.removeItem("pending_tx");
+    if(!snap.exists()){
+        toast("Invalid transaction");
         return;
     }
 
-    // ❗ BLOCK FAKE BACK BUTTON PAYMENT
-    if(!txIdFromURL){
-        return;
+    const tx = snap.val();
+
+    if(tx.status === "done"){
+        return; // already used
     }
 
-    if(tx.uid!==user.uid) return toast("Unauthorized");
+    if(tx.uid !== user.uid){
+        toast("Unauthorized");
+        return;
+    }
 
     const userRef = db.ref("users/"+user.uid);
 
@@ -213,8 +182,6 @@ if(txId && !processedTx){
 
     await txRef.update({status:"done"});
 
-    localStorage.removeItem("pending_tx");
-
     toast("✅ Coins Added");
 
     setTimeout(()=>{
@@ -222,13 +189,15 @@ if(txId && !processedTx){
     },1500);
 }
 
-/* LOAD HISTORY (LATEST FIRST FIXED) */
+/* ================= HISTORY (LATEST FIRST) ================= */
 db.ref("users/"+user.uid+"/transactions").once("value").then(snap=>{
 historyList.innerHTML="";
+
 let arr=[];
 snap.forEach(c=>{
     arr.push(c.val());
 });
+
 arr.sort((a,b)=>b.time-a.time);
 
 arr.forEach(t=>{
@@ -246,42 +215,31 @@ historyList.innerHTML+=`
 });
 });
 
-/* CLICK */
-submitBtn.onclick=async ()=>{
+/* ================= CLICK ================= */
+submitBtn.onclick = async ()=>{
 
-const user=firebase.auth().currentUser;
+const user = firebase.auth().currentUser;
 if(!user) return;
 
-let amount=Number(depositInput.value);
-let v=validateAmount(amount);
+let amount = Number(depositInput.value);
+let v = validateAmount(amount);
 if(!v.valid) return toast(v.msg);
 
-const snap = await db.ref("paymentLinks").once("value");
+let txId = generateTxId();
 
-if(!snap.hasChild(String(amount))){
-    let available=[];
-    snap.forEach(c=> available.push("₦"+c.key));
-    return toast("Deposit Amount Link Not Available for ₦"+amount+" | Available: "+available.join(", "));
-}
-
-let selar = snap.child(String(amount)).val();
-
-let txId=generateTxId();
-
-/* SAVE TX */
+/* save transaction */
 await db.ref("transactions/"+txId).set({
-uid:user.uid,
-amount:amount,
-coins:v.coins,
-status:"pending",
-time:Date.now()
+    uid:user.uid,
+    amount:amount,
+    coins:v.coins,
+    status:"pending",
+    time:Date.now()
 });
 
-/* SAVE LOCAL */
-localStorage.setItem("pending_tx", txId);
+/* redirect to Selar with tx */
+let selarLink = "https://selar.com/wz7sf30yxy";
 
-/* REDIRECT */
-window.location.href=selar;
+window.location.href = selarLink + "?tx=" + txId;
 };
 </script>
 
