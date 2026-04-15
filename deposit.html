@@ -72,6 +72,27 @@ button:hover {
     opacity: 1;
     bottom: 50px;
 }
+#depositStatus {
+    margin-top: 15px;
+    font-size: 18px;
+    color: yellow;
+}
+#coinRate {
+    font-size: 16px;
+    color: cyan;
+    margin-top: 5px;
+}
+#refreshNotice {
+    font-size: 14px;
+    color: yellow;
+    margin-top: 12px;
+    font-weight: bold;
+    animation: blinkGlow 1s infinite alternate;
+}
+@keyframes blinkGlow {
+    0% { opacity: 1; }
+    100% { opacity: 0.4; }
+}
 #historyBox { margin-top: 25px; text-align: left; }
 .history-item {
     background: #111;
@@ -94,6 +115,10 @@ button:hover {
 <input type="number" id="depositAmount" placeholder="Enter deposit amount (₦)" min="1000" />
 <div id="coinRate">₦200 = 1 coin</div>
 <button id="submitDepositBtn">💰 Buy Coins</button>
+
+<div id="depositStatus"></div>
+
+<div id="refreshNotice">⚡ Make sure to return back to the site immediately after payment ⚡</div>
 
 <div id="historyBox">
     <h3>📜 Transactions</h3>
@@ -137,12 +162,11 @@ function validateAmount(amount){
     return {valid:true,coins:amount/200};
 }
 
-/* 🔥 DETECT IF USER RETURNED FROM SELAR */
+/* 🔥 CHECK IF FROM SELAR */
 function cameFromSelar(){
     return document.referrer.includes("selar");
 }
 
-/* AUTH */
 firebase.auth().onAuthStateChanged(async user=>{
 if(!user){ location.href="login.html"; return; }
 
@@ -150,52 +174,53 @@ const txId = localStorage.getItem("pending_tx");
 
 if(txId){
 
-    /* ❌ IF NOT FROM SELAR → CANCEL */
+    /* 🔥 CANCEL IF USER DIDN’T COME FROM SELAR */
     if(!cameFromSelar()){
         localStorage.removeItem("pending_tx");
-        return;
-    }
+    } else {
 
-    const txRef=db.ref("transactions/"+txId);
-    const snap = await txRef.once("value");
+        const txRef=db.ref("transactions/"+txId);
+        const snap = await txRef.once("value");
 
-    if(!snap.exists()) return;
+        if(!snap.exists()) return;
 
-    const tx=snap.val();
+        const tx=snap.val();
 
-    if(tx.status==="done"){
+        if(tx.status==="done"){
+            localStorage.removeItem("pending_tx");
+            return;
+        }
+
+        if(tx.uid!==user.uid) return;
+
+        const userRef = db.ref("users/"+user.uid);
+
+        const balSnap = await userRef.child("balance").once("value");
+        let current = balSnap.val() || 0;
+
+        await userRef.child("balance").set(current + tx.coins);
+
+        await userRef.child("transactions").push({
+            type:"deposit",
+            coins:tx.coins,
+            amount:tx.amount,
+            ref:txId,
+            time:Date.now()
+        });
+
+        await txRef.update({status:"done"});
+
         localStorage.removeItem("pending_tx");
-        return;
+
+        toast("✅ Coins Added");
+
+        setTimeout(()=>{
+            window.location.href="maining.html";
+        },1500);
     }
-
-    if(tx.uid!==user.uid) return;
-
-    const userRef = db.ref("users/"+user.uid);
-
-    const balSnap = await userRef.child("balance").once("value");
-    let current = balSnap.val() || 0;
-
-    await userRef.child("balance").set(current + tx.coins);
-
-    await userRef.child("transactions").push({
-        type:"deposit",
-        coins:tx.coins,
-        amount:tx.amount,
-        ref:txId,
-        time:Date.now()
-    });
-
-    await txRef.update({status:"done"});
-    localStorage.removeItem("pending_tx");
-
-    toast("✅ Coins Added");
-
-    setTimeout(()=>{
-        window.location.href="maining.html";
-    },1500);
 }
 
-/* LOAD HISTORY */
+/* HISTORY */
 db.ref("users/"+user.uid+"/transactions").once("value").then(snap=>{
 historyList.innerHTML="";
 let arr=[];
@@ -217,7 +242,6 @@ historyList.innerHTML+=`
 });
 });
 
-/* CLICK */
 submitBtn.onclick=async ()=>{
 
 const user=firebase.auth().currentUser;
@@ -249,7 +273,6 @@ time:Date.now()
 
 localStorage.setItem("pending_tx", txId);
 
-/* 🔥 REDIRECT */
 window.location.href=selar;
 };
 </script>
