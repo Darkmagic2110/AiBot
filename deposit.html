@@ -72,34 +72,7 @@ button:hover {
     opacity: 1;
     bottom: 50px;
 }
-#depositStatus {
-    margin-top: 15px;
-    font-size: 18px;
-    color: yellow;
-}
-#coinRate {
-    font-size: 16px;
-    color: cyan;
-    margin-top: 5px;
-}
-
-#refreshNotice {
-    font-size: 14px;
-    color: yellow;
-    margin-top: 12px;
-    font-weight: bold;
-    animation: blinkGlow 1s infinite alternate;
-}
-
-@keyframes blinkGlow {
-    0% { opacity: 1; text-shadow: 0 0 5px yellow, 0 0 10px orange; }
-    100% { opacity: 0.4; text-shadow: 0 0 20px yellow, 0 0 30px red; }
-}
-
-#historyBox {
-    margin-top: 25px;
-    text-align: left;
-}
+#historyBox { margin-top: 25px; text-align: left; }
 .history-item {
     background: #111;
     border-radius: 10px;
@@ -113,6 +86,7 @@ button:hover {
 .history-naira { color: cyan; font-size: 13px; }
 </style>
 </head>
+
 <body>
 
 <h1>Deposit Coins</h1>
@@ -120,10 +94,6 @@ button:hover {
 <input type="number" id="depositAmount" placeholder="Enter deposit amount (₦)" min="1000" />
 <div id="coinRate">₦200 = 1 coin</div>
 <button id="submitDepositBtn">💰 Buy Coins</button>
-
-<div id="depositStatus"></div>
-
-<div id="refreshNotice">⚡ Make sure to return back to the site immediately after payment ⚡</div>
 
 <div id="historyBox">
     <h3>📜 Transactions</h3>
@@ -157,78 +127,82 @@ function toast(msg){
     setTimeout(()=>t.className="",3000);
 }
 
-/* TX ID */
 function generateTxId(){
     return "TX-"+Date.now()+"-"+Math.floor(Math.random()*999999);
 }
 
-/* VALIDATION */
 function validateAmount(amount){
     if(amount<1000) return {valid:false,msg:"Minimum ₦1000"};
     if(amount%200!==0) return {valid:false,msg:"Use multiples of ₦200"};
     return {valid:true,coins:amount/200};
 }
 
+/* 🔥 DETECT IF USER RETURNED FROM SELAR */
+function cameFromSelar(){
+    return document.referrer.includes("selar");
+}
+
 /* AUTH */
-firebase.auth().onAuthStateChanged(user=>{
+firebase.auth().onAuthStateChanged(async user=>{
 if(!user){ location.href="login.html"; return; }
 
-/* CHECK RETURN */
-const params=new URLSearchParams(location.search);
-const txId=params.get("tx");
+const txId = localStorage.getItem("pending_tx");
 
 if(txId){
 
+    /* ❌ IF NOT FROM SELAR → CANCEL */
+    if(!cameFromSelar()){
+        localStorage.removeItem("pending_tx");
+        return;
+    }
+
     const txRef=db.ref("transactions/"+txId);
+    const snap = await txRef.once("value");
 
-    txRef.once("value").then(snap=>{
-        if(!snap.exists()) return toast("Invalid transaction");
+    if(!snap.exists()) return;
 
-        const tx=snap.val();
+    const tx=snap.val();
 
-        if(tx.status==="done") return toast("Already used");
-        if(tx.uid!==user.uid) return toast("Unauthorized");
+    if(tx.status==="done"){
+        localStorage.removeItem("pending_tx");
+        return;
+    }
 
-        /* ✅ FIXED BALANCE ADD (REAL SOLUTION) */
-        let userRef = db.ref("users/" + user.uid + "/balance");
+    if(tx.uid!==user.uid) return;
 
-        userRef.once("value").then(snap=>{
-            let current = snap.val();
-            if(current === null || current === undefined) current = 0;
+    const userRef = db.ref("users/"+user.uid);
 
-            return userRef.set(Number(current) + Number(tx.coins));
-        }).then(()=>{
+    const balSnap = await userRef.child("balance").once("value");
+    let current = balSnap.val() || 0;
 
-            return db.ref("users/"+user.uid+"/transactions").push({
-                type:"deposit",
-                coins:tx.coins,
-                amount:tx.amount,
-                ref:txId,
-                time:Date.now()
-            });
+    await userRef.child("balance").set(current + tx.coins);
 
-        }).then(()=>{
-
-            return txRef.update({status:"done"});
-
-        }).then(()=>{
-
-            toast("✅ Coins Added");
-
-            setTimeout(()=>{
-                window.location.href="maining.html";
-            },1500);
-
-        });
-
+    await userRef.child("transactions").push({
+        type:"deposit",
+        coins:tx.coins,
+        amount:tx.amount,
+        ref:txId,
+        time:Date.now()
     });
+
+    await txRef.update({status:"done"});
+    localStorage.removeItem("pending_tx");
+
+    toast("✅ Coins Added");
+
+    setTimeout(()=>{
+        window.location.href="maining.html";
+    },1500);
 }
 
 /* LOAD HISTORY */
 db.ref("users/"+user.uid+"/transactions").once("value").then(snap=>{
 historyList.innerHTML="";
-snap.forEach(c=>{
-let t=c.val();
+let arr=[];
+snap.forEach(c=> arr.push(c.val()));
+arr.sort((a,b)=>b.time-a.time);
+
+arr.forEach(t=>{
 if(t.type==="deposit"){
 historyList.innerHTML+=`
 <div class="history-item">
@@ -244,7 +218,7 @@ historyList.innerHTML+=`
 });
 
 /* CLICK */
-submitBtn.onclick=()=>{
+submitBtn.onclick=async ()=>{
 
 const user=firebase.auth().currentUser;
 if(!user) return;
@@ -253,10 +227,19 @@ let amount=Number(depositInput.value);
 let v=validateAmount(amount);
 if(!v.valid) return toast(v.msg);
 
+const snap = await db.ref("paymentLinks").once("value");
+
+if(!snap.hasChild(String(amount))){
+    let available=[];
+    snap.forEach(c=> available.push("₦"+c.key));
+    return toast("Deposit Amount Link Not Available for ₦"+amount+" | Available: "+available.join(", "));
+}
+
+let selar = snap.child(String(amount)).val();
+
 let txId=generateTxId();
 
-/* SAVE TX */
-db.ref("transactions/"+txId).set({
+await db.ref("transactions/"+txId).set({
 uid:user.uid,
 amount:amount,
 coins:v.coins,
@@ -264,13 +247,10 @@ status:"pending",
 time:Date.now()
 });
 
-/* 🔥 SELAR PAYMENT */
-let selar="https://selar.co/YOUR_PRODUCT_LINK";
+localStorage.setItem("pending_tx", txId);
 
-/* REDIRECT BACK */
-let redirect=encodeURIComponent(location.href.split("?")[0]+"?tx="+txId);
-
-window.location.href=selar+"?amount="+amount+"&redirect_url="+redirect;
+/* 🔥 REDIRECT */
+window.location.href=selar;
 };
 </script>
 
