@@ -8,7 +8,6 @@
 <link href="https://fonts.googleapis.com/css2?family=UnifrakturCook:wght@700&display=swap" rel="stylesheet">
 <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@500;600&display=swap" rel="stylesheet">
 
-<!-- ADDED FOR PDF OCR -->
 <script src="https://cdnjs.cloudflare.com/ajax/libs/pdf.js/2.16.105/pdf.min.js"></script>
 <script src="https://cdn.jsdelivr.net/npm/tesseract.js@4/dist/tesseract.min.js"></script>
 
@@ -35,9 +34,6 @@ input[type="number"], input[type="text"], input[type="file"] {
     border: none;
     color: #000;
 }
-input::placeholder {
-    color: #888;
-}
 button {
     width: 92%;
     padding: 14px;
@@ -50,58 +46,6 @@ button {
     border: none;
     margin-top: 12px;
     cursor: pointer;
-    letter-spacing: 0.5px;
-    transition: 0.3s ease-in-out;
-    box-shadow: 0 0 18px rgba(255, 0, 0, 0.7);
-}
-button:hover {
-    box-shadow: 0 0 25px rgba(255, 0, 0, 1);
-}
-#toast {
-    visibility: hidden;
-    min-width: 240px;
-    background-color: red;
-    font-family: 'Poppins', sans-serif;
-    color: black;
-    text-align: center;
-    border-radius: 10px;
-    padding: 12px;
-    position: fixed;
-    bottom: 30px;
-    left: 50%;
-    transform: translateX(-50%);
-    font-size: 18px;
-    z-index: 99999;
-    opacity: 0;
-    transition: opacity 0.3s, bottom 0.3s;
-}
-#toast.show {
-    visibility: visible;
-    opacity: 1;
-    bottom: 50px;
-}
-#depositStatus {
-    margin-top: 15px;
-    font-size: 18px;
-    color: yellow;
-}
-#paymentInstruction {
-    margin-top: 15px;
-    font-size: 18px;
-    color: cyan;
-    font-weight: bold;
-}
-#coinRate {
-    font-size: 16px;
-    color: cyan;
-    margin-top: 5px;
-}
-#refreshNotice {
-    font-size: 14px;
-    color: yellow;
-    margin-top: 12px;
-    font-weight: bold;
-    animation: blinkGlow 1s infinite alternate;
 }
 #pdfLoader{
     display:none;
@@ -120,27 +64,17 @@ button:hover {
 
 <input type="number" id="depositAmount" placeholder="Enter deposit amount (₦)" min="1000" />
 
-<div style="color: yellow; font-size: 14px; margin-top: 10px;">
-    This name must match your bank account name
-</div>
-
 <input type="text" id="accountName" placeholder="Enter your bank account name (e.g., John Joe)" />
-
-<div id="coinRate">₦200 = 1 coin</div>
 
 <button id="submitDepositBtn">💰 Pay Now</button>
 
-<div id="depositStatus"></div>
 <div id="paymentInstruction"></div>
 
-<!-- ADDED PDF INPUT -->
 <input type="file" id="pdfFile" accept="application/pdf">
 <button onclick="verifyPDF()">Verify Payment</button>
 
 <div id="pdfLoader">⏳ Verifying payment...</div>
 <div id="pdfResult"></div>
-
-<div id="toast"></div>
 
 <script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-app.js"></script>
 <script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-auth.js"></script>
@@ -160,13 +94,6 @@ db.ref("admin/paymentDetails").on("value", snap=>{
  if(snap.exists()) paymentDetails = snap.val();
 });
 
-function toast(msg) {
-    const t = document.getElementById("toast");
-    t.innerHTML = msg;
-    t.className = "show";
-    setTimeout(() => { t.className = t.className.replace("show", ""); }, 3000);
-}
-
 document.getElementById("submitDepositBtn").onclick = ()=>{
  document.getElementById("paymentInstruction").innerHTML =
  "Account Number: "+paymentDetails.accountNumber+"<br>"+
@@ -174,12 +101,17 @@ document.getElementById("submitDepositBtn").onclick = ()=>{
  "Name: "+paymentDetails.accountName;
 };
 
+function cleanText(t){
+ return t.replace(/[^a-z0-9]/g,'');
+}
+
 async function verifyPDF(){
  const file = document.getElementById("pdfFile").files[0];
  const amountInput = Number(document.getElementById("depositAmount").value);
- const userName = document.getElementById("accountName").value.toLowerCase();
+ const userName = cleanText(document.getElementById("accountName").value.toLowerCase());
+ const receiverName = cleanText((paymentDetails.accountName||"").toLowerCase());
 
- if(!file) return toast("Upload PDF");
+ if(!file) return alert("Upload PDF");
 
  document.getElementById("pdfLoader").style.display="block";
  document.getElementById("pdfResult").innerHTML="";
@@ -204,11 +136,17 @@ async function verifyPDF(){
    text += res.data.text.toLowerCase();
   }
 
+  let cleanPDF = cleanText(text);
+
   let errors=[];
 
-  if(!text.includes(amountInput.toString())) errors.push("❌ Amount mismatch");
-  if(!text.includes(userName)) errors.push("❌ Name mismatch");
-  if(!text.includes((paymentDetails.accountName||"").toLowerCase()))
+  if(!cleanPDF.includes(amountInput.toString()))
+    errors.push("❌ Amount mismatch");
+
+  if(!(cleanPDF.includes(userName) || userName.includes(cleanPDF)))
+    errors.push("❌ Sender name mismatch");
+
+  if(!cleanPDF.includes(receiverName))
     errors.push("❌ Recipient mismatch");
 
   document.getElementById("pdfLoader").style.display="none";
@@ -236,7 +174,12 @@ async function verifyPDF(){
     time:Date.now()
   });
 
-  document.getElementById("pdfResult").innerHTML="✅ Payment Verified! Coins Added!";
+  document.getElementById("pdfResult").innerHTML="✅ Payment Verified!";
+  
+  setTimeout(()=>{
+    window.location.href = "maining.html";
+  },1500);
+
  };
 
  reader.readAsArrayBuffer(file);
