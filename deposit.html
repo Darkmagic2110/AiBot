@@ -2,106 +2,99 @@
 <html lang="en">
 <head>
 <meta charset="UTF-8">
-<title>PDF OCR Reader</title>
-<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Advanced Receipt Extractor</title>
 
-<!-- PDF.js -->
 <script src="https://cdnjs.cloudflare.com/ajax/libs/pdf.js/2.16.105/pdf.min.js"></script>
 
-<!-- Tesseract OCR -->
-<script src="https://cdn.jsdelivr.net/npm/tesseract.js@4/dist/tesseract.min.js"></script>
-
 <style>
-body {
-  font-family: Arial;
-  background: #111;
-  color: #fff;
-  padding: 20px;
-}
-
-input {
-  margin-bottom: 20px;
-}
-
-#output {
-  white-space: pre-wrap;
-  background: #000;
-  padding: 15px;
-  border-radius: 10px;
-  max-height: 400px;
-  overflow-y: auto;
-}
-
-canvas {
-  display: none;
-}
+body { font-family: Arial; padding: 20px; }
+.result { margin-top: 20px; background: #f5f5f5; padding: 15px; }
 </style>
 </head>
 <body>
 
-<h2>Upload Bank PDF (Image-based)</h2>
-<input type="file" id="pdfInput" accept="application/pdf">
+<h2>Upload Transaction Receipt PDF</h2>
+<input type="file" id="upload" accept="application/pdf">
 
-<p id="status">Status: Waiting...</p>
-
-<div id="output"></div>
+<div class="result" id="output"></div>
 
 <script>
-const pdfInput = document.getElementById("pdfInput");
+const upload = document.getElementById("upload");
 const output = document.getElementById("output");
-const statusText = document.getElementById("status");
 
-pdfInput.addEventListener("change", async function() {
-  const file = pdfInput.files[0];
-  if (!file) return;
+upload.addEventListener("change", async function(e) {
+    const file = e.target.files[0];
+    if (!file) return;
 
-  statusText.innerText = "Loading PDF...";
-  output.innerText = "";
+    const reader = new FileReader();
 
-  const fileReader = new FileReader();
-  fileReader.onload = async function() {
-    const typedarray = new Uint8Array(this.result);
+    reader.onload = async function() {
+        const typedarray = new Uint8Array(this.result);
+        const pdf = await pdfjsLib.getDocument(typedarray).promise;
 
-    const pdf = await pdfjsLib.getDocument(typedarray).promise;
-    let fullText = "";
+        let fullText = "";
 
-    for (let i = 1; i <= pdf.numPages; i++) {
-      statusText.innerText = "Processing page " + i + " of " + pdf.numPages;
+        for (let i = 1; i <= pdf.numPages; i++) {
+            const page = await pdf.getPage(i);
+            const content = await page.getTextContent();
 
-      const page = await pdf.getPage(i);
-      const viewport = page.getViewport({ scale: 2 });
-
-      const canvas = document.createElement("canvas");
-      const context = canvas.getContext("2d");
-
-      canvas.width = viewport.width;
-      canvas.height = viewport.height;
-
-      await page.render({
-        canvasContext: context,
-        viewport: viewport
-      }).promise;
-
-      // Convert canvas to image for OCR
-      const imageData = canvas.toDataURL("image/png");
-
-      const result = await Tesseract.recognize(
-        imageData,
-        'eng',
-        {
-          logger: m => console.log(m)
+            content.items.forEach(item => {
+                fullText += item.str + " ";
+            });
         }
-      );
 
-      fullText += "\n\n--- Page " + i + " ---\n";
-      fullText += result.data.text;
-    }
+        console.log(fullText);
 
-    statusText.innerText = "✅ Done!";
-    output.innerText = fullText;
-  };
+        // =========================
+        // FIELD EXTRACTION LOGIC
+        // =========================
 
-  fileReader.readAsArrayBuffer(file);
+        // Amount
+        const amountMatch = fullText.match(/₦\s?\d{1,3}(,\d{3})*(\.\d{2})?/);
+
+        // Date
+        const dateMatch = fullText.match(/\d{1,2}[-\/]\d{1,2}[-\/]\d{2,4}/);
+
+        // Time
+        const timeMatch = fullText.match(/\d{1,2}:\d{2}(\s?[APMapm]{2})?/);
+
+        // Sender Name (multiple patterns)
+        const senderMatch = fullText.match(/(Sender|From|Paid by)[:\s]*([A-Z\s]{3,})/i);
+
+        // Receiver Name
+        const receiverMatch = fullText.match(/(Receiver|To|Beneficiary)[:\s]*([A-Z\s]{3,})/i);
+
+        // Bank Name
+        const bankMatch = fullText.match(/(Bank|Bank Name)[:\s]*([A-Z\s]{3,})/i);
+
+        // =========================
+        // CLEAN VALUES
+        // =========================
+
+        const amount = amountMatch ? amountMatch[0] : "Not found";
+        const date = dateMatch ? dateMatch[0] : "Not found";
+        const time = timeMatch ? timeMatch[0] : "Not found";
+
+        const sender = senderMatch ? senderMatch[2].trim() : "Not found";
+        const receiver = receiverMatch ? receiverMatch[2].trim() : "Not found";
+        const bank = bankMatch ? bankMatch[2].trim() : "Not found";
+
+        // =========================
+        // OUTPUT
+        // =========================
+
+        output.innerHTML = `
+            <h3>Extracted Transaction Details</h3>
+            <p><b>Amount:</b> ${amount}</p>
+            <p><b>Sender:</b> ${sender}</p>
+            <p><b>Receiver:</b> ${receiver}</p>
+            <p><b>Receiver Bank:</b> ${bank}</p>
+            <p><b>Date:</b> ${date}</p>
+            <p><b>Time:</b> ${time}</p>
+        `;
+    };
+
+    reader.readAsArrayBuffer(file);
 });
 </script>
 
