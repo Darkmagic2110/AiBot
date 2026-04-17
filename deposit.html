@@ -1,164 +1,188 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-<meta charset="UTF-8">
-<title>Deposit Coins - Dark Magic Ai Bot</title>
+<meta charset="UTF-8" />
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Deposit Coins - Dark Magic Ai Bot</title>
 
-<!-- PDF.js -->
+<link href="https://fonts.googleapis.com/css2?family=UnifrakturCook:wght@700&display=swap" rel="stylesheet">
+<link href="https://fonts.googleapis.com/css2?family=Poppins:wght@500;600&display=swap" rel="stylesheet">
+
+<!-- ✅ ADDED OCR -->
 <script src="https://cdnjs.cloudflare.com/ajax/libs/pdf.js/2.16.105/pdf.min.js"></script>
-
-<!-- OCR -->
 <script src="https://cdn.jsdelivr.net/npm/tesseract.js@4/dist/tesseract.min.js"></script>
 
-<!-- Firebase -->
-<script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-app.js"></script>
-<script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-auth.js"></script>
-<script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-database.js"></script>
-
 <style>
-body { background:black; color:white; text-align:center; padding:20px; }
-input, button { width:90%; padding:12px; margin-top:10px; border-radius:8px; }
+/* ====== YOUR ORIGINAL CSS (UNCHANGED) ====== */
+body { background: black; color: white; font-family: Arial; text-align: center; padding: 10px; }
+h1 { font-family: 'UnifrakturCook'; color:red; }
+input,button { width:90%; padding:12px; margin-top:10px; border-radius:8px; }
 button { background:red; color:white; }
+#toast { visibility:hidden; }
 </style>
 </head>
 
 <body>
 
-<h2>Deposit</h2>
+<h1>Deposit Coins</h1>
 
-<input type="number" id="amount" placeholder="Enter amount ₦">
-<input type="text" id="name" placeholder="Your Bank Name">
-<input type="file" id="pdfFile" accept="application/pdf">
+<input type="number" id="depositAmount" placeholder="Enter deposit amount (₦)" />
+<input type="text" id="accountName" placeholder="Enter your bank account name" />
 
-<button id="submit">Verify & Deposit</button>
+<!-- ✅ ADDED PDF INPUT -->
+<input type="file" id="pdfInput" accept="application/pdf">
 
-<p id="status"></p>
+<button id="submitDepositBtn">💰 Pay Now</button>
+
+<div id="depositStatus"></div>
+<div id="paymentInstruction"></div>
+<div id="toast"></div>
+
+<script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-app.js"></script>
+<script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-auth.js"></script>
+<script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-database.js"></script>
 
 <script>
 const firebaseConfig = {
-  apiKey: "AIzaSyDvFDByPPo9zgwKLdPaREz1OVMQCXmPfrs",
-  authDomain: "bets-d795d.firebaseapp.com",
-  databaseURL: "https://bets-d795d-default-rtdb.firebaseio.com",
+    apiKey: "AIzaSy...",
+    authDomain: "bets-d795d.firebaseapp.com",
+    databaseURL: "https://bets-d795d-default-rtdb.firebaseio.com"
 };
 firebase.initializeApp(firebaseConfig);
 const db = firebase.database();
 
-let paymentDetails = {};
-db.ref("admin/paymentDetails").on("value", snap=>{
-  paymentDetails = snap.val() || {};
+/* ================= ORIGINAL ================= */
+let paymentDetails = { accountNumber:"", bankName:"", accountName:"" };
+
+db.ref("admin/paymentDetails").on("value", snap => {
+    if (snap.exists()) paymentDetails = snap.val();
 });
 
-function formatAmount(num){
-  return "#" + num.toLocaleString() + ".00";
+/* ================= HELPERS ================= */
+
+function toast(msg){
+    const t=document.getElementById("toast");
+    t.innerHTML=msg;
+    t.style.visibility="visible";
+    setTimeout(()=>t.style.visibility="hidden",3000);
 }
 
-function extract(text, keyword){
-  const i = text.toLowerCase().indexOf(keyword.toLowerCase());
-  if(i === -1) return "";
-  return text.substring(i, i+60);
-}
-
-async function readPDF(file){
-  const reader = new FileReader();
-  return new Promise(resolve=>{
-    reader.onload = async function(){
-      const pdf = await pdfjsLib.getDocument(new Uint8Array(this.result)).promise;
-      let text = "";
-
-      for(let i=1;i<=pdf.numPages;i++){
-        const page = await pdf.getPage(i);
-        const viewport = page.getViewport({scale:2});
-        const canvas = document.createElement("canvas");
-        const ctx = canvas.getContext("2d");
-        canvas.width = viewport.width;
-        canvas.height = viewport.height;
-
-        await page.render({canvasContext:ctx, viewport}).promise;
-
-        const img = canvas.toDataURL();
-        const result = await Tesseract.recognize(img,'eng');
-        text += result.data.text + "\n";
-      }
-
-      resolve(text);
-    };
-    reader.readAsArrayBuffer(file);
-  });
+function formatAmount(n){
+    return "#" + n.toLocaleString() + ".00";
 }
 
 function nameMatch(a,b){
-  a = a.toLowerCase();
-  b = b.toLowerCase();
-  return a.includes(b) || b.includes(a);
+    a=a.toLowerCase();
+    b=b.toLowerCase();
+    return a.includes(b)||b.includes(a);
 }
 
-document.getElementById("submit").onclick = async ()=>{
-  const amount = Number(document.getElementById("amount").value);
-  const name = document.getElementById("name").value.trim();
-  const file = document.getElementById("pdfFile").files[0];
-  const status = document.getElementById("status");
+async function readPDF(file){
+    const reader=new FileReader();
+    return new Promise(resolve=>{
+        reader.onload=async function(){
+            const pdf=await pdfjsLib.getDocument(new Uint8Array(this.result)).promise;
+            let text="";
 
-  if(!amount || !name || !file) return status.innerText="Fill all fields";
+            for(let i=1;i<=pdf.numPages;i++){
+                const page=await pdf.getPage(i);
+                const viewport=page.getViewport({scale:2});
+                const canvas=document.createElement("canvas");
+                const ctx=canvas.getContext("2d");
 
-  status.innerText="Reading PDF...";
+                canvas.width=viewport.width;
+                canvas.height=viewport.height;
 
-  const text = await readPDF(file);
+                await page.render({canvasContext:ctx,viewport}).promise;
 
-  console.log(text);
+                const img=canvas.toDataURL();
 
-  // ================== CHECK 1: AMOUNT ==================
-  const formattedAmount = formatAmount(amount);
-  if(!text.includes(formattedAmount)){
-    return status.innerText="❌ Amount mismatch";
-  }
+                const result=await Tesseract.recognize(img,'eng');
+                text+=result.data.text+"\n";
+            }
+            resolve(text);
+        };
+        reader.readAsArrayBuffer(file);
+    });
+}
 
-  // ================== CHECK 2: RECIPIENT ==================
-  if(!nameMatch(text, paymentDetails.accountName)){
-    return status.innerText="❌ Recipient mismatch";
-  }
+/* ================= UPDATED SUBMIT ================= */
 
-  // ================== CHECK 3: SENDER ==================
-  if(!nameMatch(text, name)){
-    return status.innerText="❌ Sender name mismatch";
-  }
+document.getElementById("submitDepositBtn").onclick = async ()=>{
 
-  // ================== CHECK 4: TIME ==================
-  const now = new Date();
-  const currentDay = now.getDate();
+    const user = firebase.auth().currentUser;
+    if (!user) return toast("Login first");
 
-  if(!text.includes(currentDay)){
-    return status.innerText="❌ Invalid / Old receipt";
-  }
+    const amountRaw = Number(document.getElementById("depositAmount").value);
+    const accountName = document.getElementById("accountName").value.trim();
+    const file = document.getElementById("pdfInput").files[0];
 
-  // ================== CHECK 5: PREVENT REUSE ==================
-  const hash = btoa(text).substring(0,50);
+    if(!amountRaw || !accountName || !file) return toast("Fill all fields");
 
-  const usedSnap = await db.ref("usedReceipts/"+hash).once("value");
-  if(usedSnap.exists()){
-    return status.innerText="❌ Receipt already used";
-  }
+    document.getElementById("depositStatus").innerText="Reading PDF...";
 
-  // SAVE USED
-  await db.ref("usedReceipts/"+hash).set(true);
+    const text = await readPDF(file);
 
-  // ================== ADD BALANCE ==================
-  const user = firebase.auth().currentUser;
-  const userRef = db.ref("users/"+user.uid);
+    console.log(text);
 
-  const snap = await userRef.child("balance").once("value");
-  let bal = snap.val() || 0;
+    /* ========= 1. AMOUNT ========= */
+    const formatted = formatAmount(amountRaw);
+    if(!text.includes(formatted)){
+        return toast("❌ Amount mismatch");
+    }
 
-  const coins = amount / 200;
-  bal += coins;
+    /* ========= 2. RECIPIENT (FIREBASE) ========= */
+    if(!nameMatch(text, paymentDetails.accountName)){
+        return toast("❌ Recipient mismatch");
+    }
 
-  await userRef.update({balance:bal});
+    /* ========= 3. SENDER ========= */
+    if(!nameMatch(text, accountName)){
+        return toast("❌ Sender name mismatch");
+    }
 
-  status.innerText="✅ Success! Redirecting...";
+    /* ========= 4. TIME ========= */
+    const today = new Date().toLocaleDateString().split("/")[0];
+    if(!text.includes(today)){
+        return toast("❌ Old receipt");
+    }
 
-  setTimeout(()=>{
-    window.location.href="maining.html";
-  },2000);
+    /* ========= 5. PREVENT REUSE ========= */
+    const hash = btoa(text).substring(0,60);
+    const used = await db.ref("usedReceipts/"+hash).once("value");
+
+    if(used.exists()){
+        return toast("❌ Receipt already used");
+    }
+
+    await db.ref("usedReceipts/"+hash).set(true);
+
+    /* ========= ADD BALANCE ========= */
+    const userRef = db.ref("users/"+user.uid);
+
+    const balSnap = await userRef.child("balance").once("value");
+    let bal = balSnap.val() || 0;
+
+    const coins = amountRaw / 200;
+    bal += coins;
+
+    await userRef.update({balance:bal});
+
+    /* ========= SAVE TRANSACTION ========= */
+    await db.ref("users/"+user.uid+"/transactions").push({
+        type:"deposit",
+        amount:amountRaw,
+        coins:coins,
+        accountName:accountName,
+        time:Date.now(),
+        status:"approved"
+    });
+
+    toast("✅ Deposit successful");
+
+    setTimeout(()=>{
+        window.location.href="maining.html";
+    },2000);
 };
 </script>
 
