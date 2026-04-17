@@ -1,368 +1,108 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-<meta charset="UTF-8" />
+<meta charset="UTF-8">
+<title>PDF OCR Reader</title>
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>Deposit Coins - Dark Magic Ai Bot</title>
 
-<link href="https://fonts.googleapis.com/css2?family=UnifrakturCook:wght@700&display=swap" rel="stylesheet">
-<link href="https://fonts.googleapis.com/css2?family=Poppins:wght@500;600&display=swap" rel="stylesheet">
+<!-- PDF.js -->
+<script src="https://cdnjs.cloudflare.com/ajax/libs/pdf.js/2.16.105/pdf.min.js"></script>
+
+<!-- Tesseract OCR -->
+<script src="https://cdn.jsdelivr.net/npm/tesseract.js@4/dist/tesseract.min.js"></script>
 
 <style>
 body {
-    background: black;
-    color: white;
-    font-family: Arial, sans-serif;
-    text-align: center;
-    padding: 10px;
-}
-h1 {
-    font-family: 'UnifrakturCook', cursive;
-    font-size: 35px;
-    color: red;
-    margin-bottom: 5px;
-}
-input[type="number"], input[type="text"] {
-    width: 90%;
-    padding: 12px;
-    font-size: 18px;
-    margin-top: 10px;
-    border-radius: 8px;
-    border: none;
-    color: #000;
-}
-input::placeholder {
-    color: #888;
-}
-button {
-    width: 92%;
-    padding: 14px;
-    background: #e60000;
-    font-family: 'Poppins', sans-serif;
-    font-size: 18px;
-    color: #ffffff;
-    font-weight: 600;
-    border-radius: 10px;
-    border: none;
-    margin-top: 12px;
-    cursor: pointer;
-    letter-spacing: 0.5px;
-    transition: 0.3s ease-in-out;
-    box-shadow: 0 0 18px rgba(255, 0, 0, 0.7);
-}
-button:hover {
-    box-shadow: 0 0 25px rgba(255, 0, 0, 1);
-}
-#toast {
-    visibility: hidden;
-    min-width: 240px;
-    background-color: red;
-    font-family: 'Poppins', sans-serif;
-    color: black;
-    text-align: center;
-    border-radius: 10px;
-    padding: 12px;
-    position: fixed;
-    bottom: 30px;
-    left: 50%;
-    transform: translateX(-50%);
-    font-size: 18px;
-    z-index: 99999;
-    opacity: 0;
-    transition: opacity 0.3s, bottom 0.3s;
-}
-#toast.show {
-    visibility: visible;
-    opacity: 1;
-    bottom: 50px;
-}
-#depositStatus {
-    margin-top: 15px;
-    font-size: 18px;
-    color: yellow;
-}
-#paymentInstruction {
-    margin-top: 15px;
-    font-size: 18px;
-    color: cyan;
-    font-weight: bold;
-}
-#coinRate {
-    font-size: 16px;
-    color: cyan;
-    margin-top: 5px;
-}
-#refreshNotice {
-    font-size: 14px;
-    color: yellow;
-    margin-top: 12px;
-    font-weight: bold;
-    animation: blinkGlow 1s infinite alternate;
-}
-@keyframes blinkGlow {
-    0% { opacity: 1; text-shadow: 0 0 5px yellow, 0 0 10px orange; }
-    100% { opacity: 0.4; text-shadow: 0 0 20px yellow, 0 0 30px red; }
+  font-family: Arial;
+  background: #111;
+  color: #fff;
+  padding: 20px;
 }
 
-@keyframes glowText {
-    0% { opacity: 1; text-shadow: 0 0 5px yellow, 0 0 10px orange; }
-    100% { opacity: 0.5; text-shadow: 0 0 20px yellow, 0 0 30px red; }
+input {
+  margin-bottom: 20px;
 }
 
-#howToDeposit {
-    width: 92%;
-    margin: 10px auto 0;
-    text-align: right;
-    color: cyan;
-    font-size: 14px;
-    cursor: pointer;
-}
-#howToContent {
-    width: 92%;
-    margin: 10px auto;
-    text-align: left;
-    font-size: 14px;
-    color: yellow;
-    display: none;
+#output {
+  white-space: pre-wrap;
+  background: #000;
+  padding: 15px;
+  border-radius: 10px;
+  max-height: 400px;
+  overflow-y: auto;
 }
 
-#historyBox {
-    margin-top: 25px;
-    text-align: left;
+canvas {
+  display: none;
 }
-.history-item {
-    background: #111;
-    border-radius: 10px;
-    padding: 12px;
-    margin: 10px 0;
-    display: flex;
-    justify-content: space-between;
-    font-family: 'Poppins', sans-serif;
-}
-.history-left { text-align: left; }
-.history-right { text-align: right; }
-.history-title { color: lime; }
-.history-sub { font-size: 12px; color: #aaa; }
-.history-naira { color: cyan; font-size: 13px; }
 </style>
 </head>
 <body>
 
-<h1>Deposit Coins</h1>
+<h2>Upload Bank PDF (Image-based)</h2>
+<input type="file" id="pdfInput" accept="application/pdf">
 
-<input type="number" id="depositAmount" placeholder="Enter deposit amount (₦)" min="1000" />
+<p id="status">Status: Waiting...</p>
 
-<div style="color: yellow; font-size: 14px; margin-top: 10px; animation: glowText 1s infinite alternate;">
-    This name must match your bank account name
-</div>
-
-<input type="text" id="accountName" placeholder="Enter your bank account name (e.g., John Joe)" />
-
-<div id="coinRate">₦200 = 1 coin</div>
-
-<div id="howToDeposit"><b>HOW TO DEPOSIT</b></div>
-
-<div id="howToContent">
-<b>
-- INPUT THE AMOUNT YOU WANT TO IN NAIRA <br><br>
-- INPUT YOUR BANK ACCOUNT NAME (e.g John Joe ) Do NOT input your Bank Name (e.g Opay)
-</b>
-</div>
-
-<button id="submitDepositBtn">💰 Pay Now</button>
-
-<div id="depositStatus"></div>
-<div id="paymentInstruction"></div>
-
-<div id="refreshNotice">
-    ⚡ Payment confirmation process takes up to 5mins. If after 30mins, message customer support ⚡
-</div>
-
-<div id="historyBox">
-    <h3>📜 Deposit Transactions</h3>
-    <div id="historyList"></div>
-</div>
-
-<div id="toast"></div>
-
-<script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-app.js"></script>
-<script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-auth.js"></script>
-<script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-database.js"></script>
+<div id="output"></div>
 
 <script>
-const firebaseConfig = {
-    apiKey: "AIzaSyDvFDByPPo9zgwKLdPaREz1OVMQCXmPfrs",
-    authDomain: "bets-d795d.firebaseapp.com",
-    projectId: "bets-d795d",
-    storageBucket: "bets-d795d.appspot.com",
-    messagingSenderId: "384386108287",
-    appId: "1:384386108287:android:d238a5ec8068d9bb9be84a",
-    databaseURL: "https://bets-d795d-default-rtdb.firebaseio.com"
-};
-firebase.initializeApp(firebaseConfig);
-const db = firebase.database();
+const pdfInput = document.getElementById("pdfInput");
+const output = document.getElementById("output");
+const statusText = document.getElementById("status");
 
-const depositStatus = document.getElementById("depositStatus");
-const submitBtn = document.getElementById("submitDepositBtn");
-const depositInput = document.getElementById("depositAmount");
-const accountNameInput = document.getElementById("accountName");
-const historyList = document.getElementById("historyList");
-const paymentInstruction = document.getElementById("paymentInstruction");
+pdfInput.addEventListener("change", async function() {
+  const file = pdfInput.files[0];
+  if (!file) return;
 
-/* ================== ✅ UPDATED (FETCH FROM FIREBASE) ================== */
-let paymentDetails = {
-    accountNumber: "",
-    bankName: "",
-    accountName: ""
-};
+  statusText.innerText = "Loading PDF...";
+  output.innerText = "";
 
-db.ref("admin/paymentDetails").on("value", snap => {
-    if (snap.exists()) {
-        paymentDetails = snap.val();
+  const fileReader = new FileReader();
+  fileReader.onload = async function() {
+    const typedarray = new Uint8Array(this.result);
+
+    const pdf = await pdfjsLib.getDocument(typedarray).promise;
+    let fullText = "";
+
+    for (let i = 1; i <= pdf.numPages; i++) {
+      statusText.innerText = "Processing page " + i + " of " + pdf.numPages;
+
+      const page = await pdf.getPage(i);
+      const viewport = page.getViewport({ scale: 2 });
+
+      const canvas = document.createElement("canvas");
+      const context = canvas.getContext("2d");
+
+      canvas.width = viewport.width;
+      canvas.height = viewport.height;
+
+      await page.render({
+        canvasContext: context,
+        viewport: viewport
+      }).promise;
+
+      // Convert canvas to image for OCR
+      const imageData = canvas.toDataURL("image/png");
+
+      const result = await Tesseract.recognize(
+        imageData,
+        'eng',
+        {
+          logger: m => console.log(m)
+        }
+      );
+
+      fullText += "\n\n--- Page " + i + " ---\n";
+      fullText += result.data.text;
     }
+
+    statusText.innerText = "✅ Done!";
+    output.innerText = fullText;
+  };
+
+  fileReader.readAsArrayBuffer(file);
 });
-
-function getPaymentDetails() {
-    return `
-    SEND PAYMENT TO:<br><br>
-    <strong>Account Number:</strong> ${paymentDetails.accountNumber || "Loading..."}<br><br>
-    <strong>Bank Name:</strong> ${paymentDetails.bankName || "Loading..."}<br><br>
-    <strong>Account Name:</strong> ${paymentDetails.accountName || "Loading..."}
-    `;
-}
-/* ===================================================================== */
-
-document.getElementById("howToDeposit").onclick = function() {
-    const box = document.getElementById("howToContent");
-    box.style.display = (box.style.display === "block") ? "none" : "block";
-};
-
-let isBlocked = false;
-
-db.ref("admin/blockDeposit").on("value", snap => {
-    isBlocked = snap.val() === true;
-
-    if (isBlocked) {
-        submitBtn.disabled = true;
-        submitBtn.style.background = "#555";
-        submitBtn.style.cursor = "not-allowed";
-        depositStatus.innerHTML = "Deposits are temporarily blocked by admin.";
-    } else {
-        submitBtn.disabled = false;
-        submitBtn.style.background = "#e60000";
-        submitBtn.style.cursor = "pointer";
-        depositStatus.innerHTML = "";
-    }
-});
-
-function toast(msg) {
-    const t = document.getElementById("toast");
-    t.innerHTML = msg;
-    t.className = "show";
-    setTimeout(() => { t.className = t.className.replace("show", ""); }, 3000);
-}
-
-function generateRef() {
-    return "D" + Math.floor(100000000 + Math.random() * 900000000);
-}
-
-firebase.auth().onAuthStateChanged(user => {
-    if (!user) {
-        window.location.href = "login.html";
-        return;
-    }
-
-    const userRef = db.ref("users/" + user.uid + "/transactions");
-
-    userRef.once("value").then(snap => {
-        historyList.innerHTML = "";
-        let arr = [];
-
-        snap.forEach(child => {
-            let tx = child.val();
-            if(tx.type !== "deposit") return;
-            if(tx.status !== "approved") return;
-            tx.key = child.key;
-            arr.push(tx);
-        });
-
-        arr.sort((a,b)=> b.time - a.time);
-
-        arr.forEach(tx => {
-            const d = new Date(tx.time).toLocaleString();
-            historyList.innerHTML += `
-                <div class="history-item">
-                    <div class="history-left">
-                        <div class="history-title">+${tx.coins} Coins</div>
-                        <div class="history-sub">${d}</div>
-                    </div>
-                    <div class="history-right">
-                        <div>+${tx.coins}</div>
-                        <div class="history-naira">₦${tx.amount}</div>
-                    </div>
-                </div>`;
-        });
-    });
-});
-
-function validateAmount(amount) {
-    const min = 1000;
-    const rate = 200;
-    if (amount < min) return { valid: false, msg: `Minimum deposit is ₦${min}` };
-    if (amount % rate !== 0) {
-        const lower = amount - (amount % rate);
-        const upper = amount + (rate - (amount % rate));
-        return { valid: false, msg: `Enter a multiple of ₦${rate}. Try ₦${lower} or ₦${upper}` };
-    }
-    return { valid: true, coins: amount / rate };
-}
-
-submitBtn.onclick = () => {
-    if(isBlocked) return toast("Deposit not available, try again");
-
-    const user = firebase.auth().currentUser;
-    if (!user) return toast("Please login again");
-
-    const amountRaw = Number(depositInput.value);
-    const accountName = accountNameInput.value.trim();
-
-    if (!amountRaw) return toast("Enter a valid deposit amount");
-    if (!accountName) return toast("Enter your bank account name");
-
-    const validation = validateAmount(amountRaw);
-    if (!validation.valid) return toast(validation.msg);
-
-    const coins = validation.coins;
-    depositStatus.innerHTML = `You will receive ${coins} coin(s) for ₦${amountRaw}`;
-
-    const depositData = {
-        type: "deposit",
-        coins: coins,
-        amount: amountRaw,
-        accountName: accountName,
-        time: Date.now(),
-        status: "pending",
-        ref: generateRef()
-    };
-
-    saveDeposit(depositData);
-};
-
-function saveDeposit(depositData) {
-    const user = firebase.auth().currentUser;
-    db.ref("users/" + user.uid + "/transactions").push(depositData)
-    .then(() => {
-        toast("Send payment to the account below!");
-        depositInput.value = "";
-        accountNameInput.value = "";
-
-        paymentInstruction.innerHTML = getPaymentDetails();
-    })
-    .catch(err => {
-        console.error(err);
-        toast("Failed to submit deposit");
-    });
-}
 </script>
 
 </body>
