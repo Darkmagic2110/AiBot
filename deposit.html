@@ -209,28 +209,30 @@ const accountNameInput = document.getElementById("accountName");
 const historyList = document.getElementById("historyList");
 const paymentInstruction = document.getElementById("paymentInstruction");
 
-/* ================== ✅ UPDATED (FETCH FROM FIREBASE) ================== */
-let paymentDetails = {
-    accountNumber: "",
-    bankName: "",
-    accountName: ""
-};
+let paymentMethods = []; // ✅ multiple bank accounts
 
-db.ref("admin/paymentDetails").on("value", snap => {
-    if (snap.exists()) {
-        paymentDetails = snap.val();
-    }
+// ✅ LOAD ALL ADMIN BANK ACCOUNTS
+db.ref("admin/paymentMethods").on("value", snap => {
+    paymentMethods = [];
+    snap.forEach(child => {
+        paymentMethods.push(child.val());
+    });
 });
 
-function getPaymentDetails() {
+// ✅ RANDOM PICK FUNCTION
+function getRandomPayment() {
+    if (paymentMethods.length === 0) return null;
+    return paymentMethods[Math.floor(Math.random() * paymentMethods.length)];
+}
+
+function getPaymentDetails(bank) {
     return `
     SEND PAYMENT TO:<br><br>
-    <strong>Account Number:</strong> ${paymentDetails.accountNumber || "Loading..."}<br><br>
-    <strong>Bank Name:</strong> ${paymentDetails.bankName || "Loading..."}<br><br>
-    <strong>Account Name:</strong> ${paymentDetails.accountName || "Loading..."}
+    <strong>Account Number:</strong> ${bank.accountNumber}<br><br>
+    <strong>Bank Name:</strong> ${bank.bankName}<br><br>
+    <strong>Account Name:</strong> ${bank.accountName}
     `;
 }
-/* ===================================================================== */
 
 document.getElementById("howToDeposit").onclick = function() {
     const box = document.getElementById("howToContent");
@@ -333,6 +335,10 @@ submitBtn.onclick = () => {
     if (!validation.valid) return toast(validation.msg);
 
     const coins = validation.coins;
+
+    const bank = getRandomPayment(); // ✅ RANDOM BANK HERE
+    if (!bank) return toast("No payment account available");
+
     depositStatus.innerHTML = `You will receive ${coins} coin(s) for ₦${amountRaw}`;
 
     const depositData = {
@@ -345,18 +351,19 @@ submitBtn.onclick = () => {
         ref: generateRef()
     };
 
-    saveDeposit(depositData);
+    saveDeposit(depositData, bank);
 };
 
-function saveDeposit(depositData) {
+function saveDeposit(depositData, bank) {
     const user = firebase.auth().currentUser;
+
     db.ref("users/" + user.uid + "/transactions").push(depositData)
     .then(() => {
         toast("Send payment to the account below!");
         depositInput.value = "";
         accountNameInput.value = "";
 
-        paymentInstruction.innerHTML = getPaymentDetails();
+        paymentInstruction.innerHTML = getPaymentDetails(bank);
     })
     .catch(err => {
         console.error(err);
