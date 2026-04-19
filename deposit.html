@@ -167,41 +167,6 @@ firebase.auth().onAuthStateChanged(user => {
         window.location.href = "login.html";
         return;
     }
-
-    db.ref("users/" + user.uid + "/transactions").once("value").then(snap => {
-
-        historyList.innerHTML = "";
-
-        let arr = [];
-
-        snap.forEach(child => {
-            let tx = child.val();
-            tx.key = child.key;
-            arr.push(tx);
-        });
-
-        arr.sort((a,b)=> b.time - a.time);
-
-        arr.forEach(tx => {
-            if(tx.type === "deposit"){
-                const d = new Date(tx.time).toLocaleString();
-
-                historyList.innerHTML += `
-                <div class="history-item">
-                    <div class="history-left">
-                        <div class="history-title">+${tx.coins} Coins</div>
-                        <div class="history-sub">Ref: ${tx.ref}</div>
-                        <div class="history-sub">${d}</div>
-                    </div>
-                    <div class="history-right">
-                        <div>+${tx.coins}</div>
-                        <div class="history-naira">₦${tx.amount}</div>
-                    </div>
-                </div>`;
-            }
-        });
-
-    });
 });
 
 let paystackPublicKey = null;
@@ -245,31 +210,28 @@ submitBtn.onclick = () => {
             email: user.email
         },
 
-        redirect_url: window.location.origin + "/maining.html",
+        // ✅ FIXED REDIRECT (IMPORTANT CHANGE)
+        redirect_url: window.location.origin + "/deposit.html?status=success",
 
         callback: function(response){
             if(response.status === "successful"){
-                toast("Payment successful! Ref: " + response.transaction_id);
-                depositStatus.innerHTML = `Payment complete! Coins added: ${coins}`;
+
+                toast("Payment successful!");
 
                 const userRef = db.ref("users/" + user.uid);
 
-                userRef.child("balance").once("value").then(snap => {
-                    let current = snap.val() || 0;
-                    userRef.child("balance").set(current + coins);
-                });
-
+                // ❌ BALANCE UPDATE REMOVED FROM HERE (FIX)
                 userRef.child("transactions").push({
                     type: "deposit",
                     coins: coins,
                     amount: amountRaw,
                     ref: response.transaction_id,
-                    time: Date.now()
+                    time: Date.now(),
+                    processed: false
                 });
 
-                setTimeout(()=>{
-                    window.location.href = "maining.html";
-                },1500);
+                depositStatus.innerHTML = `Payment complete! Coins will be added automatically.`;
+
             } else {
                 toast("Payment failed");
             }
