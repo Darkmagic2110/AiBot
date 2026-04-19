@@ -135,6 +135,7 @@ button:hover {
 <script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-auth.js"></script>
 <script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-database.js"></script>
 
+<!-- Flutterwave -->
 <script src="https://checkout.flutterwave.com/v3.js"></script>
 
 <script>
@@ -167,11 +168,43 @@ firebase.auth().onAuthStateChanged(user => {
         window.location.href = "login.html";
         return;
     }
+
+    db.ref("users/" + user.uid + "/transactions").once("value").then(snap => {
+        historyList.innerHTML = "";
+        let arr = [];
+
+        snap.forEach(child => {
+            let tx = child.val();
+            tx.key = child.key;
+            arr.push(tx);
+        });
+
+        arr.sort((a,b)=> b.time - a.time);
+
+        arr.forEach(tx => {
+            if(tx.type === "deposit"){
+                const d = new Date(tx.time).toLocaleString();
+
+                historyList.innerHTML += `
+                <div class="history-item">
+                    <div class="history-left">
+                        <div class="history-title">+${tx.coins} Coins</div>
+                        <div class="history-sub">Ref: ${tx.ref}</div>
+                        <div class="history-sub">${d}</div>
+                    </div>
+                    <div class="history-right">
+                        <div>+${tx.coins}</div>
+                        <div class="history-naira">₦${tx.amount}</div>
+                    </div>
+                </div>`;
+            }
+        });
+    });
 });
 
-let paystackPublicKey = null;
+let flutterPublicKey = null;
 db.ref("settings/paystackKeys/public").once("value").then(snap => {
-    paystackPublicKey = snap.val() || "";
+    flutterPublicKey = snap.val() || "";
 });
 
 function validateAmount(amount) {
@@ -199,10 +232,10 @@ submitBtn.onclick = () => {
     const coins = validation.coins;
     depositStatus.innerHTML = `You will receive ${coins} coin(s) for ₦${amountRaw}`;
 
-    if (!paystackPublicKey) return toast("Payment key not loaded — try again");
+    if (!flutterPublicKey) return toast("Payment key not loaded — try again");
 
     FlutterwaveCheckout({
-        public_key: paystackPublicKey,
+        public_key: flutterPublicKey,
         tx_ref: "TX-" + Date.now(),
         amount: amountRaw,
         currency: "NGN",
@@ -210,27 +243,47 @@ submitBtn.onclick = () => {
             email: user.email
         },
 
-        // ✅ FIXED REDIRECT (IMPORTANT CHANGE)
-        redirect_url: window.location.origin + "/deposit.html?status=success",
+        // ❌ NO redirect_url (Paystack-like behavior)
 
         callback: function(response){
+
             if(response.status === "successful"){
 
-                toast("Payment successful!");
-
+                const txId = response.transaction_id;
                 const userRef = db.ref("users/" + user.uid);
 
-                // ❌ BALANCE UPDATE REMOVED FROM HERE (FIX)
-                userRef.child("transactions").push({
-                    type: "deposit",
-                    coins: coins,
-                    amount: amountRaw,
-                    ref: response.transaction_id,
-                    time: Date.now(),
-                    processed: false
-                });
+                userRef.child("transactions")
+                .orderByChild("ref")
+                .equalTo(txId)
+                .once("value")
+                .then(snap => {
 
-                depositStatus.innerHTML = `Payment complete! Coins will be added automatically.`;
+                    if(snap.exists()){
+                        toast("Transaction already processed");
+                        return;
+                    }
+
+                    toast("Payment successful! Ref: " + txId);
+                    depositStatus.innerHTML = `Payment complete! Coins added: ${coins}`;
+
+                    userRef.child("balance").once("value").then(snap => {
+                        let current = snap.val() || 0;
+                        userRef.child("balance").set(current + coins);
+                    });
+
+                    userRef.child("transactions").push({
+                        type: "deposit",
+                        coins: coins,
+                        amount: amountRaw,
+                        ref: txId,
+                        time: Date.now()
+                    });
+
+                    setTimeout(()=>{
+                        window.location.href = "maining.html";
+                    },1500);
+
+                });
 
             } else {
                 toast("Payment failed");
