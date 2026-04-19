@@ -9,7 +9,6 @@
 <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@500;600&display=swap" rel="stylesheet">
 
 <style>
-/* (UNCHANGED — YOUR ORIGINAL STYLES) */
 body {
     background: black;
     color: white;
@@ -21,12 +20,94 @@ h1 {
     font-family: 'UnifrakturCook', cursive;
     font-size: 35px;
     color: red;
+    margin-bottom: 5px;
 }
-input, button { /* shortened for clarity */ }
-#toast { /* unchanged */ }
-#depositStatus { color: yellow; }
-#coinRate { color: cyan; }
-#refreshNotice { animation: blinkGlow 1s infinite alternate; }
+input[type="number"], input[type="text"] {
+    width: 90%;
+    padding: 12px;
+    font-size: 18px;
+    margin-top: 10px;
+    border-radius: 8px;
+    border: none;
+}
+button {
+    width: 92%;
+    padding: 14px;
+    background: #e60000;
+    font-family: 'Poppins', sans-serif;
+    font-size: 18px;
+    color: #ffffff;
+    font-weight: 600;
+    border-radius: 10px;
+    border: none;
+    margin-top: 12px;
+    cursor: pointer;
+    letter-spacing: 0.5px;
+    transition: 0.3s ease-in-out;
+    box-shadow: 0 0 18px rgba(255, 0, 0, 0.7);
+}
+button:hover {
+    box-shadow: 0 0 25px rgba(255, 0, 0, 1);
+}
+#toast {
+    visibility: hidden;
+    min-width: 240px;
+    background-color: red;
+    font-family: 'Poppins', sans-serif;
+    color: black;
+    text-align: center;
+    border-radius: 10px;
+    padding: 12px;
+    position: fixed;
+    bottom: 30px;
+    left: 50%;
+    transform: translateX(-50%);
+    font-size: 18px;
+    z-index: 99999;
+    opacity: 0;
+    transition: opacity 0.3s, bottom 0.3s;
+}
+#toast.show {
+    visibility: visible;
+    opacity: 1;
+    bottom: 50px;
+}
+#depositStatus {
+    margin-top: 15px;
+    font-size: 18px;
+    color: yellow;
+}
+#coinRate {
+    font-size: 16px;
+    color: cyan;
+    margin-top: 5px;
+}
+#refreshNotice {
+    font-size: 14px;
+    color: yellow;
+    margin-top: 12px;
+    font-weight: bold;
+    animation: blinkGlow 1s infinite alternate;
+}
+@keyframes blinkGlow {
+    0% { opacity: 1; text-shadow: 0 0 5px yellow, 0 0 10px orange; }
+    100% { opacity: 0.4; text-shadow: 0 0 20px yellow, 0 0 30px red; }
+}
+#historyBox { margin-top: 25px; text-align: left; }
+.history-item {
+    background: #111;
+    border-radius: 10px;
+    padding: 12px;
+    margin: 10px 0;
+    display: flex;
+    justify-content: space-between;
+    font-family: 'Poppins', sans-serif;
+}
+.history-left { text-align: left; }
+.history-right { text-align: right; }
+.history-title { color: lime; }
+.history-sub { font-size: 12px; color: #aaa; }
+.history-naira { color: cyan; font-size: 13px; }
 </style>
 </head>
 
@@ -39,6 +120,7 @@ input, button { /* shortened for clarity */ }
 <button id="submitDepositBtn">💰 Buy Coins</button>
 
 <div id="depositStatus"></div>
+
 <div id="refreshNotice">⚡ Make sure to return back to the site immediately after payment ⚡</div>
 
 <div id="historyBox">
@@ -53,7 +135,7 @@ input, button { /* shortened for clarity */ }
 <script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-auth.js"></script>
 <script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-database.js"></script>
 
-<!-- ✅ Flutterwave Script -->
+<!-- ✅ CHANGED: Flutterwave -->
 <script src="https://checkout.flutterwave.com/v3.js"></script>
 
 <script>
@@ -88,7 +170,9 @@ firebase.auth().onAuthStateChanged(user => {
     }
 
     db.ref("users/" + user.uid + "/transactions").once("value").then(snap => {
+
         historyList.innerHTML = "";
+
         let arr = [];
 
         snap.forEach(child => {
@@ -117,14 +201,13 @@ firebase.auth().onAuthStateChanged(user => {
                 </div>`;
             }
         });
+
     });
 });
 
-let flutterPublicKey = null;
-
-/* ✅ Load Flutterwave Public Key */
-db.ref("settings/flutterwaveKeys/public").once("value").then(snap => {
-    flutterPublicKey = snap.val() || "";
+let paystackPublicKey = null;
+db.ref("settings/paystackKeys/public").once("value").then(snap => {
+    paystackPublicKey = snap.val() || "";
 });
 
 function validateAmount(amount) {
@@ -152,22 +235,19 @@ submitBtn.onclick = () => {
     const coins = validation.coins;
     depositStatus.innerHTML = `You will receive ${coins} coin(s) for ₦${amountRaw}`;
 
-    if (!flutterPublicKey) return toast("Payment key not loaded — try again");
+    if (!paystackPublicKey) return toast("Payment key not loaded — try again");
 
-    /* ✅ Flutterwave Payment */
+    /* ✅ CHANGED: Flutterwave */
     FlutterwaveCheckout({
-        public_key: flutterPublicKey,
+        public_key: paystackPublicKey,
         tx_ref: "TX-" + Date.now(),
         amount: amountRaw,
         currency: "NGN",
-        payment_options: "card,banktransfer,ussd",
         customer: {
             email: user.email
         },
-        callback: function (response) {
-
-            if (response.status === "successful") {
-
+        callback: function(response){
+            if(response.status === "successful"){
                 toast("Payment successful! Ref: " + response.transaction_id);
                 depositStatus.innerHTML = `Payment complete! Coins added: ${coins}`;
 
@@ -189,12 +269,11 @@ submitBtn.onclick = () => {
                 setTimeout(()=>{
                     window.location.href = "maining.html";
                 },1500);
-
             } else {
                 toast("Payment failed");
             }
         },
-        onclose: function() {
+        onclose: function(){
             toast("Payment cancelled");
         }
     });
