@@ -135,7 +135,6 @@ button:hover {
 <script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-auth.js"></script>
 <script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-database.js"></script>
 
-<!-- ✅ CHANGED: Flutterwave -->
 <script src="https://checkout.flutterwave.com/v3.js"></script>
 
 <script>
@@ -237,7 +236,6 @@ submitBtn.onclick = () => {
 
     if (!paystackPublicKey) return toast("Payment key not loaded — try again");
 
-    /* ✅ CHANGED: Flutterwave */
     FlutterwaveCheckout({
         public_key: paystackPublicKey,
         tx_ref: "TX-" + Date.now(),
@@ -246,6 +244,9 @@ submitBtn.onclick = () => {
         customer: {
             email: user.email
         },
+
+        redirect_url: window.location.origin + "/maining.html",
+
         callback: function(response){
             if(response.status === "successful"){
                 toast("Payment successful! Ref: " + response.transaction_id);
@@ -273,6 +274,7 @@ submitBtn.onclick = () => {
                 toast("Payment failed");
             }
         },
+
         onclose: function(){
             toast("Payment cancelled");
         }
