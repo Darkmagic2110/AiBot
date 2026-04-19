@@ -42,18 +42,11 @@ button {
     border: none;
     margin-top: 12px;
     cursor: pointer;
-    letter-spacing: 0.5px;
-    transition: 0.3s ease-in-out;
-    box-shadow: 0 0 18px rgba(255, 0, 0, 0.7);
-}
-button:hover {
-    box-shadow: 0 0 25px rgba(255, 0, 0, 1);
 }
 #toast {
     visibility: hidden;
     min-width: 240px;
     background-color: red;
-    font-family: 'Poppins', sans-serif;
     color: black;
     text-align: center;
     border-radius: 10px;
@@ -63,14 +56,9 @@ button:hover {
     left: 50%;
     transform: translateX(-50%);
     font-size: 18px;
-    z-index: 99999;
-    opacity: 0;
-    transition: opacity 0.3s, bottom 0.3s;
 }
 #toast.show {
     visibility: visible;
-    opacity: 1;
-    bottom: 50px;
 }
 #depositStatus {
     margin-top: 15px;
@@ -82,32 +70,6 @@ button:hover {
     color: cyan;
     margin-top: 5px;
 }
-#refreshNotice {
-    font-size: 14px;
-    color: yellow;
-    margin-top: 12px;
-    font-weight: bold;
-    animation: blinkGlow 1s infinite alternate;
-}
-@keyframes blinkGlow {
-    0% { opacity: 1; text-shadow: 0 0 5px yellow, 0 0 10px orange; }
-    100% { opacity: 0.4; text-shadow: 0 0 20px yellow, 0 0 30px red; }
-}
-#historyBox { margin-top: 25px; text-align: left; }
-.history-item {
-    background: #111;
-    border-radius: 10px;
-    padding: 12px;
-    margin: 10px 0;
-    display: flex;
-    justify-content: space-between;
-    font-family: 'Poppins', sans-serif;
-}
-.history-left { text-align: left; }
-.history-right { text-align: right; }
-.history-title { color: lime; }
-.history-sub { font-size: 12px; color: #aaa; }
-.history-naira { color: cyan; font-size: 13px; }
 </style>
 </head>
 
@@ -121,16 +83,8 @@ button:hover {
 
 <div id="depositStatus"></div>
 
-<div id="refreshNotice">⚡ Make sure to return back to the site immediately after payment ⚡</div>
-
-<div id="historyBox">
-    <h3>📜 Transactions</h3>
-    <div id="historyList"></div>
-</div>
-
 <div id="toast"></div>
 
-<!-- Firebase -->
 <script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-app.js"></script>
 <script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-auth.js"></script>
 <script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-database.js"></script>
@@ -138,6 +92,7 @@ button:hover {
 <script src="https://checkout.flutterwave.com/v3.js"></script>
 
 <script>
+
 const firebaseConfig = {
     apiKey: "AIzaSyDvFDByPPo9zgwKLdPaREz1OVMQCXmPfrs",
     authDomain: "bets-d795d.firebaseapp.com",
@@ -147,102 +102,96 @@ const firebaseConfig = {
     appId: "1:384386108287:android:d238a5ec8068d9bb9be84a",
     databaseURL: "https://bets-d795d-default-rtdb.firebaseio.com"
 };
+
 firebase.initializeApp(firebaseConfig);
 const db = firebase.database();
 
 const depositStatus = document.getElementById("depositStatus");
 const submitBtn = document.getElementById("submitDepositBtn");
 const depositInput = document.getElementById("depositAmount");
-const historyList = document.getElementById("historyList");
 
 function toast(msg) {
     const t = document.getElementById("toast");
     t.innerHTML = msg;
     t.className = "show";
-    setTimeout(() => { t.className = t.className.replace("show", ""); }, 3000);
+    setTimeout(() => {
+        t.className = "";
+    }, 3000);
 }
 
-firebase.auth().onAuthStateChanged(user => {
-    if (!user) {
-        window.location.href = "login.html";
-        return;
-    }
+/* LOAD FLUTTERWAVE KEY */
 
-    db.ref("users/" + user.uid + "/transactions").once("value").then(snap => {
-
-        historyList.innerHTML = "";
-
-        let arr = [];
-
-        snap.forEach(child => {
-            let tx = child.val();
-            tx.key = child.key;
-            arr.push(tx);
-        });
-
-        arr.sort((a,b)=> b.time - a.time);
-
-        arr.forEach(tx => {
-            if(tx.type === "deposit"){
-                const d = new Date(tx.time).toLocaleString();
-
-                historyList.innerHTML += `
-                <div class="history-item">
-                    <div class="history-left">
-                        <div class="history-title">+${tx.coins} Coins</div>
-                        <div class="history-sub">Ref: ${tx.ref}</div>
-                        <div class="history-sub">${d}</div>
-                    </div>
-                    <div class="history-right">
-                        <div>+${tx.coins}</div>
-                        <div class="history-naira">₦${tx.amount}</div>
-                    </div>
-                </div>`;
-            }
-        });
-
-    });
-});
-
-/* ✅ FIXED — Load Flutterwave Key */
 let flutterwavePublicKey = null;
 
 db.ref("settings/flutterwaveKeys/public")
 .once("value")
 .then(snap => {
-    flutterwavePublicKey = snap.val() || "";
+
+    flutterwavePublicKey = snap.val();
+
+    if (!flutterwavePublicKey) {
+
+        toast("Flutterwave key not found");
+
+    }
+
 });
 
+/* VALIDATION */
+
 function validateAmount(amount) {
+
     const min = 1000;
     const rate = 200;
-    if (amount < min) return { valid: false, msg: `Minimum deposit is ₦${min}` };
+
+    if (amount < min)
+        return { valid: false, msg: `Minimum deposit is ₦${min}` };
+
     if (amount % rate !== 0) {
+
         const lower = amount - (amount % rate);
         const upper = amount + (rate - (amount % rate));
-        return { valid: false, msg: `Enter a multiple of ₦${rate}. Try ₦${lower} or ₦${upper}` };
+
+        return {
+            valid: false,
+            msg: `Enter a multiple of ₦${rate}. Try ₦${lower} or ₦${upper}`
+        };
+
     }
+
     return { valid: true, coins: amount / rate };
+
 }
+
+/* BUTTON CLICK */
 
 submitBtn.onclick = () => {
 
+    if (!flutterwavePublicKey)
+        return toast("Flutterwave key not loaded yet");
+
     const user = firebase.auth().currentUser;
-    if (!user) return toast("Please login again");
 
-    const amountRaw = Number(depositInput.value);
-    if (!amountRaw) return toast("Enter a valid deposit amount");
+    if (!user)
+        return toast("Please login again");
 
-    const validation = validateAmount(amountRaw);
-    if (!validation.valid) return toast(validation.msg);
+    const amountRaw =
+        Number(depositInput.value);
 
-    const coins = validation.coins;
+    if (!amountRaw)
+        return toast("Enter valid amount");
+
+    const validation =
+        validateAmount(amountRaw);
+
+    if (!validation.valid)
+        return toast(validation.msg);
+
+    const coins =
+        validation.coins;
 
     depositStatus.innerHTML =
-        `You will receive ${coins} coin(s) for ₦${amountRaw}`;
-
-    if (!flutterwavePublicKey)
-        return toast("Payment key not loaded — try again");
+        `You will receive ${coins} coin(s)`;
 
     FlutterwaveCheckout({
 
@@ -258,22 +207,10 @@ submitBtn.onclick = () => {
             email: user.email
         },
 
-        /* ✅ redirect_url REMOVED */
-
         callback: function(response){
 
-            if(response.status !== "successful"){
-                toast("Payment failed");
-                return;
-            }
-
-            toast(
-                "Payment successful! Ref: "
-                + response.transaction_id
-            );
-
-            depositStatus.innerHTML =
-                `Payment complete! Coins added: ${coins}`;
+            if(response.status !== "successful")
+                return toast("Payment failed");
 
             const userRef =
                 db.ref("users/" + user.uid);
@@ -282,9 +219,11 @@ submitBtn.onclick = () => {
             .once("value")
             .then(snap => {
 
-                let current = snap.val() || 0;
+                let current =
+                    snap.val() || 0;
 
-                return userRef.child("balance")
+                return userRef
+                .child("balance")
                 .set(current + coins);
 
             })
@@ -293,19 +232,29 @@ submitBtn.onclick = () => {
                 return userRef
                 .child("transactions")
                 .push({
+
                     type: "deposit",
+
                     coins: coins,
+
                     amount: amountRaw,
+
                     ref: response.transaction_id,
+
                     time: Date.now()
+
                 });
 
             })
             .then(() => {
 
-                setTimeout(()=>{
+                toast("Payment successful!");
+
+                setTimeout(() => {
+
                     window.location.href =
                         "maining.html";
+
                 },1500);
 
             });
@@ -313,12 +262,15 @@ submitBtn.onclick = () => {
         },
 
         onclose: function(){
+
             toast("Payment cancelled");
+
         }
 
     });
 
 };
+
 </script>
 
 </body>
