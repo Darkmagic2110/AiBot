@@ -141,12 +141,9 @@ button:hover {
 
 <div id="toast"></div>
 
-<!-- Firebase -->
 <script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-app.js"></script>
 <script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-auth.js"></script>
 <script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-database.js"></script>
-
-<!-- ✅ FLUTTERWAVE SCRIPT -->
 <script src="https://checkout.flutterwave.com/v3.js"></script>
 
 <script>
@@ -255,30 +252,47 @@ submitBtn.onclick = () => {
         customer: {
             email: user.email
         },
+
+        // ✅ FIXED CALLBACK ONLY
         callback: function (response) {
 
-            toast("Payment successful! Ref: " + response.transaction_id);
-            depositStatus.innerHTML = `Payment complete! Coins added: ${coins}`;
+            if (response.status !== "successful") {
+                return toast("Payment failed or not completed");
+            }
 
+            const txId = response.transaction_id;
             const userRef = db.ref("users/" + user.uid);
 
-            userRef.child("balance").once("value").then(snap => {
-                let current = snap.val() || 0;
-                userRef.child("balance").set(current + coins);
-            });
+            db.ref("processedPayments/" + txId).once("value").then(snap => {
 
-            userRef.child("transactions").push({
-                type: "deposit",
-                coins: coins,
-                amount: amountRaw,
-                ref: response.transaction_id,
-                time: Date.now()
-            });
+                if (snap.exists()) {
+                    return toast("Payment already processed");
+                }
 
-            setTimeout(()=>{
-                window.location.href = "maining.html";
-            },1500);
+                db.ref("processedPayments/" + txId).set(true);
+
+                userRef.child("balance").transaction(current => {
+                    return (current || 0) + coins;
+                });
+
+                userRef.child("transactions").push({
+                    type: "deposit",
+                    coins: coins,
+                    amount: amountRaw,
+                    ref: txId,
+                    time: Date.now()
+                });
+
+                toast("Payment successful! Ref: " + txId);
+                depositStatus.innerHTML = `Payment complete! Coins added: ${coins}`;
+
+                setTimeout(()=>{
+                    window.location.href = "maining.html";
+                },3000);
+
+            });
         },
+
         onclose: function() {
             toast("Payment cancelled");
         }
