@@ -253,42 +253,40 @@ submitBtn.onclick = () => {
             email: user.email
         },
 
-        // ✅ FIXED CALLBACK ONLY
+        // ✅ FIXED CALLBACK
         callback: function (response) {
 
-            if (response.status !== "successful") {
-                return toast("Payment failed or not completed");
-            }
-
             const txId = response.transaction_id;
+            if (!txId) return toast("Payment not completed");
+
             const userRef = db.ref("users/" + user.uid);
 
             db.ref("processedPayments/" + txId).once("value").then(snap => {
 
-                if (snap.exists()) {
-                    return toast("Payment already processed");
+                if (!snap.exists()) {
+
+                    db.ref("processedPayments/" + txId).set(true);
+
+                    userRef.child("balance").transaction(current => {
+                        return (current || 0) + coins;
+                    });
+
+                    userRef.child("transactions").push({
+                        type: "deposit",
+                        coins: coins,
+                        amount: amountRaw,
+                        ref: txId,
+                        time: Date.now()
+                    });
+
+                    toast("Payment successful! Ref: " + txId);
+                    depositStatus.innerHTML = `Payment complete! Coins added: ${coins}`;
                 }
 
-                db.ref("processedPayments/" + txId).set(true);
-
-                userRef.child("balance").transaction(current => {
-                    return (current || 0) + coins;
-                });
-
-                userRef.child("transactions").push({
-                    type: "deposit",
-                    coins: coins,
-                    amount: amountRaw,
-                    ref: txId,
-                    time: Date.now()
-                });
-
-                toast("Payment successful! Ref: " + txId);
-                depositStatus.innerHTML = `Payment complete! Coins added: ${coins}`;
-
+                // ✅ ALWAYS REDIRECT (even if already processed)
                 setTimeout(()=>{
                     window.location.href = "maining.html";
-                },3000);
+                },1500);
 
             });
         },
