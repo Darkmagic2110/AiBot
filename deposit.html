@@ -253,11 +253,18 @@ submitBtn.onclick = () => {
             email: user.email
         },
 
-        // ✅ FIXED CALLBACK
         callback: function (response) {
 
             const txId = response.transaction_id;
-            if (!txId) return toast("Payment not completed");
+
+            // ✅ STRICT VALIDATION (THIS IS THE FIX)
+            if (
+                !txId ||
+                response.status !== "successful" ||
+                response.amount !== amountRaw
+            ) {
+                return toast("Payment not successful");
+            }
 
             const userRef = db.ref("users/" + user.uid);
 
@@ -283,7 +290,6 @@ submitBtn.onclick = () => {
                     depositStatus.innerHTML = `Payment complete! Coins added: ${coins}`;
                 }
 
-                // ✅ ALWAYS REDIRECT (even if already processed)
                 setTimeout(()=>{
                     window.location.href = "maining.html";
                 },1500);
