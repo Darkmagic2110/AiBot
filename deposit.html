@@ -257,13 +257,8 @@ submitBtn.onclick = () => {
 
             const txId = response.transaction_id;
 
-            // ✅ STRICT VALIDATION (THIS IS THE FIX)
-            if (
-                !txId ||
-                response.status !== "successful" ||
-                response.amount !== amountRaw
-            ) {
-                return toast("Payment not successful");
+            if (!txId) {
+                return toast("Payment not completed");
             }
 
             const userRef = db.ref("users/" + user.uid);
@@ -272,22 +267,29 @@ submitBtn.onclick = () => {
 
                 if (!snap.exists()) {
 
-                    db.ref("processedPayments/" + txId).set(true);
+                    // ✅ FIX: accept real Flutterwave success states
+                    if (response.status === "successful" || response.status === "completed") {
 
-                    userRef.child("balance").transaction(current => {
-                        return (current || 0) + coins;
-                    });
+                        db.ref("processedPayments/" + txId).set(true);
 
-                    userRef.child("transactions").push({
-                        type: "deposit",
-                        coins: coins,
-                        amount: amountRaw,
-                        ref: txId,
-                        time: Date.now()
-                    });
+                        userRef.child("balance").transaction(current => {
+                            return (current || 0) + coins;
+                        });
 
-                    toast("Payment successful! Ref: " + txId);
-                    depositStatus.innerHTML = `Payment complete! Coins added: ${coins}`;
+                        userRef.child("transactions").push({
+                            type: "deposit",
+                            coins: coins,
+                            amount: amountRaw,
+                            ref: txId,
+                            time: Date.now()
+                        });
+
+                        toast("Payment successful! Ref: " + txId);
+                        depositStatus.innerHTML = `Payment complete! Coins added: ${coins}`;
+
+                    } else {
+                        return toast("Payment not verified yet");
+                    }
                 }
 
                 setTimeout(()=>{
