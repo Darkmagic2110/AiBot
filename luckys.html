@@ -3,7 +3,6 @@
 <head>
   <meta charset="UTF-8">
 
-  <!-- ✅ Fix screen scaling on all devices -->
   <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
 
   <title>Lucky Jet Grand Prediction</title>
@@ -23,12 +22,44 @@
       color: white;
       text-align: center;
     }
+
     h1 {
       font-size: clamp(20px, 6vw, 40px);
       font-weight: bold;
       margin-bottom: 20px;
       text-shadow: 0 0 10px purple;
     }
+
+    /* 🔥 PREMIUM TOGGLE */
+    .mode-box {
+      display: flex;
+      background: rgba(0,0,0,0.6);
+      border-radius: 30px;
+      overflow: hidden;
+      margin-bottom: 15px;
+      border: 1px solid #7f00ff;
+    }
+
+    .mode-btn {
+      padding: 8px 18px;
+      cursor: pointer;
+      font-weight: bold;
+      font-size: 14px;
+      color: white;
+      transition: 0.3s;
+    }
+
+    .mode-btn.active {
+      background: #7f00ff;
+      color: white;
+    }
+
+    #modeText {
+      font-size: 12px;
+      margin-bottom: 10px;
+      opacity: 0.8;
+    }
+
     .circle {
       width: min(60vw, 260px);
       height: min(60vw, 260px);
@@ -45,10 +76,12 @@
       margin-bottom: 25px;
       background: rgba(0,0,0,0.5);
     }
+
     @keyframes glow {
       from { box-shadow: 0 0 10px #7f00ff; }
       to { box-shadow: 0 0 30px #b266ff; }
     }
+
     button {
       padding: 12px 35px;
       font-size: clamp(14px, 4vw, 20px);
@@ -59,9 +92,7 @@
       border-radius: 30px;
       cursor: pointer;
       box-shadow: 0 0 10px #7f00ff;
-      animation: glow 1.5s infinite alternate;
     }
-    button:active { transform: scale(0.95); }
 
     #balanceContainer {
       position: fixed;
@@ -76,98 +107,129 @@
     }
   </style>
 </head>
+
 <body>
 
-  <div id="balanceContainer">
-    <span id="balanceAmount">0</span> COINS
-  </div>
+<div id="balanceContainer">
+  <span id="balanceAmount">0</span> COINS
+</div>
 
-  <h1>LUCKY JET GRAND PREDICTION</h1>
+<h1>LUCKY JET GRAND PREDICTION</h1>
 
-  <div class="circle" id="display">0.00x</div>
+<!-- 🔥 MODE SELECT -->
+<div class="mode-box">
+  <div class="mode-btn active" id="regularBtn">Regular</div>
+  <div class="mode-btn" id="premiumBtn">Premium</div>
+</div>
 
-  <button onclick="generateSignal()">GET SIGNALS</button>
+<div id="modeText">You are using Regular Mode</div>
 
-  <!-- Firebase -->
-  <script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-app.js"></script>
-  <script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-auth.js"></script>
-  <script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-database.js"></script>
+<div class="circle" id="display">0.00x</div>
 
-  <script>
-    const display = document.getElementById("display");
-    const balanceDisplay = document.getElementById("balanceAmount");
+<button onclick="generateSignal()">GET SIGNALS</button>
 
-    // Firebase config
-    const firebaseConfig = {
-      apiKey: "AIzaSyDvFDByPPo9zgwKLdPaREz1OVMQCXmPfrs",
-      authDomain: "bets-d795d.firebaseapp.com",
-      projectId: "bets-d795d",
-      storageBucket: "bets-d795d.appspot.com",
-      messagingSenderId: "384386108287",
-      appId: "1:384386108287:android:d238a5ec8068d9bb9be84a",
-      databaseURL: "https://bets-d795d-default-rtdb.firebaseio.com"
-    };
-    firebase.initializeApp(firebaseConfig);
-    const db = firebase.database();
-    let currentUserUid = null;
+<!-- Firebase -->
+<script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-app.js"></script>
+<script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-auth.js"></script>
+<script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-database.js"></script>
 
-    // Auth & balance listener
-    firebase.auth().onAuthStateChanged(user => {
-      if (!user) { alert("Please login first"); return; }
-      currentUserUid = user.uid;
+<script>
+const display = document.getElementById("display");
+const balanceDisplay = document.getElementById("balanceAmount");
 
-      // Real-time balance listener
-      db.ref("users/" + currentUserUid + "/balance").on("value", snap => {
-        const val = snap.val();
-        balanceDisplay.innerText = val != null ? Math.floor(val) : 0;
-      });
+const regularBtn = document.getElementById("regularBtn");
+const premiumBtn = document.getElementById("premiumBtn");
+const modeText = document.getElementById("modeText");
+
+let mode = "regular";
+
+// toggle
+regularBtn.onclick = () => {
+  mode = "regular";
+  regularBtn.classList.add("active");
+  premiumBtn.classList.remove("active");
+  modeText.innerText = "You are using Regular Mode";
+};
+
+premiumBtn.onclick = () => {
+  mode = "premium";
+  premiumBtn.classList.add("active");
+  regularBtn.classList.remove("active");
+  modeText.innerText = "Premium Mode (cost: 2 coins | 1.05x - 1.50x)";
+};
+
+// Firebase config
+const firebaseConfig = {
+  apiKey: "AIzaSyDvFDByPPo9zgwKLdPaREz1OVMQCXmPfrs",
+  authDomain: "bets-d795d.firebaseapp.com",
+  projectId: "bets-d795d",
+  storageBucket: "bets-d795d.appspot.com",
+  messagingSenderId: "384386108287",
+  appId: "1:384386108287:android:d238a5ec8068d9bb9be84a",
+  databaseURL: "https://bets-d795d-default-rtdb.firebaseio.com"
+};
+firebase.initializeApp(firebaseConfig);
+const db = firebase.database();
+
+let currentUserUid = null;
+
+firebase.auth().onAuthStateChanged(user => {
+  if (!user) { alert("Please login first"); return; }
+  currentUserUid = user.uid;
+
+  db.ref("users/" + currentUserUid + "/balance").on("value", snap => {
+    balanceDisplay.innerText = snap.val() || 0;
+  });
+});
+
+function generateSignal() {
+  if (!currentUserUid) return alert("User not logged in!");
+
+  const cost = (mode === "premium") ? 2 : 1;
+
+  const userBalanceRef = db.ref("users/" + currentUserUid + "/balance");
+
+  userBalanceRef.transaction(current => {
+    current = current || 0;
+    if (current < cost) { alert("Insufficient balance!"); return; }
+    return current - cost;
+  }, (err, committed) => {
+    if (!committed) return;
+
+    db.ref("users/" + currentUserUid + "/transactions").push({
+      type: "bet",
+      coins: -cost,
+      game: "Lucky Jet",
+      time: Date.now(),
+      uid: currentUserUid
     });
 
-    // Generate Lucky Jet signal
-    function generateSignal() {
-      if (!currentUserUid) return alert("User not logged in!");
+    let count = 0;
+    const anim = setInterval(() => {
+      let fake = (Math.random() * 6.5).toFixed(2);
+      display.textContent = fake + "x";
+      count++;
 
-      const userBalanceRef = db.ref("users/" + currentUserUid + "/balance");
+      if (count > 15) {
+        clearInterval(anim);
 
-      // Deduct 1 coin per signal & store transaction
-      userBalanceRef.transaction(current => {
-        current = current || 0;
-        if (current < 1) { alert("Insufficient balance!"); return; }
-        return current - 1;
-      }, (err, committed, snapshot) => {
-        if (!committed) return; // Stop if transaction failed
+        let finalNumber;
 
-        // ** Store deduction in transactions **
-        db.ref("users/" + currentUserUid + "/transactions").push({
-          type: "bet",
-          coins: -1,
-          amount: 1,
-          game: "Lucky Jet",
-          ref: "BET-" + Date.now(),
-          time: Date.now(),
-          uid: currentUserUid
-        });
+        if (mode === "premium") {
+          // 🔥 PREMIUM RANGE
+          finalNumber = (Math.random() * (1.50 - 1.05) + 1.05).toFixed(2);
+        } else {
+          let chance = Math.random();
+          if (chance < 0.7) finalNumber = (1 + Math.random() * 1.99).toFixed(2);
+          else finalNumber = (3 + Math.random() * 3.5).toFixed(2);
+        }
 
-        // Start animation after deduction
-        let count = 0;
-        const anim = setInterval(() => {
-          let fake = (Math.random() * 6.5).toFixed(2);
-          display.textContent = fake + "x";
-          count++;
-          if (count > 15) {
-            clearInterval(anim);
-
-            let chance = Math.random();
-            let finalNumber;
-            if (chance < 0.7) finalNumber = (1 + Math.random() * 1.99).toFixed(2);
-            else finalNumber = (3 + Math.random() * 3.5).toFixed(2);
-
-            display.textContent = finalNumber + "x";
-          }
-        }, 80);
-      });
-    }
-  </script>
+        display.textContent = finalNumber + "x";
+      }
+    }, 80);
+  });
+}
+</script>
 
 </body>
 </html>

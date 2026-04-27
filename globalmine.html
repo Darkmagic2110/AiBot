@@ -30,8 +30,21 @@ select{padding:6px;border-radius:6px;border:1px solid #233042;background:#071024
 
 <div class="app">
 <h1>🌍 GLOBAL MINES PREDICTOR</h1>
+
+<!-- MODE INFO -->
+<div id="modeInfo" style="margin-bottom:8px;color:#00ffcc;font-weight:bold;">
+  You are currently using Regular Prediction
+</div>
+
+<!-- MODE SELECT -->
+<select id="modeSelect">
+  <option value="regular">Regular Mode</option>
+  <option value="premium">Premium Mode</option>
+</select>
+
 <div id="timerText">READY</div>
 <div id="statusText"></div>
+
 <div class="controls">
   <select id="bombChoice">
     <option value="2">2 Bombs</option>
@@ -57,6 +70,18 @@ const statusText = document.getElementById("statusText");
 const predictBtn = document.getElementById("predictBtn");
 const balanceDisplay = document.getElementById("balanceAmount");
 
+const modeSelect = document.getElementById("modeSelect");
+const modeInfo = document.getElementById("modeInfo");
+
+// MODE INFO
+modeSelect.addEventListener("change", () => {
+  if (modeSelect.value === "premium") {
+    modeInfo.innerText = "Premium Mode: Each prediction costs 2 coins";
+  } else {
+    modeInfo.innerText = "You are currently using Regular Prediction";
+  }
+});
+
 // FIREBASE CONFIG
 const firebaseConfig = {
   apiKey: "AIzaSyDvFDByPPo9zgwKLdPaREz1OVMQCXmPfrs",
@@ -73,20 +98,19 @@ const db = firebase.database();
 let currentUserUid = null;
 let currentUserEmail = null;
 
-// CREATE GRID
+// GRID
 for (let i = 0; i < 25; i++) {
     const cell = document.createElement("div");
     cell.className = "cell";
     grid.appendChild(cell);
 }
 
-// CHECK USER LOGIN
+// LOGIN
 firebase.auth().onAuthStateChanged(user => {
     if (!user) { alert("Please login first"); return; }
     currentUserUid = user.uid;
     currentUserEmail = user.email;
 
-    // LOAD BALANCE
     db.ref("users/" + currentUserUid + "/balance").once("value").then(snap => {
         balanceDisplay.innerText = snap.val() || 0;
     });
@@ -95,7 +119,7 @@ firebase.auth().onAuthStateChanged(user => {
         balanceDisplay.innerText = snap.val() || 0;
     });
 
-    // RESTORE GAME IF EXISTS
+    // 🔥 RESTORE (UNCHANGED)
     const saved = JSON.parse(localStorage.getItem("minesData"));
     if (saved) {
         const now = Date.now();
@@ -116,29 +140,33 @@ firebase.auth().onAuthStateChanged(user => {
     }
 });
 
-// PREDICT FUNCTION WITH FIREBASE TRANSACTION
+// PREDICT
 function predict() {
     if (!currentUserUid) return alert("User not logged in!");
+
+    const isPremium = modeSelect.value === "premium";
+    const cost = isPremium ? 2 : 1;
 
     const userBalanceRef = db.ref("users/" + currentUserUid + "/balance");
 
     userBalanceRef.transaction(current => {
         current = current || 0;
-        if (current < 1) { alert("Insufficient balance!"); return; }
-        return current - 1; // Deduct 1 coin per prediction
-    }, (err, committed, snapshot) => {
+        if (current < cost) { alert("Insufficient balance!"); return; }
+        return current - cost;
+    }, (err, committed) => {
         if (committed) {
-            // SAVE TRANSACTION
+
             const tx = {
                 type: "bet",
-                coins: -1,
-                amount: 1,
+                coins: -cost,
+                amount: cost,
                 game: "Mines",
                 ref: "BET-" + Date.now(),
                 time: Date.now(),
                 email: currentUserEmail,
                 uid: currentUserUid
             };
+
             db.ref("users/" + currentUserUid + "/transactions").push(tx);
             db.ref("transactions").push(tx);
 
@@ -147,16 +175,18 @@ function predict() {
     });
 }
 
-// RUN PREDICTION
+// RUN
 function runPrediction() {
     const bombs = parseInt(document.getElementById("bombChoice").value);
+    const isPremium = modeSelect.value === "premium";
+
     const cells = [...grid.children];
     cells.forEach(c => c.innerHTML = "");
 
-    // ANIMATION TEXT
     const messages = ["Generating prediction...", "Analyzing mines...", "Calculating safe spots..."];
     let index = 0;
     statusText.innerText = messages[index];
+
     const animInterval = setInterval(() => {
         index = (index + 1) % messages.length;
         statusText.innerText = messages[index];
@@ -164,21 +194,29 @@ function runPrediction() {
 
     predictBtn.disabled = true;
 
-    // SHOW STARS AFTER 2–3 SECONDS
     setTimeout(() => {
         clearInterval(animInterval);
         statusText.innerText = "Prediction complete!";
 
         let stars = 0;
-        if (bombs === 2) stars = getRandom(4, 7);
-        else if (bombs === 3) stars = getRandom(5, 7);
-        else if (bombs === 5) stars = getRandom(3, 5);
-        else if (bombs === 7) stars = getRandom(2, 4);
+
+        if (!isPremium) {
+            if (bombs === 2) stars = getRandom(6, 10);
+            else if (bombs === 3) stars = getRandom(5, 7);
+            else if (bombs === 5) stars = getRandom(3, 5);
+            else if (bombs === 7) stars = getRandom(2, 4);
+        } else {
+            if (bombs === 2) stars = getRandom(4, 5);
+            else if (bombs === 3) stars = getRandom(3, 4);
+            else if (bombs === 5) stars = getRandom(2, 3);
+            else if (bombs === 7) stars = getRandom(1, 2);
+        }
 
         let used = new Set();
         while (used.size < stars) {
             used.add(Math.floor(Math.random() * cells.length));
         }
+
         used.forEach(i => {
             const star = document.createElement("div");
             star.className = "star";
@@ -186,22 +224,24 @@ function runPrediction() {
             cells[i].appendChild(star);
         });
 
-        // FUTURE TIME 1–2 MIN AHEAD
+        // 🔥 TIMER + STORAGE (UNCHANGED)
         const now = new Date();
         const addMinutes = getRandom(1,2);
         now.setMinutes(now.getMinutes() + addMinutes);
-        let hours = now.getHours();
-        let minutes = now.getMinutes();
-        if (minutes < 10) minutes = "0" + minutes;
-        if (hours < 10) hours = "0" + hours;
-        const displayTime = `${hours}:${minutes}`;
+        let h = now.getHours();
+        let m = now.getMinutes();
+        if (m < 10) m = "0" + m;
+        if (h < 10) h = "0" + h;
+
+        const displayTime = `${h}:${m}`;
         timerText.innerText = "STAKE AT " + displayTime;
 
         const expireTime = Date.now() + addMinutes*60*1000;
+
         localStorage.setItem("minesData", JSON.stringify({
             stars: [...used],
-            expireTime: expireTime,
-            displayTime: displayTime
+            expireTime,
+            displayTime
         }));
 
         setTimeout(() => {
@@ -214,7 +254,7 @@ function runPrediction() {
     }, getRandom(2000,3000));
 }
 
-// RESTORE GAME
+// RESTORE
 function restoreGame(data) {
     const cells = [...grid.children];
     data.stars.forEach(i => {
@@ -225,7 +265,7 @@ function restoreGame(data) {
     });
 }
 
-// RANDOM HELPER
+// RANDOM
 function getRandom(min, max) {
     return Math.floor(Math.random() * (max - min + 1)) + min;
 }

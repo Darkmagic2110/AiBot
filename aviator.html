@@ -22,8 +22,44 @@
         font-family: 'UnifrakturCook', cursive;
         font-size: 30px;
         color: red;
-        margin-bottom: 20px;
+        margin-bottom: 10px;
         text-shadow: 0 0 8px #ff3300, 0 0 15px #ff4d4d;
+    }
+
+    /* 🔥 MODERN TOGGLE */
+    .mode-toggle {
+        display: flex;
+        justify-content: center;
+        background: #111;
+        border-radius: 30px;
+        padding: 4px;
+        margin-bottom: 8px;
+        width: 220px;
+        margin-left: auto;
+        margin-right: auto;
+        box-shadow: 0 0 10px #ff3300;
+    }
+
+    .mode-btn {
+        flex: 1;
+        padding: 8px;
+        border-radius: 25px;
+        cursor: pointer;
+        font-size: 14px;
+        transition: 0.3s;
+    }
+
+    .mode-btn.active {
+        background: #ff3300;
+        color: black;
+        font-weight: bold;
+        box-shadow: 0 0 10px #ff3300;
+    }
+
+    #modeInfo {
+        font-size: 13px;
+        margin-bottom: 10px;
+        color: #ff4d4d;
     }
 
     #botImage {
@@ -118,6 +154,14 @@
   <span id="balanceAmount">0</span> COINS
 </div>
 
+<!-- 🔥 ADDED (no removal) -->
+<div class="mode-toggle">
+  <div class="mode-btn active" id="regularBtn">Regular</div>
+  <div class="mode-btn" id="premiumBtn">Premium</div>
+</div>
+
+<div id="modeInfo">You are using Regular Prediction</div>
+
 <img id="botImage" src="aviator.jpg" alt="Aviator Bot">
 
 <div id="loadingText">⏳ Predicting...</div>
@@ -133,12 +177,33 @@
 <script>
 function padZero(num) { return num < 10 ? '0'+num : num; }
 function getRandomCoefficient() { return (Math.random() * (4.50 - 2.30) + 2.30).toFixed(2); }
-function getRandomMinuteOffset() { return Math.floor(Math.random() * 3) + 2; } // 2-4 mins
+function getPremiumCoefficient() { return (Math.random() * (2.30 - 1.50) + 1.50).toFixed(2); }
+function getRandomMinuteOffset() { return Math.floor(Math.random() * 3) + 2; }
 
 const predictBtn = document.getElementById("predictBtn");
 const predictionBox = document.getElementById("predictionBox");
 const loadingText = document.getElementById("loadingText");
 const balanceDisplay = document.getElementById("balanceAmount");
+
+const regularBtn = document.getElementById("regularBtn");
+const premiumBtn = document.getElementById("premiumBtn");
+const modeInfo = document.getElementById("modeInfo");
+
+let mode = "regular";
+
+regularBtn.onclick = () => {
+    mode = "regular";
+    regularBtn.classList.add("active");
+    premiumBtn.classList.remove("active");
+    modeInfo.innerText = "You are using Regular Prediction";
+};
+
+premiumBtn.onclick = () => {
+    mode = "premium";
+    premiumBtn.classList.add("active");
+    regularBtn.classList.remove("active");
+    modeInfo.innerText = "Premium Mode: costs 2 coins";
+};
 
 const firebaseConfig = {
   apiKey: "AIzaSyDvFDByPPo9zgwKLdPaREz1OVMQCXmPfrs",
@@ -153,7 +218,6 @@ firebase.initializeApp(firebaseConfig);
 const db = firebase.database();
 let currentUserUid = null;
 
-// Auth & balance listener
 firebase.auth().onAuthStateChanged(user => {
   if (!user) { alert("Please login first"); return; }
   currentUserUid = user.uid;
@@ -167,28 +231,27 @@ firebase.auth().onAuthStateChanged(user => {
 predictBtn.addEventListener("click", () => {
   if (!currentUserUid) return alert("User not logged in!");
 
+  const cost = mode === "premium" ? 2 : 1;
+
   const userBalanceRef = db.ref("users/" + currentUserUid + "/balance");
 
-  // Deduct 1 coin per prediction & store transaction
   userBalanceRef.transaction(current => {
     current = current || 0;
-    if (current < 1) { alert("Insufficient balance!"); return; }
-    return current - 1;
+    if (current < cost) { alert("Insufficient balance!"); return; }
+    return current - cost;
   }, (err, committed, snapshot) => {
     if (!committed) return;
 
-    // ** Store deduction in transactions with game info **
     db.ref("users/" + currentUserUid + "/transactions").push({
       type: "bet",
-      coins: -1,
-      amount: 1,              // optional
+      coins: -cost,
+      amount: cost,
       game: "Aviator",
       ref: "BET-" + Date.now(),
       time: Date.now(),
       uid: currentUserUid
     });
 
-    // Start prediction animation
     predictionBox.style.display = "none";
     loadingText.style.display = "block";
     predictBtn.disabled = true;
@@ -232,12 +295,14 @@ predictBtn.addEventListener("click", () => {
 
     function showPrediction() {
         loadingText.style.display = "none";
+
         const now = new Date();
         const offsetMinutes = getRandomMinuteOffset();
         const predictedTime = new Date(now.getTime() + offsetMinutes * 60000);
         const hour = padZero(predictedTime.getHours());
         const minute = padZero(predictedTime.getMinutes());
-        const coef = parseFloat(getRandomCoefficient());
+
+        const coef = parseFloat(mode === "premium" ? getPremiumCoefficient() : getRandomCoefficient());
 
         const text = `AVIATOR PREDICTION
 ┏━━━━━━━━━━━━━

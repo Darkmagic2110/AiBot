@@ -37,6 +37,42 @@
         z-index: 9999;
     }
 
+    /* 🔥 MODERN TOGGLE */
+    .mode-toggle {
+        display: flex;
+        justify-content: center;
+        background: #111;
+        border-radius: 30px;
+        padding: 4px;
+        margin-bottom: 10px;
+        width: 220px;
+        margin-left: auto;
+        margin-right: auto;
+        box-shadow: 0 0 10px #00bfff;
+    }
+
+    .mode-btn {
+        flex: 1;
+        padding: 8px;
+        border-radius: 25px;
+        cursor: pointer;
+        font-size: 14px;
+        transition: 0.3s;
+    }
+
+    .mode-btn.active {
+        background: #00bfff;
+        color: black;
+        font-weight: bold;
+        box-shadow: 0 0 10px #00bfff;
+    }
+
+    #modeInfo {
+        font-size: 13px;
+        margin-bottom: 10px;
+        color: #00ffff;
+    }
+
     #botImage {
         width: 200px;
         height: 200px;
@@ -80,7 +116,6 @@
         border: 2px solid #00bfff;
         border-radius: 16px;
         padding: 20px;
-        font-family: 'Poppins', sans-serif;
         color: #00ffff;
         font-size: 16px;
         text-align: left;
@@ -89,8 +124,6 @@
         max-width: 400px;
         margin: 0 auto;
         box-shadow: 0 0 25px #00bfff, 0 0 40px #00ffff, 0 0 55px #00bfff inset;
-        position: relative;
-        overflow: hidden;
     }
 
     #loadingText {
@@ -128,7 +161,6 @@
         background: #00ffff;
         border-radius: 50%;
         opacity: 0.8;
-        pointer-events: none;
         animation: trailAnim 1.5s linear forwards;
     }
 
@@ -149,16 +181,12 @@
         bottom: 50px;
         z-index: 999;
         font-weight: bold;
-        font-size: 1rem;
     }
 
     #toast.show {
         visibility: visible;
         animation: fadein 0.5s, fadeout 0.5s 2s;
     }
-
-    @keyframes fadein { from { bottom: 30px; opacity: 0; } to { bottom: 50px; opacity: 1; } }
-    @keyframes fadeout { from { bottom: 50px; opacity: 1; } to { bottom: 70px; opacity: 0; } }
 </style>
 </head>
 
@@ -170,7 +198,14 @@
     Balance: <span id="balanceAmount">0</span> COINS
 </div>
 
-<img id="botImage" src="lucky.jpg" alt="Lucky Jet Bot">
+<!-- ✅ ADDED -->
+<div class="mode-toggle">
+  <div class="mode-btn active" id="regularBtn">Regular</div>
+  <div class="mode-btn" id="premiumBtn">Premium</div>
+</div>
+<div id="modeInfo">You are currently using Regular Prediction</div>
+
+<img id="botImage" src="lucky.jpg">
 
 <div id="loadingText">⏳ Predicting...</div>
 <button id="predictBtn">🚀 Predict Lucky Jet</button>
@@ -183,142 +218,150 @@
 <script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-database.js"></script>
 
 <script>
-function padZero(num) { return num < 10 ? '0'+num : num; }
-function getRandomCoefficient() { return (Math.random() * (4.50 - 2.50) + 2.50).toFixed(2); }
-function getRandomMinuteOffset() { return Math.floor(Math.random() * 3) + 2; } // 2-4 mins
+function padZero(num){return num<10?'0'+num:num;}
+function getRandomCoefficient(){return (Math.random()*(4.50-2.50)+2.50).toFixed(2);}
+function getPremiumCoefficient(){return (Math.random()*(2.30-1.50)+1.50).toFixed(2);}
+function getRandomMinuteOffset(){return Math.floor(Math.random()*3)+2;}
 
-const predictBtn = document.getElementById("predictBtn");
-const predictionBox = document.getElementById("predictionBox");
-const loadingText = document.getElementById("loadingText");
-const balanceDisplay = document.getElementById("balanceAmount");
-const toast = document.getElementById("toast");
+const predictBtn=document.getElementById("predictBtn");
+const predictionBox=document.getElementById("predictionBox");
+const loadingText=document.getElementById("loadingText");
+const balanceDisplay=document.getElementById("balanceAmount");
+const toast=document.getElementById("toast");
 
-let currentUserUid = null;
+const regularBtn=document.getElementById("regularBtn");
+const premiumBtn=document.getElementById("premiumBtn");
+const modeInfo=document.getElementById("modeInfo");
 
-// Firebase config
-const firebaseConfig = {
-    apiKey: "AIzaSyDvFDByPPo9zgwKLdPaREz1OVMQCXmPfrs",
-    authDomain: "bets-d795d.firebaseapp.com",
-    projectId: "bets-d795d",
-    storageBucket: "bets-d795d.appspot.com",
-    messagingSenderId: "384386108287",
-    appId: "1:384386108287:android:d238a5ec8068d9bb9be84a",
-    databaseURL: "https://bets-d795d-default-rtdb.firebaseio.com"
+let mode="regular";
+
+regularBtn.onclick=()=>{
+ mode="regular";
+ regularBtn.classList.add("active");
+ premiumBtn.classList.remove("active");
+ modeInfo.innerText="You are currently using Regular Prediction";
+};
+
+premiumBtn.onclick=()=>{
+ mode="premium";
+ premiumBtn.classList.add("active");
+ regularBtn.classList.remove("active");
+ modeInfo.innerText="Premium Mode: costs 2 coins";
+};
+
+const firebaseConfig={
+ apiKey:"AIzaSyDvFDByPPo9zgwKLdPaREz1OVMQCXmPfrs",
+ authDomain:"bets-d795d.firebaseapp.com",
+ projectId:"bets-d795d",
+ storageBucket:"bets-d795d.appspot.com",
+ messagingSenderId:"384386108287",
+ appId:"1:384386108287:android:d238a5ec8068d9bb9be84a",
+ databaseURL:"https://bets-d795d-default-rtdb.firebaseio.com"
 };
 firebase.initializeApp(firebaseConfig);
-const db = firebase.database();
+const db=firebase.database();
 
-// Auth & balance listener
-firebase.auth().onAuthStateChanged(user => {
-    if (!user) { alert("Please login first"); return; }
-    currentUserUid = user.uid;
+let currentUserUid=null;
 
-    db.ref("users/" + currentUserUid + "/balance").once("value").then(snap => {
-        balanceDisplay.innerText = snap.val() != null ? Math.floor(snap.val()) : 0;
-    });
+firebase.auth().onAuthStateChanged(user=>{
+ if(!user){alert("Please login first");return;}
+ currentUserUid=user.uid;
 
-    db.ref("users/" + currentUserUid + "/balance").on("value", snap => {
-        balanceDisplay.innerText = snap.val() != null ? Math.floor(snap.val()) : 0;
-    });
+ db.ref("users/"+currentUserUid+"/balance").on("value",snap=>{
+  balanceDisplay.innerText=snap.val()||0;
+ });
 });
 
-// Toast
-function showToast(message) {
-    toast.textContent = message;
-    toast.className = "show";
-    setTimeout(()=>{toast.className = toast.className.replace("show","");},2500);
+function showToast(msg){
+ toast.textContent=msg;
+ toast.className="show";
+ setTimeout(()=>toast.className="",2500);
 }
 
-// Prediction click
-predictBtn.addEventListener("click", () => {
-    if(!currentUserUid){ showToast("Please login first!"); return; }
+predictBtn.addEventListener("click",()=>{
+ if(!currentUserUid){showToast("Login first");return;}
 
-    const userBalanceRef = db.ref("users/" + currentUserUid + "/balance");
-    userBalanceRef.transaction(current => {
-        current = current || 0;
-        if(current < 1){ showToast("Insufficient balance!"); return; }
-        return current - 1;
-    }, (err, committed, snapshot) => {
-        if(!committed) return;
+ const cost=(mode==="premium")?2:1;
 
-        // ✅ Add transaction log for deduction
-        db.ref("users/" + currentUserUid + "/transactions").push({
-            type: "bet",
-            coins: -1,
-            game: "Lucky Jet",
-            ref: "BET-" + Date.now(),
-            time: Date.now(),
-            uid: currentUserUid
-        });
+ const ref=db.ref("users/"+currentUserUid+"/balance");
 
-        predictBtn.disabled = true;
-        predictionBox.style.display = "none";
-        loadingText.style.display = "block";
+ ref.transaction(current=>{
+  current=current||0;
+  if(current<cost){showToast("Insufficient balance!");return;}
+  return current-cost;
+ },(err,committed)=>{
+  if(!committed)return;
 
-        // Rocket + trail
-        const rocket = document.createElement("div");
-        rocket.classList.add("rocket");
-        rocket.textContent = "🚀";
-        document.body.appendChild(rocket);
+  db.ref("users/"+currentUserUid+"/transactions").push({
+   type:"bet",
+   coins:-cost,
+   game:"Lucky Jet",
+   ref:"BET-"+Date.now(),
+   time:Date.now(),
+   uid:currentUserUid
+  });
 
-        for(let i=0;i<8;i++){
-            const trail = document.createElement("div");
-            trail.classList.add("trail");
-            trail.style.left = (10 + i*8) + "%";
-            trail.style.top = "100%";
-            document.body.appendChild(trail);
-            setTimeout(()=>trail.remove(),1500);
-        }
+  predictBtn.disabled=true;
+  predictionBox.style.display="none";
+  loadingText.style.display="block";
 
-        setTimeout(()=>{
-            loadingText.style.display = "none";
-            rocket.remove();
+  const rocket=document.createElement("div");
+  rocket.classList.add("rocket");
+  rocket.textContent="🚀";
+  document.body.appendChild(rocket);
 
-            const now = new Date();
-            const offsetMinutes = getRandomMinuteOffset();
-            const predictedTime = new Date(now.getTime() + offsetMinutes * 60000);
-            const hour = padZero(predictedTime.getHours());
-            const minute = padZero(predictedTime.getMinutes());
-            const coef = parseFloat(getRandomCoefficient());
+  for(let i=0;i<8;i++){
+   const trail=document.createElement("div");
+   trail.classList.add("trail");
+   document.body.appendChild(trail);
+   setTimeout(()=>trail.remove(),1500);
+  }
 
-            const text = `LUCKY JET PREDICTION
+  setTimeout(()=>{
+   loadingText.style.display="none";
+   rocket.remove();
+
+   const now=new Date();
+   const offset=getRandomMinuteOffset();
+   const future=new Date(now.getTime()+offset*60000);
+
+   const hour=padZero(future.getHours());
+   const minute=padZero(future.getMinutes());
+
+   const coef=parseFloat(mode==="premium"?getPremiumCoefficient():getRandomCoefficient());
+
+   predictionBox.style.display="block";
+   predictionBox.textContent=`LUCKY JET PREDICTION
 ┏━━━━━━━━━━━━━
-┠ ⭓➤𝐓𝐈𝐌𝐄 : ${hour}:${minute} 
-┠ ⭓➤𝐂𝐎𝐄𝐅𝐅𝐈𝐂𝐈𝐄𝐍𝐓: `;
-            predictionBox.textContent = text;
-            predictionBox.style.display = "block";
+┠ TIME : ${hour}:${minute}
+┠ COEFFICIENT: `;
 
-            let start = 1.00;
-            const steps = 50;
-            const coefElement = document.createElement("span");
-            coefElement.style.color = "#00ffff";
-            coefElement.style.fontWeight = "700";
-            coefElement.textContent = start.toFixed(2) + "X";
-            predictionBox.appendChild(coefElement);
+   let span=document.createElement("span");
+   span.textContent="1.00X";
+   predictionBox.appendChild(span);
 
-            let currentStep = 0;
-            const coefInterval = setInterval(()=>{
-                currentStep++;
-                const value = 1.00 + ((coef-1.00)*(currentStep/steps));
-                coefElement.textContent = value.toFixed(2) + "X";
-                if(currentStep>=steps) clearInterval(coefInterval);
-            },20);
+   let step=0;
+   let interval=setInterval(()=>{
+    step++;
+    let val=1+((coef-1)*(step/50));
+    span.textContent=val.toFixed(2)+"X";
+    if(step>=50)clearInterval(interval);
+   },20);
 
-            const closingText = document.createElement("div");
-            closingText.textContent = "┗━━━━━━━━━━━━━";
-            predictionBox.appendChild(document.createElement("br"));
-            predictionBox.appendChild(closingText);
+   let end=document.createElement("div");
+   end.textContent="┗━━━━━━━━━━━━━";
+   predictionBox.appendChild(document.createElement("br"));
+   predictionBox.appendChild(end);
 
-            // Unlock button after predicted time
-            const checkInterval = setInterval(()=>{
-                if(new Date()>=predictedTime){
-                    predictBtn.disabled = false;
-                    clearInterval(checkInterval);
-                }
-            },1000);
+   let check=setInterval(()=>{
+    if(new Date()>=future){
+     predictBtn.disabled=false;
+     clearInterval(check);
+    }
+   },1000);
 
-        },1500);
-    });
+  },1500);
+ });
 });
 </script>
 
