@@ -120,6 +120,37 @@ button:hover {
 .history-title { color: lime; }
 .history-sub { font-size: 12px; color: #aaa; }
 .history-naira { color: cyan; font-size: 13px; }
+
+/* ADDED */
+#instructionModal {
+    display: none;
+    position: fixed;
+    z-index: 999999;
+    left: 0;
+    top: 0;
+    width: 100%;
+    height: 100%;
+    background: rgba(0,0,0,0.9);
+}
+#instructionContent {
+    background: #111;
+    color: white;
+    margin: 10% auto;
+    padding: 20px;
+    width: 90%;
+    border-radius: 12px;
+    text-align: left;
+    font-family: 'Poppins', sans-serif;
+    max-height: 80%;
+    overflow-y: auto;
+}
+#instructionContent h2 {
+    text-align: center;
+    color: red;
+}
+.bold {
+    font-weight: bold;
+}
 </style>
 </head>
 <body>
@@ -140,6 +171,32 @@ button:hover {
 </div>
 
 <div id="toast"></div>
+
+<!-- ADDED MODAL -->
+<div id="instructionModal">
+    <div id="instructionContent">
+        <h2 class="bold">HOW TO DEPOSIT</h2>
+
+        <p class="bold">READ THIS INSTRUCTION CAREFULLY TO AVOID COINS MISPLACE</p>
+
+        <p>1. You will be redirected to a payment page</p>
+
+        <p>2. Payment details will appear</p>
+
+        <p>3. If you don’t use card payment below you will see a change payment method, 
+        <span class="bold">CLICK IT AND CHOOSE YOUR DESIRE PAYMENT METHOD</span></p>
+
+        <p>4. After sending the money to the account given to you, 
+        <span class="bold">COME BACK TO THE PAYMENT PAGE</span></p>
+
+        <p>5. Swipe down and click on 
+        <span class="bold">I HAVE MADE THIS BANK TRANSFER (VERY IMPORTANT)</span></p>
+
+        <p class="bold">MAKE SURE YOU READ THIS BECAUSE YOU WILL BE ACCOUNTABLE FOR COIN LOSS AFTER PAYMENT</p>
+
+        <button id="agreeBtn">I HAVE READ AND UNDERSTOOD</button>
+    </div>
+</div>
 
 <script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-app.js"></script>
 <script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-auth.js"></script>
@@ -228,21 +285,7 @@ function validateAmount(amount) {
     return { valid: true, coins: amount / rate };
 }
 
-submitBtn.onclick = () => {
-    const user = firebase.auth().currentUser;
-    if (!user) return toast("Please login again");
-
-    const amountRaw = Number(depositInput.value);
-    if (!amountRaw) return toast("Enter a valid deposit amount");
-
-    const validation = validateAmount(amountRaw);
-    if (!validation.valid) return toast(validation.msg);
-
-    const coins = validation.coins;
-    depositStatus.innerHTML = `You will receive ${coins} coin(s) for ₦${amountRaw}`;
-
-    if (!flutterwaveKey) return toast("Payment key not loaded — try again");
-
+function startPayment(user, amountRaw, coins) {
     FlutterwaveCheckout({
         public_key: flutterwaveKey,
         tx_ref: "TX-" + Date.now(),
@@ -267,7 +310,6 @@ submitBtn.onclick = () => {
 
                 if (!snap.exists()) {
 
-                    // ✅ FIX: accept real Flutterwave success states
                     if (response.status === "successful" || response.status === "completed") {
 
                         db.ref("processedPayments/" + txId).set(true);
@@ -303,6 +345,29 @@ submitBtn.onclick = () => {
             toast("Payment cancelled");
         }
     });
+}
+
+submitBtn.onclick = () => {
+    const user = firebase.auth().currentUser;
+    if (!user) return toast("Please login again");
+
+    const amountRaw = Number(depositInput.value);
+    if (!amountRaw) return toast("Enter a valid deposit amount");
+
+    const validation = validateAmount(amountRaw);
+    if (!validation.valid) return toast(validation.msg);
+
+    const coins = validation.coins;
+    depositStatus.innerHTML = `You will receive ${coins} coin(s) for ₦${amountRaw}`;
+
+    if (!flutterwaveKey) return toast("Payment key not loaded — try again");
+
+    document.getElementById("instructionModal").style.display = "block";
+
+    document.getElementById("agreeBtn").onclick = function() {
+        document.getElementById("instructionModal").style.display = "none";
+        startPayment(user, amountRaw, coins);
+    };
 };
 </script>
 
