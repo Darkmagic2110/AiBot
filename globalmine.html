@@ -4,6 +4,7 @@
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>GLOBAL MINES PREDICTOR</title>
+
 <style>
 *{box-sizing:border-box;font-family:system-ui,-apple-system,Segoe UI,Roboto,Arial}
 body{margin:0;height:100vh;background:#071023;color:#e6eef8;display:flex;flex-direction:column;}
@@ -11,17 +12,56 @@ body{margin:0;height:100vh;background:#071023;color:#e6eef8;display:flex;flex-di
 h1{font-size:20px;margin-bottom:10px;}
 #timerText{font-size:22px;font-weight:bold;color:#00ffcc;margin-bottom:10px;}
 #statusText{font-size:18px;color:#ffdd00;margin-bottom:10px;}
-.controls{margin-bottom:10px;}
-select{padding:6px;border-radius:6px;border:1px solid #233042;background:#071024;color:#e6eef8;}
+
 .grid{display:grid;grid-template-columns:repeat(5,60px);gap:8px;margin-top:15px;}
 .cell{width:60px;height:60px;border-radius:10px;display:flex;align-items:center;justify-content:center;background:linear-gradient(180deg,#0f2a46,#08182a);border:1px solid #22384e;position:relative;}
 .star{position:absolute;font-size:26px;animation:pop 0.3s ease forwards;}
 @keyframes pop{0%{transform:scale(0);opacity:0;}100%{transform:scale(1);opacity:1;}}
+
 .predict-btn{margin-top:20px;padding:14px 30px;border:none;border-radius:12px;background:#2d89ff;color:white;font-size:16px;font-weight:bold;cursor:pointer;}
 .predict-btn:disabled{background:#555;cursor:not-allowed;}
-#balanceContainer { position:fixed; top:10px; right:15px; background:#1a1a1a; padding:5px 12px; border-radius:20px; color:#fff; font-weight:bold; z-index:9999; }
+
+#balanceContainer{position:fixed;top:10px;right:15px;background:#1a1a1a;padding:5px 12px;border-radius:20px;color:#fff;font-weight:bold;z-index:9999;}
+
+/* 🔥 MODERN TOGGLE */
+.mode-toggle{
+  display:flex;
+  justify-content:center;
+  background:#0c1b2d;
+  border-radius:30px;
+  padding:4px;
+  margin-bottom:10px;
+  width:230px;
+  box-shadow:0 0 10px rgba(0,255,204,0.2);
+}
+.mode-btn{
+  flex:1;
+  padding:8px;
+  border-radius:25px;
+  cursor:pointer;
+  font-size:14px;
+  text-align:center;
+  transition:0.3s;
+}
+.mode-btn.active{
+  background:#00ffcc;
+  color:black;
+  font-weight:bold;
+  box-shadow:0 0 10px #00ffcc;
+}
+
+#modeInfo{
+  margin-bottom:8px;
+  color:#00ffcc;
+  font-weight:bold;
+}
+
+select{
+  padding:6px;border-radius:6px;border:1px solid #233042;background:#071024;color:#e6eef8;
+}
 </style>
 </head>
+
 <body>
 
 <div id="balanceContainer">
@@ -31,16 +71,13 @@ select{padding:6px;border-radius:6px;border:1px solid #233042;background:#071024
 <div class="app">
 <h1>🌍 GLOBAL MINES PREDICTOR</h1>
 
-<!-- MODE INFO -->
-<div id="modeInfo" style="margin-bottom:8px;color:#00ffcc;font-weight:bold;">
-  You are currently using Regular Prediction
+<!-- 🔥 NEW MODERN MODE TOGGLE -->
+<div class="mode-toggle">
+  <div class="mode-btn active" id="regularBtn">Regular</div>
+  <div class="mode-btn" id="premiumBtn">Premium</div>
 </div>
 
-<!-- MODE SELECT -->
-<select id="modeSelect">
-  <option value="regular">Regular Mode</option>
-  <option value="premium">Premium Mode</option>
-</select>
+<div id="modeInfo">You are currently using Regular Prediction</div>
 
 <div id="timerText">READY</div>
 <div id="statusText"></div>
@@ -70,17 +107,26 @@ const statusText = document.getElementById("statusText");
 const predictBtn = document.getElementById("predictBtn");
 const balanceDisplay = document.getElementById("balanceAmount");
 
-const modeSelect = document.getElementById("modeSelect");
+const regularBtn = document.getElementById("regularBtn");
+const premiumBtn = document.getElementById("premiumBtn");
 const modeInfo = document.getElementById("modeInfo");
 
-// MODE INFO
-modeSelect.addEventListener("change", () => {
-  if (modeSelect.value === "premium") {
-    modeInfo.innerText = "Premium Mode: Each prediction costs 2 coins";
-  } else {
-    modeInfo.innerText = "You are currently using Regular Prediction";
-  }
-});
+let mode = "regular";
+
+/* 🔥 MODE SWITCH */
+regularBtn.onclick = () => {
+  mode = "regular";
+  regularBtn.classList.add("active");
+  premiumBtn.classList.remove("active");
+  modeInfo.innerText = "You are currently using Regular Prediction";
+};
+
+premiumBtn.onclick = () => {
+  mode = "premium";
+  premiumBtn.classList.add("active");
+  regularBtn.classList.remove("active");
+  modeInfo.innerText = "Premium Mode: Each prediction costs 2 coins";
+};
 
 // FIREBASE CONFIG
 const firebaseConfig = {
@@ -111,15 +157,10 @@ firebase.auth().onAuthStateChanged(user => {
     currentUserUid = user.uid;
     currentUserEmail = user.email;
 
-    db.ref("users/" + currentUserUid + "/balance").once("value").then(snap => {
-        balanceDisplay.innerText = snap.val() || 0;
-    });
-
     db.ref("users/" + currentUserUid + "/balance").on("value", snap => {
         balanceDisplay.innerText = snap.val() || 0;
     });
 
-    // 🔥 RESTORE (UNCHANGED)
     const saved = JSON.parse(localStorage.getItem("minesData"));
     if (saved) {
         const now = Date.now();
@@ -144,7 +185,7 @@ firebase.auth().onAuthStateChanged(user => {
 function predict() {
     if (!currentUserUid) return alert("User not logged in!");
 
-    const isPremium = modeSelect.value === "premium";
+    const isPremium = mode === "premium";
     const cost = isPremium ? 2 : 1;
 
     const userBalanceRef = db.ref("users/" + currentUserUid + "/balance");
@@ -155,20 +196,12 @@ function predict() {
         return current - cost;
     }, (err, committed) => {
         if (committed) {
-
-            const tx = {
-                type: "bet",
-                coins: -cost,
-                amount: cost,
-                game: "Mines",
-                ref: "BET-" + Date.now(),
-                time: Date.now(),
-                email: currentUserEmail,
-                uid: currentUserUid
-            };
-
-            db.ref("users/" + currentUserUid + "/transactions").push(tx);
-            db.ref("transactions").push(tx);
+            db.ref("users/" + currentUserUid + "/transactions").push({
+                type:"bet",
+                coins:-cost,
+                game:"Mines",
+                time:Date.now()
+            });
 
             runPrediction();
         }
@@ -178,80 +211,61 @@ function predict() {
 // RUN
 function runPrediction() {
     const bombs = parseInt(document.getElementById("bombChoice").value);
-    const isPremium = modeSelect.value === "premium";
+    const isPremium = mode === "premium";
 
     const cells = [...grid.children];
     cells.forEach(c => c.innerHTML = "");
 
-    const messages = ["Generating prediction...", "Analyzing mines...", "Calculating safe spots..."];
-    let index = 0;
-    statusText.innerText = messages[index];
+    let stars = 0;
 
-    const animInterval = setInterval(() => {
-        index = (index + 1) % messages.length;
-        statusText.innerText = messages[index];
-    }, 600);
+    if (!isPremium) {
+        if (bombs === 2) stars = getRandom(6, 10);
+        else if (bombs === 3) stars = getRandom(5, 7);
+        else if (bombs === 5) stars = getRandom(3, 5);
+        else if (bombs === 7) stars = getRandom(2, 4);
+    } else {
+        if (bombs === 2) stars = getRandom(4, 5);
+        else if (bombs === 3) stars = getRandom(3, 4);
+        else if (bombs === 5) stars = getRandom(2, 3);
+        else if (bombs === 7) stars = getRandom(1, 2);
+    }
+
+    let used = new Set();
+    while (used.size < stars) used.add(Math.floor(Math.random() * cells.length));
+
+    used.forEach(i => {
+        const star = document.createElement("div");
+        star.className = "star";
+        star.innerText = "⭐";
+        cells[i].appendChild(star);
+    });
+
+    const now = new Date();
+    const addMinutes = getRandom(1,2);
+    now.setMinutes(now.getMinutes() + addMinutes);
+
+    let h = now.getHours();
+    let m = now.getMinutes();
+    if (m < 10) m = "0" + m;
+    if (h < 10) h = "0" + h;
+
+    timerText.innerText = "STAKE AT " + h + ":" + m;
+
+    const expireTime = Date.now() + addMinutes*60*1000;
+
+    localStorage.setItem("minesData", JSON.stringify({
+        stars:[...used],
+        expireTime,
+        displayTime:h+":"+m
+    }));
 
     predictBtn.disabled = true;
 
     setTimeout(() => {
-        clearInterval(animInterval);
-        statusText.innerText = "Prediction complete!";
-
-        let stars = 0;
-
-        if (!isPremium) {
-            if (bombs === 2) stars = getRandom(6, 10);
-            else if (bombs === 3) stars = getRandom(5, 7);
-            else if (bombs === 5) stars = getRandom(3, 5);
-            else if (bombs === 7) stars = getRandom(2, 4);
-        } else {
-            if (bombs === 2) stars = getRandom(4, 5);
-            else if (bombs === 3) stars = getRandom(3, 4);
-            else if (bombs === 5) stars = getRandom(2, 3);
-            else if (bombs === 7) stars = getRandom(1, 2);
-        }
-
-        let used = new Set();
-        while (used.size < stars) {
-            used.add(Math.floor(Math.random() * cells.length));
-        }
-
-        used.forEach(i => {
-            const star = document.createElement("div");
-            star.className = "star";
-            star.innerText = "⭐";
-            cells[i].appendChild(star);
-        });
-
-        // 🔥 TIMER + STORAGE (UNCHANGED)
-        const now = new Date();
-        const addMinutes = getRandom(1,2);
-        now.setMinutes(now.getMinutes() + addMinutes);
-        let h = now.getHours();
-        let m = now.getMinutes();
-        if (m < 10) m = "0" + m;
-        if (h < 10) h = "0" + h;
-
-        const displayTime = `${h}:${m}`;
-        timerText.innerText = "STAKE AT " + displayTime;
-
-        const expireTime = Date.now() + addMinutes*60*1000;
-
-        localStorage.setItem("minesData", JSON.stringify({
-            stars: [...used],
-            expireTime,
-            displayTime
-        }));
-
-        setTimeout(() => {
-            predictBtn.disabled = false;
-            timerText.innerText = "READY";
-            statusText.innerText = "";
-            localStorage.removeItem("minesData");
-        }, addMinutes*60*1000);
-
-    }, getRandom(2000,3000));
+        predictBtn.disabled = false;
+        timerText.innerText = "READY";
+        localStorage.removeItem("minesData");
+    }, addMinutes*60*1000);
 }
 
 // RESTORE
@@ -266,9 +280,10 @@ function restoreGame(data) {
 }
 
 // RANDOM
-function getRandom(min, max) {
-    return Math.floor(Math.random() * (max - min + 1)) + min;
+function getRandom(min,max){
+ return Math.floor(Math.random()*(max-min+1))+min;
 }
 </script>
+
 </body>
 </html>

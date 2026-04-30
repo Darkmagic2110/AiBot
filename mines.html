@@ -19,13 +19,10 @@
     height:60px; 
     background:url('https://i.ibb.co/4R4WT7v6/1000023083.png') center/cover; 
     border-radius:8px; 
-    cursor:pointer; 
-    transition:transform .1s; 
     position: relative; 
     display: flex; 
     justify-content: center; 
     align-items: center;
-    overflow: visible;
   }
 
   .star {
@@ -35,7 +32,6 @@
     transform: translate(-50%, -50%) scale(0.5);
     font-size: 32px;
     animation: pop 0.3s forwards;
-    pointer-events: none;
   }
 
   @keyframes pop {
@@ -44,9 +40,38 @@
   }
 
   .predict-btn { background:linear-gradient(90deg,#009fff,#00f5ff); color:#000; border:none; padding:14px 24px; border-radius:12px; font-size:16px; font-weight:bold; cursor:pointer; margin-bottom:12px; }
+
   .bomb-select { margin-bottom:10px; font-size:16px; font-weight:bold; }
 
   #balanceContainer { position:fixed; top:10px; right:15px; background:#1a1a1a; padding:5px 12px; border-radius:20px; color:#fff; font-weight:bold; z-index:9999; }
+
+  /* 🔥 MODERN TOGGLE */
+  .mode-toggle {
+    display:flex;
+    background:#141b26;
+    border-radius:30px;
+    padding:4px;
+    width:220px;
+    margin-bottom:10px;
+    box-shadow:0 0 10px rgba(0,255,255,0.3);
+  }
+
+  .mode-btn {
+    flex:1;
+    padding:8px;
+    border-radius:25px;
+    cursor:pointer;
+    font-size:14px;
+    text-align:center;
+    transition:0.3s;
+  }
+
+  .mode-btn.active {
+    background:#00f5ff;
+    color:black;
+    font-weight:bold;
+    box-shadow:0 0 10px #00f5ff;
+  }
 </style>
 </head>
 <body>
@@ -62,11 +87,11 @@
   You are currently using Regular Prediction
 </div>
 
-<!-- MODE SELECT -->
-<select id="modeSelect" class="bomb-select">
-  <option value="regular">Regular Mode</option>
-  <option value="premium">Premium Mode</option>
-</select>
+<!-- 🔥 MODERN TOGGLE -->
+<div class="mode-toggle">
+  <div class="mode-btn active" id="regularBtn">Regular</div>
+  <div class="mode-btn" id="premiumBtn">Premium</div>
+</div>
 
 <select id="bombChoice" class="bomb-select">
   <option value="1">1 Bomb</option>
@@ -88,8 +113,26 @@
 <script>
 const grid = document.getElementById('grid');
 const balanceDisplay = document.getElementById("balanceAmount");
-const modeSelect = document.getElementById("modeSelect");
+
+const regularBtn = document.getElementById("regularBtn");
+const premiumBtn = document.getElementById("premiumBtn");
 const modeInfo = document.getElementById("modeInfo");
+
+let mode = "regular";
+
+regularBtn.onclick = () => {
+  mode = "regular";
+  regularBtn.classList.add("active");
+  premiumBtn.classList.remove("active");
+  modeInfo.innerText = "You are currently using Regular Prediction";
+};
+
+premiumBtn.onclick = () => {
+  mode = "premium";
+  premiumBtn.classList.add("active");
+  regularBtn.classList.remove("active");
+  modeInfo.innerText = "Premium Mode: Each prediction costs 2 coins";
+};
 
 const firebaseConfig = {
   apiKey: "AIzaSyDvFDByPPo9zgwKLdPaREz1OVMQCXmPfrs",
@@ -102,6 +145,7 @@ const firebaseConfig = {
 };
 firebase.initializeApp(firebaseConfig);
 const db = firebase.database();
+
 let currentUserUid = null;
 let currentUserEmail = null;
 
@@ -110,29 +154,15 @@ firebase.auth().onAuthStateChanged(user => {
   currentUserUid = user.uid;
   currentUserEmail = user.email;
   
-  db.ref("users/" + currentUserUid + "/balance").once("value").then(snap => {
-    balanceDisplay.innerText = snap.val() || 0;
-  });
-
   db.ref("users/" + currentUserUid + "/balance").on("value", snap => {
     balanceDisplay.innerText = snap.val() || 0;
   });
 });
 
-// MODE TEXT UPDATE
-modeSelect.addEventListener("change", () => {
-  if (modeSelect.value === "premium") {
-    modeInfo.innerText = "Premium Mode: Each prediction costs 2 coins";
-  } else {
-    modeInfo.innerText = "You are currently using Regular Prediction";
-  }
-});
-
 function predict() {
   if (!currentUserUid) return alert("User not logged in!");
 
-  const isPremium = modeSelect.value === "premium";
-  const cost = isPremium ? 2 : 1;
+  const cost = mode === "premium" ? 2 : 1;
 
   const userBalanceRef = db.ref("users/" + currentUserUid + "/balance");
 
@@ -140,7 +170,7 @@ function predict() {
     current = current || 0;
     if (current < cost) { alert("Insufficient balance!"); return; }
     return current - cost;
-  }, (err, committed, snapshot) => {
+  }, (err, committed) => {
     if (committed) {
 
       const tx = {
@@ -164,10 +194,11 @@ function predict() {
 
 function runGame() {
   const cells = [...grid.children];
-  cells.forEach(c => c.querySelectorAll('.star').forEach(s => s.remove()));
+  cells.forEach(c => c.innerHTML = "");
 
   const bombs = parseInt(document.getElementById("bombChoice").value);
-  const isPremium = modeSelect.value === "premium";
+  const isPremium = mode === "premium";
+
   let stars = 0;
 
   if (!isPremium) {
@@ -176,7 +207,6 @@ function runGame() {
     else if (bombs === 5) stars = getRandom(3, 5);
     else if (bombs === 7) stars = getRandom(2, 4);
   } else {
-    // PREMIUM LOGIC (YOUR EXACT RULES)
     if (bombs === 1) stars = getRandom(5, 6);
     else if (bombs === 3) stars = getRandom(3, 4);
     else if (bombs === 5) stars = getRandom(2, 3);
