@@ -92,7 +92,7 @@ body {
     transition: .3s;
 }
 
-/* 🔥 persistent glow */
+/* 🔥 ONLY ONE ACTIVE */
 .btn.active-choice {
     background: #00ff88;
     color: black;
@@ -162,12 +162,15 @@ body {
 <script>
 let choice = "";
 let mode = "regular";
-let anim = null; // 🔥 prevent multiple animations
+let anim = null;
 
 const balanceDisplay = document.getElementById("balanceAmount");
 const regularBtn = document.getElementById("regularBtn");
 const premiumBtn = document.getElementById("premiumBtn");
 const modeText = document.getElementById("modeText");
+
+const overBtn = document.getElementById("overBtn");
+const underBtn = document.getElementById("underBtn");
 
 // mode switch
 regularBtn.onclick = () => {
@@ -211,16 +214,18 @@ function showToast(msg) {
     setTimeout(()=>toast.style.visibility="hidden",1500);
 }
 
-// 🔥 keep glow (no removal)
+// 🔥 ONLY ONE BUTTON GLOW
 overBtn.onclick = function () {
     choice = "over";
-    this.classList.add("active-choice");
+    overBtn.classList.add("active-choice");
+    underBtn.classList.remove("active-choice");
     showToast("OVER selected");
 };
 
 underBtn.onclick = function () {
     choice = "under";
-    this.classList.add("active-choice");
+    underBtn.classList.add("active-choice");
+    overBtn.classList.remove("active-choice");
     showToast("UNDER selected");
 };
 
@@ -251,10 +256,8 @@ function predict() {
 
         const display = document.getElementById("numberDisplay");
 
-        // 🔥 clear old animation if exists
         if (anim) clearInterval(anim);
 
-        // animation
         anim = setInterval(() => {
             display.innerText = Math.floor(Math.random()*99)
                 .toString().padStart(2,'0');
