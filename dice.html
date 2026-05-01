@@ -6,120 +6,127 @@
 <title>DICE</title>
 
 <style>
-    body {
-        background: linear-gradient(135deg, #001a00, #003300);
-        color: white;
-        font-family: 'Segoe UI', sans-serif;
-        text-align: center;
-        padding-top: 40px;
-    }
+body {
+    background: linear-gradient(135deg, #001a00, #003300);
+    color: white;
+    font-family: 'Segoe UI', sans-serif;
+    text-align: center;
+    padding-top: 40px;
+}
 
-    #balanceContainer {
-        position: fixed;
-        top: 10px;
-        right: 15px;
-        background: #111;
-        padding: 6px 14px;
-        border-radius: 20px;
-        font-weight: bold;
-        box-shadow: 0 0 10px #00ff88;
-    }
+#balanceContainer {
+    position: fixed;
+    top: 10px;
+    right: 15px;
+    background: #111;
+    padding: 6px 14px;
+    border-radius: 20px;
+    font-weight: bold;
+    box-shadow: 0 0 10px #00ff88;
+}
 
-    .dice-header {
-        font-size: 70px;
-        font-weight: 900;
-        letter-spacing: 12px;
-        margin-bottom: 20px;
-    }
+.dice-header {
+    font-size: 70px;
+    font-weight: 900;
+    letter-spacing: 12px;
+    margin-bottom: 20px;
+}
 
-    #numberDisplay {
-        font-size: 110px;
-        font-weight: 900;
-        margin-top: 20px;
-        color: #00ffcc;
-        text-shadow: 0 0 20px #00ffcc;
-    }
+#numberDisplay {
+    font-size: 110px;
+    font-weight: 900;
+    margin-top: 20px;
+    color: #00ffcc;
+    text-shadow: 0 0 20px #00ffcc;
+}
 
-    /* 🔥 MODERN MODE SWITCH */
-    .mode-box {
-        display: flex;
-        justify-content: center;
-        margin-bottom: 15px;
-        background: #111;
-        border-radius: 30px;
-        width: 220px;
-        margin-left: auto;
-        margin-right: auto;
-        padding: 4px;
-    }
+/* MODE SWITCH */
+.mode-box {
+    display: flex;
+    justify-content: center;
+    margin-bottom: 15px;
+    background: #111;
+    border-radius: 30px;
+    width: 220px;
+    margin-left: auto;
+    margin-right: auto;
+    padding: 4px;
+}
 
-    .mode-btn {
-        flex: 1;
-        padding: 8px;
-        border-radius: 25px;
-        cursor: pointer;
-        transition: 0.3s;
-        font-weight: bold;
-    }
+.mode-btn {
+    flex: 1;
+    padding: 8px;
+    border-radius: 25px;
+    cursor: pointer;
+    transition: 0.3s;
+    font-weight: bold;
+}
 
-    .mode-btn.active {
-        background: #00ff88;
-        color: black;
-    }
+.mode-btn.active {
+    background: #00ff88;
+    color: black;
+}
 
-    #modeText {
-        font-size: 13px;
-        margin-bottom: 10px;
-        opacity: 0.8;
-    }
+#modeText {
+    font-size: 13px;
+    margin-bottom: 10px;
+    opacity: 0.8;
+}
 
-    .option-box {
-        margin-top: 30px;
-        display: flex;
-        justify-content: center;
-        gap: 20px;
-    }
+.option-box {
+    margin-top: 30px;
+    display: flex;
+    justify-content: center;
+    gap: 20px;
+}
 
-    .btn {
-        padding: 14px 26px;
-        font-size: 20px;
-        border-radius: 12px;
-        border: 2px solid #00ff88;
-        background: transparent;
-        color: white;
-        font-weight: 800;
-        cursor: pointer;
-        transition: .3s;
-    }
+.btn {
+    padding: 14px 26px;
+    font-size: 20px;
+    border-radius: 12px;
+    border: 2px solid #00ff88;
+    background: transparent;
+    color: white;
+    font-weight: 800;
+    cursor: pointer;
+    transition: .3s;
+}
 
-    .btn:hover {
-        background: #00ff88;
-        color: black;
-    }
+/* 🔥 PERSISTENT GLOW */
+.btn.active-choice {
+    background: #00ff88;
+    color: black;
+    box-shadow: 0 0 15px #00ff88, 0 0 30px #00ff88;
+}
 
-    .predict-btn {
-        margin-top: 40px;
-        padding: 16px 36px;
-        font-size: 24px;
-        font-weight: 900;
-        background: #00ff88;
-        color: black;
-        border: none;
-        border-radius: 14px;
-        cursor: pointer;
-        box-shadow: 0 0 15px #00ff88;
-    }
+.btn:hover {
+    background: #00ff88;
+    color: black;
+}
 
-    #toast {
-        visibility: hidden;
-        background: black;
-        padding: 10px 16px;
-        border-radius: 8px;
-        position: fixed;
-        bottom: 60px;
-        left: 50%;
-        transform: translateX(-50%);
-    }
+.predict-btn {
+    margin-top: 40px;
+    padding: 16px 36px;
+    font-size: 24px;
+    font-weight: 900;
+    background: #00ff88;
+    color: black;
+    border: none;
+    border-radius: 14px;
+    cursor: pointer;
+    box-shadow: 0 0 15px #00ff88;
+}
+
+#toast {
+    visibility: hidden;
+    background: black;
+    padding: 10px 16px;
+    border-radius: 8px;
+    position: fixed;
+    bottom: 60px;
+    left: 50%;
+    transform: translateX(-50%);
+}
 </style>
 </head>
 
@@ -131,7 +138,6 @@
 
 <div class="dice-header">DICE</div>
 
-<!-- 🔥 MODE SWITCH -->
 <div class="mode-box">
   <div class="mode-btn active" id="regularBtn">Regular</div>
   <div class="mode-btn" id="premiumBtn">Premium</div>
@@ -204,23 +210,29 @@ function showToast(msg) {
     setTimeout(()=>toast.style.visibility="hidden",1500);
 }
 
-// Choice
-document.getElementById("overBtn").onclick = () => {
+// 🔥 KEEP GLOW (NO REMOVAL)
+document.getElementById("overBtn").onclick = function () {
     choice = "over";
+    this.classList.add("active-choice");
     showToast("OVER selected");
 };
 
-document.getElementById("underBtn").onclick = () => {
+document.getElementById("underBtn").onclick = function () {
     choice = "under";
+    this.classList.add("active-choice");
     showToast("UNDER selected");
 };
+
+// random helper
+function rand(min, max) {
+    return Math.floor(Math.random() * (max - min + 1)) + min;
+}
 
 function predict() {
     if (!currentUserUid) return;
     if (!choice) return showToast("Select option");
 
     const cost = mode === "premium" ? 2 : 1;
-
     const ref = db.ref("users/" + currentUserUid + "/balance");
 
     ref.transaction(current => {
@@ -249,21 +261,14 @@ function predict() {
             let result;
 
             if (mode === "premium") {
-                if (choice === "over") {
-                    result = Math.floor(Math.random() * (35 - 20 + 1)) + 20;
-                } else {
-                    result = Math.floor(Math.random() * (90 - 75 + 1)) + 75;
-                }
+                result = (choice === "over") ? rand(15,35) : rand(70,85);
             } else {
-                if (choice === "over") {
-                    result = Math.floor(Math.random() * (55 - 35 + 1)) + 35;
-                } else {
-                    result = Math.floor(Math.random() * (80 - 55 + 1)) + 55;
-                }
+                result = (choice === "over") ? rand(35,55) : rand(55,75);
             }
 
-            display.innerText = result;
+            display.innerText = result.toString().padStart(2,'0');
             showToast("Done");
+
         },2600);
     });
 }
