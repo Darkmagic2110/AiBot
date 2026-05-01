@@ -92,7 +92,7 @@ body {
     transition: .3s;
 }
 
-/* 🔥 PERSISTENT GLOW */
+/* 🔥 persistent glow */
 .btn.active-choice {
     background: #00ff88;
     color: black;
@@ -162,13 +162,14 @@ body {
 <script>
 let choice = "";
 let mode = "regular";
+let anim = null; // 🔥 prevent multiple animations
 
 const balanceDisplay = document.getElementById("balanceAmount");
 const regularBtn = document.getElementById("regularBtn");
 const premiumBtn = document.getElementById("premiumBtn");
 const modeText = document.getElementById("modeText");
 
-// Mode switch
+// mode switch
 regularBtn.onclick = () => {
     mode = "regular";
     regularBtn.classList.add("active");
@@ -183,7 +184,7 @@ premiumBtn.onclick = () => {
     modeText.innerText = "Premium Mode (2 coins)";
 };
 
-// Firebase
+// firebase
 const firebaseConfig = {
   apiKey: "AIzaSyDvFDByPPo9zgwKLdPaREz1OVMQCXmPfrs",
   authDomain: "bets-d795d.firebaseapp.com",
@@ -210,14 +211,14 @@ function showToast(msg) {
     setTimeout(()=>toast.style.visibility="hidden",1500);
 }
 
-// 🔥 KEEP GLOW (NO REMOVAL)
-document.getElementById("overBtn").onclick = function () {
+// 🔥 keep glow (no removal)
+overBtn.onclick = function () {
     choice = "over";
     this.classList.add("active-choice");
     showToast("OVER selected");
 };
 
-document.getElementById("underBtn").onclick = function () {
+underBtn.onclick = function () {
     choice = "under";
     this.classList.add("active-choice");
     showToast("UNDER selected");
@@ -250,14 +251,19 @@ function predict() {
 
         const display = document.getElementById("numberDisplay");
 
-        let count = 0;
-        let anim = setInterval(() => {
-            display.innerText = Math.floor(Math.random()*99).toString().padStart(2,'0');
-            count++;
-            if(count>35) clearInterval(anim);
+        // 🔥 clear old animation if exists
+        if (anim) clearInterval(anim);
+
+        // animation
+        anim = setInterval(() => {
+            display.innerText = Math.floor(Math.random()*99)
+                .toString().padStart(2,'0');
         },70);
 
         setTimeout(() => {
+            clearInterval(anim);
+            anim = null;
+
             let result;
 
             if (mode === "premium") {
