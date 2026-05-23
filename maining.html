@@ -26,80 +26,118 @@ h1 {
     color: red;
     margin-bottom: 10px;
     text-shadow: 0 0 8px rgba(255,0,0,0.8);
+    margin-top: 85px;
 }
 
-/* HAMBURGER TOOLBAR */
+/* TOP TOOLBAR */
 #toolbarContainer {
     position: fixed;
-    top: 10px;
-    right: 10px;
-    z-index: 9999;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 68px;
+    background: rgba(10,10,10,0.96);
+    backdrop-filter: blur(10px);
+    border-bottom: 1px solid rgba(255,0,0,0.25);
     display: flex;
-    flex-direction: column;
-    align-items: flex-end;
+    align-items: center;
+    justify-content: space-between;
+    padding: 0 14px;
+    box-sizing: border-box;
+    z-index: 9999;
+    box-shadow: 0 0 20px rgba(255,0,0,0.2);
 }
 
-/* Hamburger icon */
+/* LOGO */
+#logoText{
+    font-family:'UnifrakturCook',cursive;
+    font-size:24px;
+    color:red;
+    text-shadow:0 0 10px rgba(255,0,0,0.9);
+    letter-spacing:1px;
+}
+
+/* RIGHT AREA */
+#topRight{
+    display:flex;
+    align-items:center;
+    gap:10px;
+}
+
+/* HAMBURGER */
 #hamburger {
-    width: 35px;
-    height: 25px;
+    width: 34px;
+    height: 24px;
     display: flex;
     flex-direction: column;
     justify-content: space-between;
     cursor: pointer;
-    z-index: 10000;
 }
 
 #hamburger span {
     display: block;
     height: 4px;
     width: 100%;
-    background-color: red;
-    border-radius: 2px;
-    transition: all 0.3s ease-in-out;
+    background: linear-gradient(90deg,#ff0000,#ff4d4d);
+    border-radius: 10px;
+    transition: 0.3s;
+    box-shadow: 0 0 8px rgba(255,0,0,0.8);
 }
 
-/* Toolbar buttons hidden initially */
+/* TOOLBAR MENU */
 #toolbar {
+    position: absolute;
+    top: 72px;
+    right: 10px;
+    width: 230px;
+    background: rgba(15,15,15,0.98);
+    border: 1px solid rgba(255,0,0,0.25);
+    border-radius: 18px;
+    padding: 12px;
     display: none;
     flex-direction: column;
     gap: 10px;
-    margin-top: 10px;
-    align-items: flex-end;
+    box-shadow: 0 0 25px rgba(255,0,0,0.25);
+    backdrop-filter: blur(12px);
 }
 
 #toolbar button {
-    background: rgba(255,0,0,0.9);
-    border: none;
+    background: linear-gradient(135deg,#1f0000,#520000);
+    border: 1px solid rgba(255,0,0,0.2);
     color: white;
-    padding: 10px 14px;
-    border-radius: 12px;
+    padding: 13px;
+    border-radius: 14px;
     font-size: 13px;
     cursor: pointer;
-    box-shadow: 0 0 12px rgba(255,0,0,0.7);
     transition: 0.25s;
-    text-align: right;
+    text-align: left;
+    font-weight: 600;
 }
 
-#toolbar button:hover { background: #ff1a1a; transform: scale(1.05); }
+#toolbar button:hover {
+    background: linear-gradient(135deg,#ff0000,#990000);
+    transform: scale(1.03);
+}
 
 /* BALANCE PANEL */
 #balanceContainer {
-    position: fixed;
-    top: 10px;
-    right: 60px;
-    background: #1a1a1a;
+    background: rgba(30,30,30,0.95);
     padding: 6px 12px;
     border-radius: 20px;
     display: flex;
     align-items: center;
     font-family: 'Poppins', sans-serif;
     color: #fff;
-    z-index: 9999;
-    box-shadow: 0 0 14px rgba(255, 0, 0, 0.6);
+    box-shadow: 0 0 14px rgba(255, 0, 0, 0.5);
+    border:1px solid rgba(255,0,0,0.2);
 }
 
-#balanceAmount { font-size: 14px; margin-right: 6px; font-weight: 600; }
+#balanceAmount {
+    font-size: 14px;
+    margin-right: 6px;
+    font-weight: 600;
+}
+
 #addBalanceBtn {
     font-size: 14px;
     background: red;
@@ -115,32 +153,50 @@ h1 {
     box-shadow: 0 0 6px rgba(255,0,0,0.8);
     transition: 0.2s ease-in-out;
 }
-#addBalanceBtn:hover { background: #ff3333; box-shadow: 0 0 12px rgba(255,0,0,1); transform: scale(1.1); }
+
+#addBalanceBtn:hover {
+    background: #ff3333;
+    box-shadow: 0 0 12px rgba(255,0,0,1);
+    transform: scale(1.1);
+}
 
 /* STATUS + INSTRUCTIONS */
-#statusMessage { margin-top: 12px; font-size: 18px; color: yellow; text-shadow: 0 0 4px orange; }
-#instructionText { font-size: 16px; color: orange; margin-bottom: 15px; }
+#statusMessage {
+    margin-top: 12px;
+    font-size: 18px;
+    color: yellow;
+    text-shadow: 0 0 4px orange;
+}
+
+#instructionText {
+    font-size: 16px;
+    color: orange;
+    margin-bottom: 15px;
+}
 
 /* REGISTER PANEL */
-#registrationContainer { margin-bottom: 20px; }
+#registrationContainer {
+    margin-bottom: 20px;
+}
 
-/* REGISTER BUTTON CUSTOM STYLE */
+/* REGISTER BUTTON */
 #registerBtn {
-    border: 2px solid cyan;   /* adds border */
-    border-radius: 16px;      /* rounded corners */
-    padding: 10px 20px;       /* spacing */
-    background: red;           /* existing background */
-    color: white;              /* text color */
+    border: 2px solid cyan;
+    border-radius: 16px;
+    padding: 10px 20px;
+    background: red;
+    color: white;
     cursor: pointer;
     font-size: 16px;
     transition: 0.3s;
 }
+
 #registerBtn:hover {
     background: #ff1a1a;
     transform: scale(1.05);
 }
 
-/* 1WIN ID INPUT + SUBMIT BUTTON */
+/* INPUT */
 #oneWinID {
     border: 2px solid cyan;
     border-radius: 12px;
@@ -152,7 +208,11 @@ h1 {
     outline: none;
     transition: 0.3s;
 }
-#oneWinID:focus { border-color: #00ffff; box-shadow: 0 0 8px cyan; }
+
+#oneWinID:focus {
+    border-color: #00ffff;
+    box-shadow: 0 0 8px cyan;
+}
 
 #submitIDBtn {
     border: 2px solid cyan;
@@ -165,7 +225,11 @@ h1 {
     color: white;
     transition: 0.3s;
 }
-#submitIDBtn:hover { background: #ff1a1a; transform: scale(1.05); }
+
+#submitIDBtn:hover {
+    background: #ff1a1a;
+    transform: scale(1.05);
+}
 
 /* GAME GRID */
 .grid {
@@ -225,33 +289,49 @@ h1 {
     opacity: 0;
     transition: opacity 0.3s, bottom 0.3s;
 }
-#toast.show { visibility: visible; opacity: 1; bottom: 50px; }
+
+#toast.show {
+    visibility: visible;
+    opacity: 1;
+    bottom: 50px;
+}
 </style>
 </head>
 <body>
 
-<h1>Dark Magic Ai Bot</h1>
-
-<!-- HAMBURGER TOOLBAR -->
+<!-- TOP TOOLBAR -->
 <div id="toolbarContainer">
-    <div id="hamburger">
-        <span></span>
-        <span></span>
-        <span></span>
+
+    <div id="logoText">DARK MAGIC AI</div>
+
+    <div id="topRight">
+
+        <!-- BALANCE -->
+        <div id="balanceContainer">
+            <span id="balanceAmount">0</span> DM COINS
+            <button id="addBalanceBtn">+</button>
+        </div>
+
+        <!-- HAMBURGER -->
+        <div id="hamburger">
+            <span></span>
+            <span></span>
+            <span></span>
+        </div>
+
     </div>
+
+    <!-- TOOLBAR -->
     <div id="toolbar">
         <button onclick="openTelegram()">JOIN TELEGRAM CHANNEL</button>
-        <button onclick="goHelp()">HELP</button>
         <button onclick="contactSupport()">CUSTOMER SUPPORT</button>
+        <button onclick="goHelp()">HELP</button>
         <button onclick="goAbout()">ABOUT</button>
     </div>
+
 </div>
 
-<!-- BALANCE -->
-<div id="balanceContainer">
-    <span id="balanceAmount">0</span> DM COINS
-    <button id="addBalanceBtn">+</button>
-</div>
+<h1>Dark Magic Ai Bot</h1>
 
 <p id="statusMessage">Checking approval status...</p>
 
@@ -304,12 +384,16 @@ function toast(msg){
 // HAMBURGER TOGGLE
 const hamburger=document.getElementById("hamburger");
 const toolbar=document.getElementById("toolbar");
-hamburger.onclick=()=>{ toolbar.style.display=(toolbar.style.display==="flex")?"none":"flex"; };
+
+hamburger.onclick=()=>{
+    toolbar.style.display=(toolbar.style.display==="flex")?"none":"flex";
+};
 
 // TOOLBAR BUTTONS
 function openTelegram(){ window.open("https://t.me/darkmagic01","_blank"); }
 function goHelp(){ window.location.href="help.html"; }
 function goAbout(){ window.location.href="about.html"; }
+
 function contactSupport(){
     const links=["https://t.me/dark_magiks","https://t.me/dark_maggik"];
     window.open(links[Math.floor(Math.random()*links.length)],"_blank");
@@ -317,7 +401,10 @@ function contactSupport(){
 
 // BALANCE PANEL
 const balanceDisplay = document.getElementById("balanceAmount");
-document.getElementById("addBalanceBtn").onclick=()=>{ window.location.href="deposit.html"; };
+
+document.getElementById("addBalanceBtn").onclick=()=>{
+    window.location.href="deposit.html";
+};
 
 // FIREBASE CONFIG
 const firebaseConfig = {
@@ -329,86 +416,165 @@ const firebaseConfig = {
     appId: "1:384386108287:android:d238a5ec8068d9bb9be84a",
     databaseURL: "https://bets-d795d-default-rtdb.firebaseio.com"
 };
+
 firebase.initializeApp(firebaseConfig);
+
 const db=firebase.database();
 let approvalStatus=null;
 
 // AUTH + APPROVAL
 firebase.auth().onAuthStateChanged(user=>{
-    if(!user){ window.location.href="login.html"; return; }
+    if(!user){
+        window.location.href="login.html";
+        return;
+    }
+
     checkStatus(user.uid);
     listenBalance(user.uid);
 });
 
-function lockButtons(){ document.querySelectorAll(".game-button img").forEach(i=>{i.style.opacity="0.3"; i.style.pointerEvents="none";}); }
-function unlockButtons(){ document.querySelectorAll(".game-button img").forEach(i=>{i.style.opacity="1"; i.style.pointerEvents="auto";}); }
+function lockButtons(){
+    document.querySelectorAll(".game-button img").forEach(i=>{
+        i.style.opacity="0.3";
+        i.style.pointerEvents="none";
+    });
+}
+
+function unlockButtons(){
+    document.querySelectorAll(".game-button img").forEach(i=>{
+        i.style.opacity="1";
+        i.style.pointerEvents="auto";
+    });
+}
 
 const gamePages={
-    luckyJetBtn:"lucky.html", aviatorBtn:"aviator.html", diceBtn:"dice.html",
-    luckyBtn:"luckys.html", coinBtn:"coin.html", minesBtn:"mines.html", bottleBtn:"bottle.html",
+    luckyJetBtn:"lucky.html",
+    aviatorBtn:"aviator.html",
+    diceBtn:"dice.html",
+    luckyBtn:"luckys.html",
+    coinBtn:"coin.html",
+    minesBtn:"mines.html",
+    bottleBtn:"bottle.html",
     towerBtn:"tower.html",
-    globalmineBtn:"globalmine.html", chickenBtn:"chicken.html",  thimbleBtn:"thimble.html", rocketBtn:null
+    globalmineBtn:"globalmine.html",
+    chickenBtn:"chicken.html",
+    thimbleBtn:"thimble.html",
+    rocketBtn:null
 };
+
 Object.keys(gamePages).forEach(id=>{
     const page=gamePages[id];
-    document.getElementById(id).onclick=()=>{if(!page) return toast("🚫 Server Unavailable"); handleGameClick(page);}
+
+    document.getElementById(id).onclick=()=>{
+        if(!page) return toast("🚫 Server Unavailable");
+        handleGameClick(page);
+    };
 });
+
 function handleGameClick(page){
-    if(approvalStatus!=="activated"){ toast("You must complete verification to access games."); return; }
+    if(approvalStatus!=="activated"){
+        toast("You must complete verification to access games.");
+        return;
+    }
+
     toast("Connecting to Game Server...");
-    setTimeout(()=>{ location.href=page; }, 900);
+
+    setTimeout(()=>{
+        location.href=page;
+    },900);
 }
 
 function submitID(){
     const user=firebase.auth().currentUser;
+
     if(!user) return toast("Auth error — please login again.");
+
     const idRaw=(document.getElementById("oneWinID").value||"").trim();
+
     if(!idRaw) return toast("Enter your 1Win ID");
     if(isNaN(idRaw)) return toast("ID must be numbers only");
     if(Number(idRaw)<335000000) return toast("Invalid ID ❌ Use a newly created 1Win ID");
 
     document.getElementById("statusMessage").innerHTML="⏳ Validating ID...";
+
     lockButtons();
+
     setTimeout(()=>{
         document.getElementById("statusMessage").innerHTML=`⏳ Connecting to 1Win ID: ${idRaw}...`;
+
         setTimeout(()=>{
-            const updates={email:user.email||"", oneWinID:idRaw, status:"approved"};
+            const updates={
+                email:user.email||"",
+                oneWinID:idRaw,
+                status:"approved"
+            };
+
             db.ref("users/"+user.uid).update(updates).then(()=>{
                 approvalStatus="activated";
+
                 document.getElementById("statusMessage").innerHTML="✅ ID verified — You can now play!";
+
                 document.getElementById("registrationContainer").style.display="none";
+
                 unlockButtons();
-            }).catch(err=>{console.error(err); toast("Error submitting — try again.");});
+
+            }).catch(err=>{
+                console.error(err);
+                toast("Error submitting — try again.");
+            });
+
         },2000);
+
     },1500);
 }
 
 function checkStatus(uid){
+
     const statusMessage=document.getElementById("statusMessage");
     const registrationContainer=document.getElementById("registrationContainer");
+
     statusMessage.innerHTML="Checking approval status...";
+
     registrationContainer.style.display="block";
+
     lockButtons();
+
     db.ref("users/"+uid).on("value",snap=>{
+
         const data=snap.val()||{};
         const userStatus=data.status||null;
+
         if(userStatus==="activated"||userStatus==="approved"){
+
             approvalStatus="activated";
+
             statusMessage.innerHTML="✅ Fully verified — You can now play!";
+
             unlockButtons();
+
             registrationContainer.style.display="none";
+
         }else{
+
             approvalStatus=userStatus;
+
             statusMessage.innerHTML="🚫 You have not submitted your ID yet";
+
             lockButtons();
+
             registrationContainer.style.display="block";
         }
     });
 }
 
 function listenBalance(uid){
+
     db.ref("users/"+uid+"/balance").on("value",snap=>{
-        balanceDisplay.innerText=snap.val()!=null?Math.floor(snap.val()):0;
+
+        balanceDisplay.innerText=snap.val()!=null
+        ?Math.floor(snap.val())
+        :0;
+
     });
 }
 </script>
