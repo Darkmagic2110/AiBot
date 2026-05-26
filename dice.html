@@ -2,253 +2,1101 @@
 <html lang="en">
 <head>
 <meta charset="UTF-8">
-<meta name="viewport" content="width=device-width,initial-scale=1.0">
-<title>Dice Pro</title>
+<meta name="viewport"
+content="width=device-width,initial-scale=1.0">
+
+<title>Dice Quantum</title>
+
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
 
 <style>
-body{
+
+*{
 margin:0;
-font-family:Segoe UI,sans-serif;
-background:linear-gradient(135deg,#001a00,#002b1f);
-color:#fff;
-text-align:center;
+padding:0;
+box-sizing:border-box;
+font-family:'Inter',sans-serif;
 }
 
-#balanceContainer{
-position:fixed;
-top:10px;
-right:12px;
-background:rgba(0,0,0,.6);
-backdrop-filter:blur(10px);
-padding:6px 14px;
-border-radius:20px;
-font-weight:700;
-box-shadow:0 0 12px #00ff88;
+body{
+
+min-height:100vh;
+
+background:
+radial-gradient(circle at top,#061a12 0%,#04110c 45%,#010403 100%);
+
+overflow-x:hidden;
+
+color:white;
+
+position:relative;
+
 }
 
-.header{
-font-size:50px;
-font-weight:900;
-letter-spacing:8px;
-margin-top:35px;
-opacity:.9;
+/* BG GLOW */
+
+.bg-glow{
+
+position:absolute;
+
+width:500px;
+
+height:500px;
+
+border-radius:50%;
+
+background:rgba(0,255,136,.12);
+
+filter:blur(120px);
+
+top:-220px;
+
+left:50%;
+
+transform:translateX(-50%);
+
 }
 
-#numberDisplay{
-font-size:110px;
-font-weight:900;
-margin:20px 0;
-color:#00ffcc;
-text-shadow:0 0 25px #00ffcc;
+/* APP */
+
+.app{
+
+position:relative;
+
+z-index:10;
+
+width:100%;
+
+max-width:430px;
+
+margin:auto;
+
+padding:18px;
+
 }
 
-.mode-box{
+/* TOPBAR */
+
+.topbar{
+
 display:flex;
+
+justify-content:space-between;
+
+align-items:center;
+
+margin-bottom:24px;
+
+}
+
+.logo-wrap{
+
+display:flex;
+
+align-items:center;
+
+gap:12px;
+
+}
+
+.logo{
+
+width:56px;
+
+height:56px;
+
+border-radius:18px;
+
+background:
+linear-gradient(135deg,#00ff88,#00ffcc);
+
+display:flex;
+
 justify-content:center;
-width:220px;
-margin:10px auto;
-background:#111;
+
+align-items:center;
+
+font-size:24px;
+
+font-weight:800;
+
+color:#00130c;
+
+box-shadow:
+0 0 35px rgba(0,255,136,.45);
+
+}
+
+.brand h1{
+
+font-size:20px;
+
+font-weight:800;
+
+}
+
+.brand p{
+
+font-size:12px;
+
+opacity:.6;
+
+}
+
+/* BALANCE */
+
+.balance-card{
+
+background:rgba(255,255,255,.05);
+
+border:1px solid rgba(255,255,255,.08);
+
+backdrop-filter:blur(18px);
+
+border-radius:18px;
+
+padding:10px 15px;
+
+text-align:right;
+
+box-shadow:
+0 12px 35px rgba(0,0,0,.35);
+
+}
+
+.balance-card small{
+
+font-size:11px;
+
+opacity:.65;
+
+}
+
+.balance-card h2{
+
+margin-top:4px;
+
+color:#66ffd9;
+
+font-size:20px;
+
+}
+
+/* MAIN CARD */
+
+.main-card{
+
+background:rgba(255,255,255,.05);
+
+border:1px solid rgba(255,255,255,.08);
+
+backdrop-filter:blur(22px);
+
 border-radius:30px;
-padding:4px;
+
+padding:22px;
+
+box-shadow:
+0 20px 55px rgba(0,0,0,.45);
+
+}
+
+/* LIVE */
+
+.live-bar{
+
+display:flex;
+
+justify-content:space-between;
+
+align-items:center;
+
+margin-bottom:18px;
+
+}
+
+.live{
+
+background:#00ff8820;
+
+border:1px solid #00ff8855;
+
+color:#66ffd9;
+
+padding:8px 14px;
+
+border-radius:999px;
+
+font-size:12px;
+
+font-weight:700;
+
+}
+
+.session{
+
+font-size:12px;
+
+opacity:.6;
+
+}
+
+/* TOGGLE */
+
+.mode-toggle{
+
+display:flex;
+
+background:#07130f;
+
+border-radius:18px;
+
+padding:5px;
+
+margin-bottom:18px;
+
 }
 
 .mode-btn{
+
 flex:1;
-padding:8px;
-border-radius:25px;
+
+padding:14px;
+
+border-radius:14px;
+
+text-align:center;
+
 cursor:pointer;
-font-weight:700;
+
 transition:.25s;
-color:#aaa;
+
+color:#9ab3ab;
+
+font-weight:600;
+
 }
 
 .mode-btn.active{
-background:#00ff88;
-color:#000;
+
+background:
+linear-gradient(135deg,#00ff88,#00ffcc);
+
+color:#00130c;
+
+box-shadow:
+0 10px 30px rgba(0,255,136,.35);
+
+}
+
+/* INFO */
+
+.info-card{
+
+background:#07130f;
+
+border-radius:18px;
+
+padding:16px;
+
+margin-bottom:22px;
+
+border:1px solid rgba(255,255,255,.06);
+
+}
+
+.info-title{
+
+font-size:12px;
+
+opacity:.6;
+
+margin-bottom:6px;
+
 }
 
 #modeText{
-font-size:13px;
-opacity:.7;
-margin-bottom:10px;
+
+font-size:14px;
+
+color:#66ffd9;
+
+font-weight:700;
+
 }
+
+/* NUMBER DISPLAY */
+
+.display-wrap{
+
+display:flex;
+
+justify-content:center;
+
+margin-bottom:25px;
+
+}
+
+#numberDisplay{
+
+width:220px;
+
+height:220px;
+
+border-radius:35px;
+
+display:flex;
+
+align-items:center;
+
+justify-content:center;
+
+font-size:90px;
+
+font-weight:900;
+
+color:#66ffd9;
+
+background:
+linear-gradient(145deg,#07130f,#021009);
+
+border:2px solid rgba(0,255,136,.18);
+
+box-shadow:
+0 0 45px rgba(0,255,136,.15);
+
+animation:pulse 2.5s infinite;
+
+}
+
+@keyframes pulse{
+
+0%,100%{
+
+transform:scale(1);
+
+box-shadow:
+0 0 45px rgba(0,255,136,.15);
+
+}
+
+50%{
+
+transform:scale(1.03);
+
+box-shadow:
+0 0 70px rgba(0,255,136,.25);
+
+}
+
+}
+
+/* CHOICE */
 
 .option-box{
+
 display:flex;
-justify-content:center;
-gap:15px;
-margin-top:25px;
+
+gap:14px;
+
+margin-bottom:24px;
+
 }
 
-.btn{
-padding:12px 22px;
-border-radius:12px;
-border:2px solid #00ff88;
-background:transparent;
-color:#fff;
+.choice-btn{
+
+flex:1;
+
+padding:18px;
+
+border-radius:18px;
+
+border:none;
+
+background:#07130f;
+
+color:#9ab3ab;
+
+font-size:15px;
+
 font-weight:800;
+
 cursor:pointer;
-transition:.2s;
+
+transition:.25s;
+
+border:1px solid rgba(255,255,255,.06);
+
 }
 
-.btn.active-choice,
-.btn:hover{
-background:#00ff88;
-color:#000;
+.choice-btn.active-choice{
+
+background:
+linear-gradient(135deg,#00ff88,#00ffcc);
+
+color:#00130c;
+
+box-shadow:
+0 10px 30px rgba(0,255,136,.35);
+
 }
+
+/* BUTTON */
 
 .predict-btn{
-margin-top:35px;
-padding:15px 30px;
-font-size:20px;
-font-weight:900;
+
+width:100%;
+
 border:none;
-border-radius:14px;
-background:#00ff88;
-color:#000;
+
+background:
+linear-gradient(135deg,#00ff88,#00ffcc);
+
+color:#00130c;
+
+padding:18px;
+
+border-radius:18px;
+
+font-size:16px;
+
+font-weight:800;
+
 cursor:pointer;
-box-shadow:0 0 15px #00ff88;
+
+transition:.25s;
+
+box-shadow:
+0 12px 35px rgba(0,255,136,.35);
+
 }
 
-#toast{
-position:fixed;
-bottom:50px;
-left:50%;
-transform:translateX(-50%);
-background:#000;
-padding:10px 16px;
-border-radius:10px;
-visibility:hidden;
-font-size:13px;
+.predict-btn:hover{
+
+transform:translateY(-2px);
+
 }
+
+.predict-btn:active{
+
+transform:scale(.98);
+
+}
+
+/* RESULT */
+
+.result-card{
+
+display:none;
+
+margin-top:22px;
+
+background:
+linear-gradient(145deg,#07130f,#021009);
+
+border-radius:22px;
+
+padding:20px;
+
+border:1px solid rgba(0,255,136,.18);
+
+box-shadow:
+0 0 35px rgba(0,255,136,.15);
+
+}
+
+.result-title{
+
+color:#66ffd9;
+
+font-size:14px;
+
+margin-bottom:14px;
+
+font-weight:700;
+
+}
+
+.result-item{
+
+display:flex;
+
+justify-content:space-between;
+
+padding:14px 0;
+
+border-bottom:1px solid rgba(255,255,255,.06);
+
+}
+
+.result-item:last-child{
+
+border-bottom:none;
+
+}
+
+.label{
+
+opacity:.65;
+
+font-size:13px;
+
+}
+
+.value{
+
+font-weight:800;
+
+color:#66ffd9;
+
+font-size:17px;
+
+}
+
+/* TOAST */
+
+#toast{
+
+visibility:hidden;
+
+min-width:220px;
+
+background:
+linear-gradient(135deg,#00ff88,#00ffcc);
+
+color:#00130c;
+
+text-align:center;
+
+border-radius:14px;
+
+padding:14px;
+
+position:fixed;
+
+bottom:40px;
+
+left:50%;
+
+transform:translateX(-50%);
+
+z-index:99999;
+
+font-weight:700;
+
+box-shadow:
+0 12px 35px rgba(0,255,136,.35);
+
+}
+
+#toast.show{
+
+visibility:visible;
+
+animation:fadein .4s, fadeout .4s 2.2s;
+
+}
+
+@keyframes fadein{
+
+from{
+opacity:0;
+bottom:10px;
+}
+
+to{
+opacity:1;
+bottom:40px;
+}
+
+}
+
+@keyframes fadeout{
+
+from{
+opacity:1;
+bottom:40px;
+}
+
+to{
+opacity:0;
+bottom:10px;
+}
+
+}
+
+/* FOOTER */
+
+.footer{
+
+text-align:center;
+
+margin-top:18px;
+
+opacity:.4;
+
+font-size:12px;
+
+}
+
 </style>
 </head>
 
 <body>
 
-<div id="balanceContainer"><span id="balanceAmount">0</span> COINS</div>
+<div class="bg-glow"></div>
 
-<div class="header">DICE</div>
+<div class="app">
 
-<div class="mode-box">
-<div class="mode-btn active" id="regularBtn">Regular</div>
-<div class="mode-btn" id="premiumBtn">Premium</div>
+<!-- TOPBAR -->
+
+<div class="topbar">
+
+<div class="logo-wrap">
+
+<div class="logo">
+D
 </div>
 
-<div id="modeText">Regular Mode Active</div>
+<div class="brand">
 
-<div id="numberDisplay">00</div>
+<h1>Dice Quantum</h1>
+
+<p>Neural Dice Engine</p>
+
+</div>
+
+</div>
+
+<div class="balance-card">
+
+<small>AVAILABLE COINS</small>
+
+<h2>
+<span id="balanceAmount">0</span>
+</h2>
+
+</div>
+
+</div>
+
+<!-- MAIN -->
+
+<div class="main-card">
+
+<!-- LIVE -->
+
+<div class="live-bar">
+
+<div class="live">
+● LIVE ENGINE
+</div>
+
+<div class="session"
+id="sessionId"></div>
+
+</div>
+
+<!-- MODES -->
+
+<div class="mode-toggle">
+
+<div class="mode-btn active"
+id="regularBtn">
+
+Regular
+
+</div>
+
+<div class="mode-btn"
+id="premiumBtn">
+
+Premium
+
+</div>
+
+</div>
+
+<!-- INFO -->
+
+<div class="info-card">
+
+<div class="info-title">
+CURRENT ENGINE
+</div>
+
+<div id="modeText">
+Regular Neural Engine Active
+</div>
+
+</div>
+
+<!-- DISPLAY -->
+
+<div class="display-wrap">
+
+<div id="numberDisplay">
+00
+</div>
+
+</div>
+
+<!-- OPTIONS -->
 
 <div class="option-box">
-<button id="overBtn" class="btn">OVER</button>
-<button id="underBtn" class="btn">UNDER</button>
+
+<button id="overBtn"
+class="choice-btn">
+
+OVER
+
+</button>
+
+<button id="underBtn"
+class="choice-btn">
+
+UNDER
+
+</button>
+
 </div>
 
-<button class="predict-btn" onclick="predict()">PREDICT</button>
+<!-- BUTTON -->
+
+<button class="predict-btn"
+onclick="predict()">
+
+Generate Dice Signal
+
+</button>
+
+<!-- RESULT -->
+
+<div class="result-card"
+id="resultCard">
+
+<div class="result-title">
+DICE SIGNAL GENERATED
+</div>
+
+<div class="result-item">
+
+<div class="label">
+Prediction Mode
+</div>
+
+<div class="value"
+id="modeValue">
+
+Regular
+
+</div>
+
+</div>
+
+<div class="result-item">
+
+<div class="label">
+Generated Number
+</div>
+
+<div class="value"
+id="resultValue">
+
+00
+
+</div>
+
+</div>
+
+</div>
+
+</div>
+
+<div class="footer">
+Dice Quantum System © 2026
+</div>
+
+</div>
 
 <div id="toast"></div>
 
+<!-- FIREBASE -->
+
 <script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-app.js"></script>
+
 <script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-auth.js"></script>
+
 <script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-database.js"></script>
 
 <script>
-let choice="",mode="regular",anim=null;
 
-const balanceDisplay=document.getElementById("balanceAmount"),
-regularBtn=document.getElementById("regularBtn"),
-premiumBtn=document.getElementById("premiumBtn"),
-modeText=document.getElementById("modeText"),
-overBtn=document.getElementById("overBtn"),
-underBtn=document.getElementById("underBtn"),
-display=document.getElementById("numberDisplay"),
-toast=document.getElementById("toast");
+let choice = "",
+mode = "regular",
+anim = null;
 
-regularBtn.onclick=()=>{
-mode="regular";
+const balanceDisplay =
+document.getElementById("balanceAmount");
+
+const regularBtn =
+document.getElementById("regularBtn");
+
+const premiumBtn =
+document.getElementById("premiumBtn");
+
+const modeText =
+document.getElementById("modeText");
+
+const overBtn =
+document.getElementById("overBtn");
+
+const underBtn =
+document.getElementById("underBtn");
+
+const display =
+document.getElementById("numberDisplay");
+
+const toast =
+document.getElementById("toast");
+
+const resultCard =
+document.getElementById("resultCard");
+
+const resultValue =
+document.getElementById("resultValue");
+
+const modeValue =
+document.getElementById("modeValue");
+
+/* SESSION */
+
+document.getElementById("sessionId").innerText =
+"SESSION #" +
+Math.floor(Math.random()*99999);
+
+/* MODES */
+
+regularBtn.onclick = () => {
+
+mode = "regular";
+
 regularBtn.classList.add("active");
+
 premiumBtn.classList.remove("active");
-modeText.innerText="Regular Mode Active";
+
+modeText.innerText =
+"Regular Neural Engine Active";
+
 };
 
-premiumBtn.onclick=()=>{
-mode="premium";
+premiumBtn.onclick = () => {
+
+mode = "premium";
+
 premiumBtn.classList.add("active");
+
 regularBtn.classList.remove("active");
-modeText.innerText="Premium Mode (2 coins)";
+
+modeText.innerText =
+"Premium Quantum Engine Active";
+
 };
 
-overBtn.onclick=()=>{
-choice="over";
+/* CHOICE */
+
+overBtn.onclick = () => {
+
+choice = "over";
+
 overBtn.classList.add("active-choice");
+
 underBtn.classList.remove("active-choice");
+
 show("OVER selected");
+
 };
 
-underBtn.onclick=()=>{
-choice="under";
+underBtn.onclick = () => {
+
+choice = "under";
+
 underBtn.classList.add("active-choice");
+
 overBtn.classList.remove("active-choice");
+
 show("UNDER selected");
+
 };
+
+/* TOAST */
 
 function show(msg){
-toast.innerText=msg;
-toast.style.visibility="visible";
-setTimeout(()=>toast.style.visibility="hidden",1200);
+
+toast.innerText = msg;
+
+toast.className = "show";
+
+setTimeout(() => {
+
+toast.className = "";
+
+}, 2500);
+
 }
+
+/* RANDOM */
 
 function rand(min,max){
-return Math.floor(Math.random()*(max-min+1))+min;
+
+return Math.floor(
+Math.random() *
+(max-min+1)
+)+min;
+
 }
 
-// firebase
-const firebaseConfig={
-apiKey:"AIzaSyDvFDByPPo9zgwKLdPaREz1OVMQCXmPfrs",
-authDomain:"bets-d795d.firebaseapp.com",
-databaseURL:"https://bets-d795d-default-rtdb.firebaseio.com"
+/* FIREBASE */
+
+const firebaseConfig = {
+
+apiKey:
+"AIzaSyDvFDByPPo9zgwKLdPaREz1OVMQCXmPfrs",
+
+authDomain:
+"bets-d795d.firebaseapp.com",
+
+databaseURL:
+"https://bets-d795d-default-rtdb.firebaseio.com"
+
 };
 
 firebase.initializeApp(firebaseConfig);
-const db=firebase.database();
-let uid=null;
 
-firebase.auth().onAuthStateChanged(u=>{
-if(!u)return alert("Login first");
-uid=u.uid;
-db.ref("users/"+uid+"/balance").on("value",s=>balanceDisplay.innerText=s.val()||0);
+const db = firebase.database();
+
+let uid = null;
+
+/* LOGIN */
+
+firebase.auth().onAuthStateChanged(u => {
+
+if(!u){
+
+show("Login first");
+
+return;
+
+}
+
+uid = u.uid;
+
+db.ref(
+"users/" +
+uid +
+"/balance"
+).on("value", s => {
+
+balanceDisplay.innerText =
+s.val() || 0;
+
 });
+
+});
+
+/* PREDICT */
 
 function predict(){
-if(!uid)return;
-if(!choice)return show("Select option");
 
-const cost=mode==="premium"?2:1;
+if(!uid) return;
 
-db.ref("users/"+uid+"/balance").transaction(c=>{
-c=c||0;
-if(c<cost){show("No balance");return;}
-return c-cost;
-},(e,ok)=>{
-if(!ok)return;
+if(!choice){
 
-if(anim)clearInterval(anim);
+show("Select option");
 
-anim=setInterval(()=>{
-display.innerText=Math.floor(Math.random()*99).toString().padStart(2,'0');
-},60);
+return;
 
-setTimeout(()=>{
+}
+
+const cost =
+mode === "premium"
+? 2
+: 1;
+
+db.ref(
+"users/" +
+uid +
+"/balance"
+).transaction(c => {
+
+c = c || 0;
+
+if(c < cost){
+
+show("Insufficient balance");
+
+return;
+
+}
+
+return c - cost;
+
+}, (e,ok) => {
+
+if(!ok) return;
+
+resultCard.style.display = "none";
+
+if(anim)
 clearInterval(anim);
 
-display.innerText=mode==="premium"
-?(choice==="over"?rand(15,35):rand(70,85))
-:(choice==="over"?rand(35,55):rand(55,75));
+anim = setInterval(() => {
 
-show("Done");
-},2000);
+display.innerText =
+Math.floor(
+Math.random()*99
+).toString().padStart(2,'0');
+
+}, 60);
+
+setTimeout(() => {
+
+clearInterval(anim);
+
+const result =
+mode === "premium"
+? (
+choice === "over"
+? rand(15,35)
+: rand(70,85)
+)
+: (
+choice === "over"
+? rand(35,55)
+: rand(55,75)
+);
+
+display.innerText =
+result.toString().padStart(2,'0');
+
+resultValue.innerText =
+result.toString().padStart(2,'0');
+
+modeValue.innerText =
+mode === "premium"
+? "Premium"
+: "Regular";
+
+resultCard.style.display =
+"block";
+
+show("Signal Generated");
+
+}, 2200);
+
 });
+
 }
+
 </script>
 
 </body>
