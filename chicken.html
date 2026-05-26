@@ -2,286 +2,1070 @@
 <html lang="en">
 <head>
 <meta charset="UTF-8">
-<meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>CHICKEN RUN</title>
+<meta name="viewport"
+content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+
+<title>Chicken Run X</title>
+
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
 
 <style>
-  body {
-    margin: 0;
-    padding: 0;
-    height: 100vh;
-    background: rgba(0, 50, 0, 0.9);
-    backdrop-filter: blur(10px);
-    display: flex;
-    flex-direction: column;
-    align-items: center;
-    justify-content: center;
-    font-family: "Arial Black", sans-serif;
-    color: yellow;
-    text-align: center;
-  }
 
-  h1 {
-    font-size: 50px;
-    font-weight: bold;
-    color: yellow;
-    margin-bottom: 20px;
-    text-shadow: 0 0 15px yellow;
-  }
+*{
+margin:0;
+padding:0;
+box-sizing:border-box;
+font-family:'Inter',sans-serif;
+}
 
-  #balanceContainer {
-    position: fixed;
-    top: 10px;
-    right: 15px;
-    background: #1a1a1a;
-    padding: 5px 12px;
-    border-radius: 20px;
-    color: #fff;
-    font-weight: bold;
-    z-index: 9999;
-  }
+body{
 
-  #coefficient {
-    font-size: 55px;
-    font-weight: 900;
-    color: yellow;
-    text-shadow: 0 0 20px yellow;
-    margin-bottom: 10px;
-    display: none;
-  }
+min-height:100vh;
 
-  #chicken {
-    width: 200px;
-    height: 200px;
-    object-fit: cover;
-    border-radius: 25px;
-    display: none;
-    margin-bottom: 15px;
-  }
+background:
+radial-gradient(circle at top,#1d3000 0%,#101c00 45%,#050700 100%);
 
-  .difficulty {
-    display: flex;
-    gap: 10px;
-    margin-top: 10px;
-    flex-wrap: wrap;
-    justify-content: center;
-  }
+overflow-x:hidden;
 
-  .option {
-    border: 2px solid yellow;
-    padding: 8px 20px;
-    border-radius: 10px;
-    cursor: pointer;
-    font-weight: bold;
-    color: yellow;
-    transition: 0.3s;
-  }
+color:white;
 
-  .option.active {
-    background: yellow;
-    color: darkgreen;
-  }
+position:relative;
 
-  button {
-    background: transparent;
-    border: 2px solid yellow;
-    color: yellow;
-    font-size: 22px;
-    font-weight: bold;
-    padding: 10px 30px;
-    border-radius: 10px;
-    cursor: pointer;
-    transition: 0.3s;
-    margin-top: 25px;
-  }
+}
 
-  button:hover {
-    background: yellow;
-    color: darkgreen;
-  }
+/* BACKGROUND GLOW */
 
-  .blink {
-    animation: blink 4s infinite alternate ease-in-out;
-  }
+.bg-glow{
 
-  @keyframes blink {
-    from { opacity: 0.4; }
-    to { opacity: 1.0; }
-  }
+position:absolute;
 
-  #toast {
-    visibility: hidden;
-    min-width: 240px;
-    background-color: rgba(255, 255, 0, 0.95);
-    color: darkgreen;
-    text-align: center;
-    border-radius: 10px;
-    padding: 14px;
-    position: fixed;
-    z-index: 1;
-    left: 50%;
-    bottom: 30px;
-    font-weight: bold;
-    font-size: 18px;
-    transform: translateX(-50%);
-    box-shadow: 0 0 20px yellow;
-  }
+width:500px;
 
-  #toast.show {
-    visibility: visible;
-    animation: fadein 0.6s, fadeout 0.6s 2.4s;
-  }
+height:500px;
 
-  @keyframes fadein {
-    from { bottom: 10px; opacity: 0; }
-    to { bottom: 30px; opacity: 1; }
-  }
+border-radius:50%;
 
-  @keyframes fadeout {
-    from { bottom: 30px; opacity: 1; }
-    to { bottom: 10px; opacity: 0; }
-  }
+background:rgba(255,230,0,.12);
+
+filter:blur(120px);
+
+top:-220px;
+
+left:50%;
+
+transform:translateX(-50%);
+
+}
+
+/* APP */
+
+.app{
+
+position:relative;
+
+z-index:10;
+
+width:100%;
+
+max-width:430px;
+
+margin:auto;
+
+padding:18px;
+
+}
+
+/* TOPBAR */
+
+.topbar{
+
+display:flex;
+
+justify-content:space-between;
+
+align-items:center;
+
+margin-bottom:24px;
+
+}
+
+.logo-wrap{
+
+display:flex;
+
+align-items:center;
+
+gap:12px;
+
+}
+
+.logo{
+
+width:56px;
+
+height:56px;
+
+border-radius:18px;
+
+background:
+linear-gradient(135deg,#ffe600,#c7ff00);
+
+display:flex;
+
+justify-content:center;
+
+align-items:center;
+
+font-size:24px;
+
+font-weight:800;
+
+color:#172000;
+
+box-shadow:
+0 0 35px rgba(255,230,0,.45);
+
+}
+
+.brand h1{
+
+font-size:20px;
+
+font-weight:800;
+
+}
+
+.brand p{
+
+font-size:12px;
+
+opacity:.6;
+
+}
+
+/* BALANCE */
+
+.balance-card{
+
+background:rgba(255,255,255,.05);
+
+border:1px solid rgba(255,255,255,.08);
+
+backdrop-filter:blur(18px);
+
+border-radius:18px;
+
+padding:10px 15px;
+
+text-align:right;
+
+box-shadow:
+0 12px 35px rgba(0,0,0,.35);
+
+}
+
+.balance-card small{
+
+font-size:11px;
+
+opacity:.65;
+
+}
+
+.balance-card h2{
+
+margin-top:4px;
+
+color:#ffe600;
+
+font-size:20px;
+
+}
+
+/* MAIN CARD */
+
+.main-card{
+
+background:rgba(255,255,255,.05);
+
+border:1px solid rgba(255,255,255,.08);
+
+backdrop-filter:blur(22px);
+
+border-radius:30px;
+
+padding:22px;
+
+box-shadow:
+0 20px 55px rgba(0,0,0,.45);
+
+}
+
+/* LIVE */
+
+.live-bar{
+
+display:flex;
+
+justify-content:space-between;
+
+align-items:center;
+
+margin-bottom:18px;
+
+}
+
+.live{
+
+background:#ffe60022;
+
+border:1px solid #ffe60055;
+
+color:#ffe600;
+
+padding:8px 14px;
+
+border-radius:999px;
+
+font-size:12px;
+
+font-weight:700;
+
+}
+
+.session{
+
+font-size:12px;
+
+opacity:.6;
+
+}
+
+/* IMAGE */
+
+.image-wrap{
+
+display:flex;
+
+justify-content:center;
+
+margin-bottom:22px;
+
+position:relative;
+
+}
+
+#chicken{
+
+width:230px;
+
+height:230px;
+
+object-fit:cover;
+
+border-radius:30px;
+
+border:3px solid rgba(255,230,0,.25);
+
+box-shadow:
+0 0 45px rgba(255,230,0,.22);
+
+animation:pulse 2.5s infinite;
+
+}
+
+@keyframes pulse{
+
+0%,100%{
+
+transform:scale(1);
+
+box-shadow:
+0 0 45px rgba(255,230,0,.22);
+
+}
+
+50%{
+
+transform:scale(1.03);
+
+box-shadow:
+0 0 70px rgba(255,230,0,.4);
+
+}
+
+}
+
+/* COEFFICIENT */
+
+#coefficient{
+
+position:absolute;
+
+top:-18px;
+
+background:
+linear-gradient(135deg,#ffe600,#c7ff00);
+
+color:#172000;
+
+padding:10px 18px;
+
+border-radius:16px;
+
+font-size:28px;
+
+font-weight:900;
+
+box-shadow:
+0 12px 35px rgba(255,230,0,.35);
+
+display:none;
+
+}
+
+/* MODE */
+
+.mode-title{
+
+font-size:12px;
+
+opacity:.6;
+
+margin-bottom:10px;
+
+text-align:left;
+
+}
+
+.difficulty{
+
+display:grid;
+
+grid-template-columns:repeat(2,1fr);
+
+gap:12px;
+
+margin-bottom:22px;
+
+}
+
+.option{
+
+background:#0f1505;
+
+border:1px solid rgba(255,255,255,.08);
+
+padding:15px;
+
+border-radius:18px;
+
+cursor:pointer;
+
+transition:.25s;
+
+text-align:center;
+
+font-weight:700;
+
+color:#c9d3b5;
+
+}
+
+.option.active{
+
+background:
+linear-gradient(135deg,#ffe600,#c7ff00);
+
+color:#172000;
+
+box-shadow:
+0 10px 30px rgba(255,230,0,.35);
+
+transform:translateY(-2px);
+
+}
+
+/* INFO CARD */
+
+.info-card{
+
+background:#0f1505;
+
+border-radius:18px;
+
+padding:16px;
+
+margin-bottom:22px;
+
+border:1px solid rgba(255,255,255,.06);
+
+}
+
+.info-title{
+
+font-size:12px;
+
+opacity:.6;
+
+margin-bottom:8px;
+
+}
+
+.info-value{
+
+font-size:15px;
+
+font-weight:700;
+
+color:#ffe600;
+
+}
+
+/* BUTTON */
+
+#predictBtn{
+
+width:100%;
+
+border:none;
+
+background:
+linear-gradient(135deg,#ffe600,#c7ff00);
+
+color:#172000;
+
+padding:18px;
+
+border-radius:18px;
+
+font-size:16px;
+
+font-weight:800;
+
+cursor:pointer;
+
+transition:.25s;
+
+box-shadow:
+0 12px 35px rgba(255,230,0,.35);
+
+}
+
+#predictBtn:hover{
+
+transform:translateY(-2px);
+
+}
+
+#predictBtn:active{
+
+transform:scale(.98);
+
+}
+
+/* LOADING */
+
+#loading{
+
+display:none;
+
+text-align:center;
+
+margin-bottom:20px;
+
+color:#ffe600;
+
+font-weight:700;
+
+animation:blink 1s infinite;
+
+}
+
+@keyframes blink{
+
+0%,100%{
+opacity:1;
+}
+
+50%{
+opacity:.35;
+}
+
+}
+
+/* TOAST */
+
+#toast{
+
+visibility:hidden;
+
+min-width:220px;
+
+background:
+linear-gradient(135deg,#ffe600,#c7ff00);
+
+color:#172000;
+
+text-align:center;
+
+border-radius:14px;
+
+padding:14px;
+
+position:fixed;
+
+bottom:40px;
+
+left:50%;
+
+transform:translateX(-50%);
+
+z-index:99999;
+
+font-weight:700;
+
+box-shadow:
+0 12px 35px rgba(255,230,0,.35);
+
+}
+
+#toast.show{
+
+visibility:visible;
+
+animation:fadein .4s, fadeout .4s 2.2s;
+
+}
+
+@keyframes fadein{
+
+from{
+opacity:0;
+bottom:10px;
+}
+
+to{
+opacity:1;
+bottom:40px;
+}
+
+}
+
+@keyframes fadeout{
+
+from{
+opacity:1;
+bottom:40px;
+}
+
+to{
+opacity:0;
+bottom:10px;
+}
+
+}
+
+/* FOOTER */
+
+.footer{
+
+text-align:center;
+
+margin-top:18px;
+
+opacity:.4;
+
+font-size:12px;
+
+}
+
 </style>
 </head>
 
 <body>
 
-  <h1>𝐂𝐇𝐈𝐂𝐊𝐄𝐍 𝐑𝐔𝐍</h1>
+<div class="bg-glow"></div>
 
-  <!-- Balance -->
-  <div id="balanceContainer">
-      Balance: <span id="balanceAmount">0</span> COINS
-  </div>
+<div class="app">
 
-  <!-- Coefficient above the chicken -->
-  <div id="coefficient" class="blink"></div>
+<!-- TOPBAR -->
 
-  <!-- Chicken image -->
-  <img id="chicken" src="chicken.jpg" alt="Chicken" class="blink">
+<div class="topbar">
 
-  <!-- Difficulty options -->
-  <div class="difficulty">
-    <div class="option" id="easy">𝐄𝐀𝐒𝐘</div>
-    <div class="option" id="medium">𝐌𝐄𝐃𝐈𝐔𝐌</div>
-    <div class="option" id="hard">𝐇𝐀𝐑𝐃</div>
-    <div class="option" id="hardcore">𝐇𝐀𝐑𝐃𝐂𝐎𝐑𝐄</div>
-  </div>
+<div class="logo-wrap">
 
-  <!-- Predict button -->
-  <button id="predictBtn">𝐏𝐑𝐄𝐃𝐈𝐂𝐓</button>
+<div class="logo">
+🐔
+</div>
 
-  <!-- Toast message -->
-  <div id="toast"></div>
+<div class="brand">
 
-<!-- Firebase -->
+<h1>Chicken Run X</h1>
+
+<p>Advanced Route Engine</p>
+
+</div>
+
+</div>
+
+<div class="balance-card">
+
+<small>AVAILABLE COINS</small>
+
+<h2>
+<span id="balanceAmount">0</span>
+</h2>
+
+</div>
+
+</div>
+
+<!-- MAIN -->
+
+<div class="main-card">
+
+<div class="live-bar">
+
+<div class="live">
+● LIVE ANALYTICS
+</div>
+
+<div class="session"
+id="sessionId">
+SESSION #0000
+</div>
+
+</div>
+
+<div class="image-wrap">
+
+<div id="coefficient">
+1.00X
+</div>
+
+<img id="chicken"
+src="chicken.jpg"
+alt="Chicken Run">
+
+</div>
+
+<div class="mode-title">
+SELECT DIFFICULTY
+</div>
+
+<div class="difficulty">
+
+<div class="option"
+id="easy">
+Easy
+</div>
+
+<div class="option"
+id="medium">
+Medium
+</div>
+
+<div class="option"
+id="hard">
+Hard
+</div>
+
+<div class="option"
+id="hardcore">
+Hardcore
+</div>
+
+</div>
+
+<div class="info-card">
+
+<div class="info-title">
+CURRENT ENGINE
+</div>
+
+<div class="info-value"
+id="engineText">
+Balanced Route Engine Enabled
+</div>
+
+</div>
+
+<div id="loading">
+🚀 Calculating Safe Route...
+</div>
+
+<button id="predictBtn">
+Generate Chicken Route
+</button>
+
+</div>
+
+<div class="footer">
+Chicken Run X © 2026
+</div>
+
+</div>
+
+<div id="toast"></div>
+
+<!-- FIREBASE -->
+
 <script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-app.js"></script>
+
 <script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-auth.js"></script>
+
 <script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-database.js"></script>
 
 <script>
-  const options = document.querySelectorAll(".option");
-  const predictBtn = document.getElementById("predictBtn");
-  const coeff = document.getElementById("coefficient");
-  const chicken = document.getElementById("chicken");
-  const toast = document.getElementById("toast");
-  const balanceDisplay = document.getElementById("balanceAmount");
 
-  let selected = null;
-  let currentUserUid = null;
+/* ELEMENTS */
 
-  // Firebase config
-  const firebaseConfig = {
-    apiKey: "AIzaSyDvFDByPPo9zgwKLdPaREz1OVMQCXmPfrs",
-    authDomain: "bets-d795d.firebaseapp.com",
-    projectId: "bets-d795d",
-    storageBucket: "bets-d795d.appspot.com",
-    messagingSenderId: "384386108287",
-    appId: "1:384386108287:android:d238a5ec8068d9bb9be84a",
-    databaseURL: "https://bets-d795d-default-rtdb.firebaseio.com"
-  };
-  firebase.initializeApp(firebaseConfig);
-  const db = firebase.database();
+const options =
+document.querySelectorAll(".option");
 
-  // Auth check
-  firebase.auth().onAuthStateChanged(user => {
-    if (!user) { alert("Please login first"); return; }
-    currentUserUid = user.uid;
+const predictBtn =
+document.getElementById("predictBtn");
 
-    // Fetch balance
-    db.ref("users/" + currentUserUid + "/balance").once("value").then(snap => {
-      const val = snap.val();
-      balanceDisplay.innerText = val != null ? Math.floor(val) : 0;
-    });
+const coefficient =
+document.getElementById("coefficient");
 
-    // Real-time listener
-    db.ref("users/" + currentUserUid + "/balance").on("value", snap => {
-      const val = snap.val();
-      balanceDisplay.innerText = val != null ? Math.floor(val) : 0;
-    });
-  });
+const toast =
+document.getElementById("toast");
 
-  // Difficulty selection
-  options.forEach(opt => {
-    opt.addEventListener("click", () => {
-      options.forEach(o => o.classList.remove("active"));
-      opt.classList.add("active");
-      selected = opt.id;
-    });
-  });
+const balanceDisplay =
+document.getElementById("balanceAmount");
 
-  // Toast function
-  function showToast(message) {
-    toast.textContent = message;
-    toast.className = "show";
-    setTimeout(() => {
-      toast.className = toast.className.replace("show", "");
-    }, 3000);
-  }
+const loading =
+document.getElementById("loading");
 
-  // Predict button click
-  predictBtn.addEventListener("click", () => {
-    if (!selected) {
-      showToast("Please choose a difficulty first!");
-      return;
-    }
+const engineText =
+document.getElementById("engineText");
 
-    if (!currentUserUid) {
-      showToast("Please login first!");
-      return;
-    }
+/* SESSION */
 
-    // Deduct 1 coin and log transaction
-    const userBalanceRef = db.ref("users/" + currentUserUid + "/balance");
-    userBalanceRef.transaction(current => {
-      current = current || 0;
-      if (current < 1) { showToast("Insufficient balance!"); return; }
-      return current - 1;
-    }, (err, committed, snapshot) => {
-      if (!committed) return;
+document.getElementById("sessionId").innerText =
+"SESSION #" +
+Math.floor(Math.random()*99999);
 
-      // ✅ Add transaction log for deduction
-      db.ref("users/" + currentUserUid + "/transactions").push({
-        type: "bet",
-        coins: -1,
-        game: "Chicken Run",
-        ref: "BET-" + Date.now(),
-        time: Date.now(),
-        uid: currentUserUid
-      });
+/* FIREBASE */
 
-      // Proceed with coefficient
-      let values = [];
-      if (selected === "easy") values = ["1.3X","1.4X","1.5X","1.6X","1.7X","1.8X","1.9X","2.0X","2.2X","2.4X","2.6X","2.8X","3.0X","3.5X"];
-      else if (selected === "medium") values = ["1.4X","1.6X","1.8X","2.0X","2.2X","2.4X","2.7X","3.0X"];
-      else if (selected === "hard") values = ["1.5X","1.7X","2.0X","3.0X","4.5X"];
-      else if (selected === "hardcore") values = ["2.5X","5.0X","10.0X"];
+const firebaseConfig = {
 
-      const randomCoeff = values[Math.floor(Math.random() * values.length)];
-      coeff.textContent = randomCoeff;
-      coeff.style.display = "block";
-      chicken.style.display = "block";
-    });
-  });
+apiKey:
+"AIzaSyDvFDByPPo9zgwKLdPaREz1OVMQCXmPfrs",
+
+authDomain:
+"bets-d795d.firebaseapp.com",
+
+projectId:
+"bets-d795d",
+
+storageBucket:
+"bets-d795d.appspot.com",
+
+messagingSenderId:
+"384386108287",
+
+appId:
+"1:384386108287:android:d238a5ec8068d9bb9be84a",
+
+databaseURL:
+"https://bets-d795d-default-rtdb.firebaseio.com"
+
+};
+
+firebase.initializeApp(firebaseConfig);
+
+const db = firebase.database();
+
+let currentUserUid = null;
+
+let selected = null;
+
+/* LOGIN */
+
+firebase.auth().onAuthStateChanged(user => {
+
+if(!user){
+
+showToast("Please login first");
+
+return;
+
+}
+
+currentUserUid = user.uid;
+
+db.ref(
+"users/" +
+currentUserUid +
+"/balance"
+).on("value", snap => {
+
+balanceDisplay.innerText =
+snap.val() || 0;
+
+});
+
+});
+
+/* SELECT */
+
+options.forEach(opt => {
+
+opt.addEventListener("click", () => {
+
+options.forEach(o => {
+
+o.classList.remove("active");
+
+});
+
+opt.classList.add("active");
+
+selected = opt.id;
+
+if(selected === "easy"){
+
+engineText.innerText =
+"Safe Route Engine Enabled";
+
+}
+
+else if(selected === "medium"){
+
+engineText.innerText =
+"Balanced Route Engine Enabled";
+
+}
+
+else if(selected === "hard"){
+
+engineText.innerText =
+"Risk Route Engine Enabled";
+
+}
+
+else{
+
+engineText.innerText =
+"Extreme Quantum Engine Enabled";
+
+}
+
+});
+
+});
+
+/* TOAST */
+
+function showToast(msg){
+
+toast.textContent = msg;
+
+toast.className = "show";
+
+setTimeout(() => {
+
+toast.className = "";
+
+}, 2600);
+
+}
+
+/* BUTTON */
+
+predictBtn.addEventListener("click", () => {
+
+if(!selected){
+
+showToast("Select difficulty");
+
+return;
+
+}
+
+if(!currentUserUid){
+
+showToast("Login first");
+
+return;
+
+}
+
+const ref =
+db.ref(
+"users/" +
+currentUserUid +
+"/balance"
+);
+
+ref.transaction(current => {
+
+current = current || 0;
+
+if(current < 1){
+
+showToast("Insufficient balance");
+
+return;
+
+}
+
+return current - 1;
+
+}, (err, committed) => {
+
+if(!committed) return;
+
+db.ref(
+"users/" +
+currentUserUid +
+"/transactions"
+).push({
+
+type:"bet",
+
+coins:-1,
+
+game:"Chicken Run",
+
+ref:"BET-" + Date.now(),
+
+time:Date.now(),
+
+uid:currentUserUid
+
+});
+
+startPrediction();
+
+});
+
+});
+
+/* START */
+
+function startPrediction(){
+
+predictBtn.disabled = true;
+
+loading.style.display = "block";
+
+coefficient.style.display = "none";
+
+setTimeout(() => {
+
+loading.style.display = "none";
+
+showResult();
+
+predictBtn.disabled = false;
+
+}, 2200);
+
+}
+
+/* RESULT */
+
+function showResult(){
+
+let values = [];
+
+if(selected === "easy"){
+
+values = [
+"1.3X","1.4X","1.5X",
+"1.6X","1.7X","1.8X",
+"1.9X","2.0X","2.2X",
+"2.4X","2.6X","2.8X",
+"3.0X"
+];
+
+}
+
+else if(selected === "medium"){
+
+values = [
+"1.4X","1.6X","1.8X",
+"2.0X","2.2X","2.5X",
+"2.8X","3.0X"
+];
+
+}
+
+else if(selected === "hard"){
+
+values = [
+"1.8X","2.0X","2.5X",
+"3.0X","4.5X","5.0X"
+];
+
+}
+
+else{
+
+values = [
+"5.0X","10.0X","25.0X"
+];
+
+}
+
+const finalValue =
+values[
+Math.floor(
+Math.random() * values.length
+)
+];
+
+coefficient.style.display = "block";
+
+animateCoefficient(finalValue);
+
+}
+
+/* ANIMATE */
+
+function animateCoefficient(target){
+
+let current = 1.00;
+
+const end =
+parseFloat(target);
+
+let count = 0;
+
+const steps = 45;
+
+const interval =
+setInterval(() => {
+
+count++;
+
+current =
+1 +
+(
+(end - 1) *
+(count / steps)
+);
+
+coefficient.innerText =
+current.toFixed(2) + "X";
+
+if(count >= steps){
+
+clearInterval(interval);
+
+coefficient.innerText =
+target;
+
+}
+
+}, 22);
+
+}
+
 </script>
 
 </body>
