@@ -2,287 +2,928 @@
 <html lang="en">
 <head>
 <meta charset="UTF-8">
-<meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>GLOBAL MINES PREDICTOR</title>
+<meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+
+<title>Nova Global</title>
+
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
 
 <style>
-*{box-sizing:border-box;font-family:system-ui,-apple-system,Segoe UI,Roboto,Arial}
-body{margin:0;height:100vh;background:#071023;color:#e6eef8;display:flex;flex-direction:column;}
-.app{flex:1;display:flex;flex-direction:column;align-items:center;padding:20px;}
-h1{font-size:20px;margin-bottom:10px;}
-#timerText{font-size:22px;font-weight:bold;color:#00ffcc;margin-bottom:10px;}
-#statusText{font-size:18px;color:#ffdd00;margin-bottom:10px;}
 
-.grid{display:grid;grid-template-columns:repeat(5,60px);gap:8px;margin-top:15px;}
-.cell{width:60px;height:60px;border-radius:10px;display:flex;align-items:center;justify-content:center;background:linear-gradient(180deg,#0f2a46,#08182a);border:1px solid #22384e;position:relative;}
-.star{position:absolute;font-size:26px;animation:pop 0.3s ease forwards;}
-@keyframes pop{0%{transform:scale(0);opacity:0;}100%{transform:scale(1);opacity:1;}}
+*{
+  margin:0;
+  padding:0;
+  box-sizing:border-box;
+  font-family:'Inter',sans-serif;
+}
 
-.predict-btn{margin-top:20px;padding:14px 30px;border:none;border-radius:12px;background:#2d89ff;color:white;font-size:16px;font-weight:bold;cursor:pointer;}
-.predict-btn:disabled{background:#555;cursor:not-allowed;}
+body{
+  background:
+  radial-gradient(circle at top,#1d3561 0%,#0c111b 45%,#06080d 100%);
+  color:white;
+  min-height:100vh;
+  padding:18px;
+  overflow-x:hidden;
+}
 
-#balanceContainer{position:fixed;top:10px;right:15px;background:#1a1a1a;padding:5px 12px;border-radius:20px;color:#fff;font-weight:bold;z-index:9999;}
+/* APP */
 
-/* 🔥 MODERN TOGGLE */
-.mode-toggle{
+.app{
+  width:100%;
+  max-width:430px;
+  margin:auto;
+}
+
+/* HEADER */
+
+.topbar{
+  display:flex;
+  justify-content:space-between;
+  align-items:center;
+  margin-bottom:22px;
+}
+
+.logo-wrap{
+  display:flex;
+  align-items:center;
+  gap:12px;
+}
+
+.logo{
+  width:55px;
+  height:55px;
+  border-radius:18px;
+  background:
+  linear-gradient(135deg,#00d2ff,#3a7bff);
   display:flex;
   justify-content:center;
-  background:#0c1b2d;
-  border-radius:30px;
-  padding:4px;
-  margin-bottom:10px;
-  width:230px;
-  box-shadow:0 0 10px rgba(0,255,204,0.2);
-}
-.mode-btn{
-  flex:1;
-  padding:8px;
-  border-radius:25px;
-  cursor:pointer;
-  font-size:14px;
-  text-align:center;
-  transition:0.3s;
-}
-.mode-btn.active{
-  background:#00ffcc;
-  color:black;
-  font-weight:bold;
-  box-shadow:0 0 10px #00ffcc;
+  align-items:center;
+  font-size:26px;
+  font-weight:800;
+  box-shadow:0 0 35px rgba(0,153,255,.45);
 }
 
-#modeInfo{
+.brand h1{
+  font-size:20px;
+  font-weight:800;
+}
+
+.brand p{
+  font-size:12px;
+  opacity:.6;
+}
+
+/* BALANCE */
+
+.balance-card{
+  background:rgba(255,255,255,.05);
+  border:1px solid rgba(255,255,255,.08);
+  backdrop-filter:blur(18px);
+  border-radius:18px;
+  padding:10px 15px;
+  text-align:right;
+  box-shadow:0 12px 35px rgba(0,0,0,.35);
+}
+
+.balance-card small{
+  font-size:11px;
+  opacity:.65;
+}
+
+.balance-card h2{
+  margin-top:4px;
+  color:#00d9ff;
+  font-size:20px;
+}
+
+/* MAIN */
+
+.main-card{
+  background:rgba(255,255,255,.05);
+  border:1px solid rgba(255,255,255,.08);
+  backdrop-filter:blur(20px);
+  border-radius:28px;
+  padding:20px;
+  box-shadow:0 18px 50px rgba(0,0,0,.45);
+}
+
+/* LIVE BAR */
+
+.live-bar{
+  display:flex;
+  justify-content:space-between;
+  align-items:center;
+  margin-bottom:18px;
+}
+
+.live-badge{
+  background:#00ff9d22;
+  color:#00ff9d;
+  border:1px solid #00ff9d55;
+  padding:8px 14px;
+  border-radius:999px;
+  font-size:12px;
+  font-weight:700;
+}
+
+.session{
+  font-size:12px;
+  opacity:.6;
+}
+
+/* TOGGLE */
+
+.mode-toggle{
+  display:flex;
+  background:#101826;
+  border-radius:18px;
+  padding:5px;
+  margin-bottom:18px;
+}
+
+.mode-btn{
+  flex:1;
+  padding:14px;
+  border-radius:14px;
+  text-align:center;
+  cursor:pointer;
+  transition:.25s;
+  color:#9aa5b3;
+  font-weight:600;
+}
+
+.mode-btn.active{
+  background:
+  linear-gradient(135deg,#00d2ff,#3a7bff);
+  color:white;
+  box-shadow:0 10px 30px rgba(0,153,255,.45);
+}
+
+/* INFO */
+
+.info-card{
+  background:#101826;
+  border-radius:18px;
+  padding:16px;
+  margin-bottom:18px;
+  border:1px solid rgba(255,255,255,.06);
+}
+
+.info-title{
+  font-size:12px;
+  opacity:.6;
+  margin-bottom:6px;
+}
+
+.info-text{
+  font-size:14px;
+  color:#00d9ff;
+  font-weight:700;
+}
+
+/* TIMER */
+
+.timer-box{
+  background:
+  linear-gradient(145deg,#121f35,#0d1627);
+  border-radius:20px;
+  padding:20px;
+  text-align:center;
+  margin-bottom:18px;
+  border:1px solid rgba(255,255,255,.06);
+}
+
+.timer-label{
+  font-size:12px;
+  opacity:.6;
   margin-bottom:8px;
+}
+
+#timerText{
+  font-size:28px;
+  font-weight:800;
   color:#00ffcc;
-  font-weight:bold;
+}
+
+#statusText{
+  margin-top:8px;
+  font-size:13px;
+  color:#ffc400;
+}
+
+/* SELECT */
+
+.control-box{
+  margin-bottom:18px;
+}
+
+.control-box label{
+  display:block;
+  margin-bottom:8px;
+  font-size:13px;
+  opacity:.75;
 }
 
 select{
-  padding:6px;border-radius:6px;border:1px solid #233042;background:#071024;color:#e6eef8;
+  width:100%;
+  background:#101826;
+  border:1px solid rgba(255,255,255,.08);
+  color:white;
+  padding:15px;
+  border-radius:16px;
+  outline:none;
+  font-size:15px;
 }
+
+/* GRID */
+
+.board{
+  background:#0c1524;
+  padding:16px;
+  border-radius:24px;
+  margin-bottom:20px;
+  border:1px solid rgba(255,255,255,.06);
+}
+
+.grid{
+  display:grid;
+  grid-template-columns:repeat(5,1fr);
+  gap:10px;
+}
+
+.cell{
+  aspect-ratio:1;
+  border-radius:18px;
+  background:
+  linear-gradient(145deg,#172338,#0f1725);
+  border:1px solid rgba(255,255,255,.05);
+  position:relative;
+  overflow:hidden;
+  display:flex;
+  justify-content:center;
+  align-items:center;
+  transition:.3s;
+}
+
+.cell::before{
+  content:'';
+  position:absolute;
+  inset:0;
+  background:
+  linear-gradient(
+  145deg,
+  rgba(255,255,255,.08),
+  transparent);
+}
+
+.cell.active{
+  background:
+  linear-gradient(145deg,#00d2ff,#3a7bff);
+  box-shadow:0 0 30px rgba(0,153,255,.65);
+  transform:scale(1.04);
+}
+
+.star{
+  font-size:30px;
+  animation:pop .35s ease;
+}
+
+@keyframes pop{
+  0%{
+    transform:scale(0);
+    opacity:0;
+  }
+
+  100%{
+    transform:scale(1);
+    opacity:1;
+  }
+}
+
+/* BUTTON */
+
+.predict-btn{
+  width:100%;
+  border:none;
+  background:
+  linear-gradient(135deg,#00d2ff,#3a7bff);
+  color:white;
+  padding:17px;
+  border-radius:18px;
+  font-size:16px;
+  font-weight:800;
+  cursor:pointer;
+  transition:.25s;
+  box-shadow:0 12px 35px rgba(0,153,255,.4);
+}
+
+.predict-btn:hover{
+  transform:translateY(-2px);
+}
+
+.predict-btn:active{
+  transform:scale(.98);
+}
+
+.predict-btn:disabled{
+  opacity:.55;
+  cursor:not-allowed;
+}
+
+/* FOOTER */
+
+.footer{
+  text-align:center;
+  margin-top:18px;
+  opacity:.45;
+  font-size:12px;
+}
+
 </style>
 </head>
 
 <body>
 
-<div id="balanceContainer">
-  <span id="balanceAmount">0</span> COINS
-</div>
-
 <div class="app">
-<h1>🌍 GLOBAL MINES PREDICTOR</h1>
 
-<!-- 🔥 NEW MODERN MODE TOGGLE -->
-<div class="mode-toggle">
-  <div class="mode-btn active" id="regularBtn">Regular</div>
-  <div class="mode-btn" id="premiumBtn">Premium</div>
+  <!-- TOPBAR -->
+
+  <div class="topbar">
+
+    <div class="logo-wrap">
+
+      <div class="logo">
+        N
+      </div>
+
+      <div class="brand">
+        <h1>Nova Global</h1>
+        <p>AI Gaming Interface</p>
+      </div>
+
+    </div>
+
+    <div class="balance-card">
+      <small>AVAILABLE COINS</small>
+      <h2><span id="balanceAmount">0</span></h2>
+    </div>
+
+  </div>
+
+  <!-- MAIN -->
+
+  <div class="main-card">
+
+    <!-- LIVE -->
+
+    <div class="live-bar">
+
+      <div class="live-badge">
+        ● LIVE SESSION
+      </div>
+
+      <div class="session" id="sessionId"></div>
+
+    </div>
+
+    <!-- MODE -->
+
+    <div class="mode-toggle">
+
+      <div class="mode-btn active" id="regularBtn">
+        Regular
+      </div>
+
+      <div class="mode-btn" id="premiumBtn">
+        Premium
+      </div>
+
+    </div>
+
+    <!-- INFO -->
+
+    <div class="info-card">
+
+      <div class="info-title">
+        CURRENT ENGINE
+      </div>
+
+      <div class="info-text" id="modeInfo">
+        Regular AI Scan Enabled
+      </div>
+
+    </div>
+
+    <!-- TIMER -->
+
+    <div class="timer-box">
+
+      <div class="timer-label">
+        NEXT SIGNAL WINDOW
+      </div>
+
+      <div id="timerText">
+        READY
+      </div>
+
+      <div id="statusText"></div>
+
+    </div>
+
+    <!-- CONTROLS -->
+
+    <div class="control-box">
+
+      <label>Select Bomb Difficulty</label>
+
+      <select id="bombChoice">
+        <option value="2">2 Bombs</option>
+        <option value="3">3 Bombs</option>
+        <option value="5">5 Bombs</option>
+        <option value="7">7 Bombs</option>
+      </select>
+
+    </div>
+
+    <!-- GRID -->
+
+    <div class="board">
+      <div class="grid" id="grid"></div>
+    </div>
+
+    <!-- BUTTON -->
+
+    <button class="predict-btn" id="predictBtn">
+      Generate Signal
+    </button>
+
+  </div>
+
+  <div class="footer">
+    Nova Gaming System © 2026
+  </div>
+
 </div>
 
-<div id="modeInfo">You are currently using Regular Prediction</div>
-
-<div id="timerText">READY</div>
-<div id="statusText"></div>
-
-<div class="controls">
-  <select id="bombChoice">
-    <option value="2">2 Bombs</option>
-    <option value="3">3 Bombs</option>
-    <option value="5">5 Bombs</option>
-    <option value="7">7 Bombs</option>
-  </select>
-</div>
-
-<div class="grid" id="grid"></div>
-
-<button id="predictBtn" class="predict-btn" onclick="predict()">Predict</button>
-</div>
+<!-- FIREBASE -->
 
 <script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-app.js"></script>
 <script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-auth.js"></script>
 <script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-database.js"></script>
 
 <script>
-const grid = document.getElementById("grid");
-const timerText = document.getElementById("timerText");
-const statusText = document.getElementById("statusText");
-const predictBtn = document.getElementById("predictBtn");
-const balanceDisplay = document.getElementById("balanceAmount");
 
-const regularBtn = document.getElementById("regularBtn");
-const premiumBtn = document.getElementById("premiumBtn");
-const modeInfo = document.getElementById("modeInfo");
+/* ELEMENTS */
+
+const grid = document.getElementById("grid");
+
+const timerText =
+document.getElementById("timerText");
+
+const statusText =
+document.getElementById("statusText");
+
+const predictBtn =
+document.getElementById("predictBtn");
+
+const balanceDisplay =
+document.getElementById("balanceAmount");
+
+const regularBtn =
+document.getElementById("regularBtn");
+
+const premiumBtn =
+document.getElementById("premiumBtn");
+
+const modeInfo =
+document.getElementById("modeInfo");
+
+/* SESSION */
+
+document.getElementById("sessionId").innerText =
+"SESSION #" +
+Math.floor(Math.random()*99999);
+
+/* MODE */
 
 let mode = "regular";
 
-/* 🔥 MODE SWITCH */
 regularBtn.onclick = () => {
+
   mode = "regular";
+
   regularBtn.classList.add("active");
+
   premiumBtn.classList.remove("active");
-  modeInfo.innerText = "You are currently using Regular Prediction";
+
+  modeInfo.innerText =
+  "Regular AI Scan Enabled";
+
 };
 
 premiumBtn.onclick = () => {
+
   mode = "premium";
+
   premiumBtn.classList.add("active");
+
   regularBtn.classList.remove("active");
-  modeInfo.innerText = "Premium Mode: Each prediction costs 2 coins";
+
+  modeInfo.innerText =
+  "Premium Quantum Engine Enabled";
+
 };
 
-// FIREBASE CONFIG
+/* FIREBASE */
+
 const firebaseConfig = {
-  apiKey: "AIzaSyDvFDByPPo9zgwKLdPaREz1OVMQCXmPfrs",
-  authDomain: "bets-d795d.firebaseapp.com",
-  projectId: "bets-d795d",
-  storageBucket: "bets-d795d.appspot.com",
-  messagingSenderId: "384386108287",
-  appId: "1:384386108287:android:d238a5ec8068d9bb9be84a",
-  databaseURL: "https://bets-d795d-default-rtdb.firebaseio.com"
+
+  apiKey:
+  "AIzaSyDvFDByPPo9zgwKLdPaREz1OVMQCXmPfrs",
+
+  authDomain:
+  "bets-d795d.firebaseapp.com",
+
+  projectId:
+  "bets-d795d",
+
+  storageBucket:
+  "bets-d795d.appspot.com",
+
+  messagingSenderId:
+  "384386108287",
+
+  appId:
+  "1:384386108287:android:d238a5ec8068d9bb9be84a",
+
+  databaseURL:
+  "https://bets-d795d-default-rtdb.firebaseio.com"
+
 };
+
 firebase.initializeApp(firebaseConfig);
+
 const db = firebase.database();
 
 let currentUserUid = null;
 let currentUserEmail = null;
 
-// GRID
-for (let i = 0; i < 25; i++) {
-    const cell = document.createElement("div");
-    cell.className = "cell";
-    grid.appendChild(cell);
+/* GRID */
+
+for(let i=0;i<25;i++){
+
+  const cell =
+  document.createElement("div");
+
+  cell.className = "cell";
+
+  grid.appendChild(cell);
+
 }
 
-// LOGIN
+/* LOGIN */
+
 firebase.auth().onAuthStateChanged(user => {
-    if (!user) { alert("Please login first"); return; }
-    currentUserUid = user.uid;
-    currentUserEmail = user.email;
 
-    db.ref("users/" + currentUserUid + "/balance").on("value", snap => {
-        balanceDisplay.innerText = snap.val() || 0;
-    });
+  if(!user){
 
-    const saved = JSON.parse(localStorage.getItem("minesData"));
-    if (saved) {
-        const now = Date.now();
-        if (now < saved.expireTime) {
-            restoreGame(saved);
-            timerText.innerText = "STAKE AT " + saved.displayTime;
-            predictBtn.disabled = true;
-            statusText.innerText = "Prediction locked";
+    alert("Please login first");
 
-            const remaining = saved.expireTime - now;
-            setTimeout(() => {
-                predictBtn.disabled = false;
-                timerText.innerText = "READY";
-                statusText.innerText = "";
-                localStorage.removeItem("minesData");
-            }, remaining);
-        } else localStorage.removeItem("minesData");
+    return;
+
+  }
+
+  currentUserUid = user.uid;
+
+  currentUserEmail = user.email;
+
+  db.ref(
+  "users/" +
+  currentUserUid +
+  "/balance"
+  ).on("value", snap => {
+
+    balanceDisplay.innerText =
+    snap.val() || 0;
+
+  });
+
+  const saved =
+  JSON.parse(
+  localStorage.getItem("novaGlobal")
+  );
+
+  if(saved){
+
+    const now = Date.now();
+
+    if(now < saved.expireTime){
+
+      restoreGame(saved);
+
+      timerText.innerText =
+      "STAKE AT " +
+      saved.displayTime;
+
+      predictBtn.disabled = true;
+
+      statusText.innerText =
+      "Signal locked until next session";
+
+      const remaining =
+      saved.expireTime - now;
+
+      setTimeout(() => {
+
+        predictBtn.disabled = false;
+
+        timerText.innerText = "READY";
+
+        statusText.innerText = "";
+
+        localStorage.removeItem("novaGlobal");
+
+      }, remaining);
+
+    }else{
+
+      localStorage.removeItem("novaGlobal");
+
     }
+
+  }
+
 });
 
-// PREDICT
-function predict() {
-    if (!currentUserUid) return alert("User not logged in!");
+/* BUTTON */
 
-    const isPremium = mode === "premium";
-    const cost = isPremium ? 2 : 1;
+predictBtn.onclick = () => {
 
-    const userBalanceRef = db.ref("users/" + currentUserUid + "/balance");
+  predict();
 
-    userBalanceRef.transaction(current => {
-        current = current || 0;
-        if (current < cost) { alert("Insufficient balance!"); return; }
-        return current - cost;
-    }, (err, committed) => {
-        if (committed) {
-            db.ref("users/" + currentUserUid + "/transactions").push({
-                type:"bet",
-                coins:-cost,
-                game:"Mines",
-                time:Date.now()
-            });
+};
 
-            runPrediction();
-        }
-    });
+/* PREDICT */
+
+function predict(){
+
+  if(!currentUserUid){
+
+    alert("User not logged in!");
+
+    return;
+
+  }
+
+  const isPremium =
+  mode === "premium";
+
+  const cost =
+  isPremium ? 2 : 1;
+
+  const balanceRef =
+  db.ref(
+  "users/" +
+  currentUserUid +
+  "/balance"
+  );
+
+  balanceRef.transaction(current => {
+
+    current = current || 0;
+
+    if(current < cost){
+
+      alert("Insufficient balance!");
+
+      return;
+
+    }
+
+    return current - cost;
+
+  }, (err, committed) => {
+
+    if(committed){
+
+      db.ref(
+      "users/" +
+      currentUserUid +
+      "/transactions"
+      ).push({
+
+        type:"bet",
+
+        coins:-cost,
+
+        game:"Mines",
+
+        time:Date.now()
+
+      });
+
+      runPrediction();
+
+    }
+
+  });
+
 }
 
-// RUN
-function runPrediction() {
-    const bombs = parseInt(document.getElementById("bombChoice").value);
-    const isPremium = mode === "premium";
+/* RUN */
 
-    const cells = [...grid.children];
-    cells.forEach(c => c.innerHTML = "");
+function runPrediction(){
+
+  predictBtn.disabled = true;
+
+  predictBtn.innerText =
+  "Analyzing...";
+
+  const bombs =
+  parseInt(
+  document.getElementById("bombChoice").value
+  );
+
+  const isPremium =
+  mode === "premium";
+
+  const cells = [...grid.children];
+
+  cells.forEach(c => {
+
+    c.innerHTML = "";
+
+    c.classList.remove("active");
+
+  });
+
+  setTimeout(() => {
 
     let stars = 0;
 
-    if (!isPremium) {
-        if (bombs === 2) stars = getRandom(6, 10);
-        else if (bombs === 3) stars = getRandom(5, 7);
-        else if (bombs === 5) stars = getRandom(3, 5);
-        else if (bombs === 7) stars = getRandom(2, 4);
-    } else {
-        if (bombs === 2) stars = getRandom(4, 5);
-        else if (bombs === 3) stars = getRandom(3, 4);
-        else if (bombs === 5) stars = getRandom(2, 3);
-        else if (bombs === 7) stars = getRandom(1, 2);
+    if(!isPremium){
+
+      if(bombs === 2)
+      stars = getRandom(6,10);
+
+      else if(bombs === 3)
+      stars = getRandom(5,7);
+
+      else if(bombs === 5)
+      stars = getRandom(3,5);
+
+      else if(bombs === 7)
+      stars = getRandom(2,4);
+
+    }else{
+
+      if(bombs === 2)
+      stars = getRandom(4,5);
+
+      else if(bombs === 3)
+      stars = getRandom(3,4);
+
+      else if(bombs === 5)
+      stars = getRandom(2,3);
+
+      else if(bombs === 7)
+      stars = getRandom(1,2);
+
     }
 
     let used = new Set();
-    while (used.size < stars) used.add(Math.floor(Math.random() * cells.length));
+
+    while(
+      used.size < stars
+    ){
+
+      used.add(
+      Math.floor(
+      Math.random() * cells.length
+      ));
+
+    }
+
+    let delay = 0;
 
     used.forEach(i => {
-        const star = document.createElement("div");
+
+      setTimeout(() => {
+
+        const star =
+        document.createElement("div");
+
         star.className = "star";
+
         star.innerText = "⭐";
+
+        cells[i].classList.add("active");
+
         cells[i].appendChild(star);
+
+      }, delay);
+
+      delay += 100;
+
     });
 
     const now = new Date();
-    const addMinutes = getRandom(1,2);
-    now.setMinutes(now.getMinutes() + addMinutes);
+
+    const addMinutes =
+    getRandom(1,2);
+
+    now.setMinutes(
+    now.getMinutes() + addMinutes
+    );
 
     let h = now.getHours();
+
     let m = now.getMinutes();
-    if (m < 10) m = "0" + m;
-    if (h < 10) h = "0" + h;
 
-    timerText.innerText = "STAKE AT " + h + ":" + m;
+    if(m < 10) m = "0" + m;
 
-    const expireTime = Date.now() + addMinutes*60*1000;
+    if(h < 10) h = "0" + h;
 
-    localStorage.setItem("minesData", JSON.stringify({
-        stars:[...used],
-        expireTime,
-        displayTime:h+":"+m
-    }));
+    timerText.innerText =
+    "STAKE AT " +
+    h + ":" + m;
 
-    predictBtn.disabled = true;
+    statusText.innerText =
+    "Signal generated successfully";
+
+    const expireTime =
+    Date.now() +
+    addMinutes * 60 * 1000;
+
+    localStorage.setItem(
+    "novaGlobal",
+    JSON.stringify({
+
+      stars:[...used],
+
+      expireTime,
+
+      displayTime:h + ":" + m
+
+    })
+    );
 
     setTimeout(() => {
-        predictBtn.disabled = false;
-        timerText.innerText = "READY";
-        localStorage.removeItem("minesData");
-    }, addMinutes*60*1000);
+
+      predictBtn.disabled = false;
+
+      predictBtn.innerText =
+      "Generate Signal";
+
+      timerText.innerText =
+      "READY";
+
+      statusText.innerText = "";
+
+      localStorage.removeItem(
+      "novaGlobal"
+      );
+
+    }, addMinutes * 60 * 1000);
+
+  }, 1500);
+
 }
 
-// RESTORE
-function restoreGame(data) {
-    const cells = [...grid.children];
-    data.stars.forEach(i => {
-        const star = document.createElement("div");
-        star.className = "star";
-        star.innerText = "⭐";
-        cells[i].appendChild(star);
-    });
+/* RESTORE */
+
+function restoreGame(data){
+
+  const cells = [...grid.children];
+
+  data.stars.forEach(i => {
+
+    const star =
+    document.createElement("div");
+
+    star.className = "star";
+
+    star.innerText = "⭐";
+
+    cells[i].classList.add("active");
+
+    cells[i].appendChild(star);
+
+  });
+
 }
 
-// RANDOM
+/* RANDOM */
+
 function getRandom(min,max){
- return Math.floor(Math.random()*(max-min+1))+min;
+
+  return Math.floor(
+  Math.random() *
+  (max - min + 1)
+  ) + min;
+
 }
+
 </script>
 
 </body>
