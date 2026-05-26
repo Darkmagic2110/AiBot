@@ -1,346 +1,1201 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-<meta charset="UTF-8">
-<meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>Dark Magic Ai Aviator Bot</title>
 
-<link href="https://fonts.googleapis.com/css2?family=UnifrakturCook:wght@700&display=swap" rel="stylesheet">
-<link href="https://fonts.googleapis.com/css2?family=Poppins:wght@500;600&display=swap" rel="stylesheet">
+<meta charset="UTF-8">
+
+<meta name="viewport"
+content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+
+<title>Nova Aviator</title>
+
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
 
 <style>
-    body {
-        background: black;
-        color: #ff3300;
-        font-family: 'Poppins', sans-serif;
-        text-align: center;
-        padding: 15px;
-        overflow-x: hidden;
-    }
 
-    h1 {
-        font-family: 'UnifrakturCook', cursive;
-        font-size: 30px;
-        color: red;
-        margin-bottom: 10px;
-        text-shadow: 0 0 8px #ff3300, 0 0 15px #ff4d4d;
-    }
+*{
+  margin:0;
+  padding:0;
+  box-sizing:border-box;
+  font-family:'Inter',sans-serif;
+}
 
-    /* 🔥 MODERN TOGGLE */
-    .mode-toggle {
-        display: flex;
-        justify-content: center;
-        background: #111;
-        border-radius: 30px;
-        padding: 4px;
-        margin-bottom: 8px;
-        width: 220px;
-        margin-left: auto;
-        margin-right: auto;
-        box-shadow: 0 0 10px #ff3300;
-    }
+body{
 
-    .mode-btn {
-        flex: 1;
-        padding: 8px;
-        border-radius: 25px;
-        cursor: pointer;
-        font-size: 14px;
-        transition: 0.3s;
-    }
+  min-height:100vh;
 
-    .mode-btn.active {
-        background: #ff3300;
-        color: black;
-        font-weight: bold;
-        box-shadow: 0 0 10px #ff3300;
-    }
+  background:
+  radial-gradient(circle at top,#3a0d0d 0%,#130707 45%,#050505 100%);
 
-    #modeInfo {
-        font-size: 13px;
-        margin-bottom: 10px;
-        color: #ff4d4d;
-    }
+  overflow-x:hidden;
 
-    #botImage {
-        width: 200px;
-        height: 200px;
-        border-radius: 20px;
-        object-fit: cover;
-        margin-bottom: 20px;
-        border: 3px solid red;
-        box-shadow: 0 0 20px #ff3300, 0 0 35px #ff4d4d;
-        animation: pulse 2s infinite;
-    }
+  color:white;
 
-    @keyframes pulse {
-        0%, 100% {box-shadow: 0 0 20px #ff3300, 0 0 35px #ff4d4d;}
-        50% {box-shadow: 0 0 30px #ff3300, 0 0 50px #ff4d4d;}
-    }
+  position:relative;
 
-    #predictBtn {
-        padding: 14px 20px;
-        font-size: 18px;
-        font-weight: 600;
-        border-radius: 12px;
-        border: none;
-        background: #ff3300;
-        color: black;
-        cursor: pointer;
-        margin-bottom: 20px;
-        box-shadow: 0 0 18px #ff3300, 0 0 25px #ff4d4d;
-        transition: 0.3s ease-in-out;
-        position: relative;
-        overflow: hidden;
-    }
+}
 
-    #predictBtn:disabled {
-        background: #7f0000;
-        cursor: not-allowed;
-        box-shadow: 0 0 10px #7f0000;
-    }
+/* BACKGROUND EFFECT */
 
-    #predictionBox {
-        background: linear-gradient(145deg, #000000, #330000);
-        border: 2px solid red;
-        border-radius: 16px;
-        padding: 20px;
-        font-family: 'Poppins', sans-serif;
-        color: #ff4d4d;
-        font-size: 16px;
-        text-align: left;
-        white-space: pre-line;
-        display: none;
-        max-width: 400px;
-        margin: 0 auto;
-        box-shadow: 0 0 25px #ff3300, 0 0 40px #ff4d4d, 0 0 55px #ff3300 inset;
-        position: relative;
-        overflow: hidden;
-    }
+.bg-glow{
 
-    #loadingText {
-        color: #ff3300;
-        font-size: 18px;
-        margin-bottom: 20px;
-        display: none;
-        font-weight: 600;
-        animation: blink 1s infinite;
-    }
+  position:absolute;
 
-    @keyframes blink {
-        0%, 50%, 100% {opacity: 1;}
-        25%, 75% {opacity: 0.2;}
-    }
+  width:500px;
 
-    #balanceContainer {
-        position: fixed;
-        top: 10px;
-        right: 15px;
-        background: #1a1a1a;
-        padding: 5px 12px;
-        border-radius: 20px;
-        color: #fff;
-        font-weight: bold;
-        z-index: 9999;
-    }
+  height:500px;
+
+  border-radius:50%;
+
+  background:rgba(255,60,0,.18);
+
+  filter:blur(120px);
+
+  top:-200px;
+
+  left:50%;
+
+  transform:translateX(-50%);
+
+}
+
+/* APP */
+
+.app{
+
+  position:relative;
+
+  z-index:5;
+
+  width:100%;
+
+  max-width:430px;
+
+  margin:auto;
+
+  padding:18px;
+
+}
+
+/* TOPBAR */
+
+.topbar{
+
+  display:flex;
+
+  justify-content:space-between;
+
+  align-items:center;
+
+  margin-bottom:24px;
+
+}
+
+.logo-wrap{
+
+  display:flex;
+
+  align-items:center;
+
+  gap:12px;
+
+}
+
+.logo{
+
+  width:56px;
+
+  height:56px;
+
+  border-radius:18px;
+
+  background:
+  linear-gradient(135deg,#ff3300,#ff6600);
+
+  display:flex;
+
+  justify-content:center;
+
+  align-items:center;
+
+  font-size:24px;
+
+  font-weight:800;
+
+  box-shadow:
+  0 0 35px rgba(255,80,0,.55);
+
+}
+
+.brand h1{
+
+  font-size:20px;
+
+  font-weight:800;
+
+}
+
+.brand p{
+
+  font-size:12px;
+
+  opacity:.6;
+
+}
+
+/* BALANCE */
+
+.balance-card{
+
+  background:rgba(255,255,255,.05);
+
+  border:1px solid rgba(255,255,255,.08);
+
+  backdrop-filter:blur(18px);
+
+  border-radius:18px;
+
+  padding:10px 15px;
+
+  text-align:right;
+
+  box-shadow:
+  0 12px 35px rgba(0,0,0,.35);
+
+}
+
+.balance-card small{
+
+  font-size:11px;
+
+  opacity:.65;
+
+}
+
+.balance-card h2{
+
+  margin-top:4px;
+
+  color:#ff7a45;
+
+  font-size:20px;
+
+}
+
+/* MAIN */
+
+.main-card{
+
+  background:rgba(255,255,255,.05);
+
+  border:1px solid rgba(255,255,255,.08);
+
+  backdrop-filter:blur(22px);
+
+  border-radius:30px;
+
+  padding:22px;
+
+  box-shadow:
+  0 20px 55px rgba(0,0,0,.45);
+
+}
+
+/* LIVE */
+
+.live-bar{
+
+  display:flex;
+
+  justify-content:space-between;
+
+  align-items:center;
+
+  margin-bottom:18px;
+
+}
+
+.live{
+
+  background:#ff550022;
+
+  border:1px solid #ff550055;
+
+  color:#ff884d;
+
+  padding:8px 14px;
+
+  border-radius:999px;
+
+  font-size:12px;
+
+  font-weight:700;
+
+}
+
+.session{
+
+  font-size:12px;
+
+  opacity:.6;
+
+}
+
+/* TOGGLE */
+
+.mode-toggle{
+
+  display:flex;
+
+  background:#170c08;
+
+  border-radius:18px;
+
+  padding:5px;
+
+  margin-bottom:18px;
+
+}
+
+.mode-btn{
+
+  flex:1;
+
+  padding:14px;
+
+  border-radius:14px;
+
+  text-align:center;
+
+  cursor:pointer;
+
+  transition:.25s;
+
+  color:#b9aca6;
+
+  font-weight:600;
+
+}
+
+.mode-btn.active{
+
+  background:
+  linear-gradient(135deg,#ff3300,#ff6600);
+
+  color:white;
+
+  box-shadow:
+  0 10px 30px rgba(255,80,0,.45);
+
+}
+
+/* INFO */
+
+.info-card{
+
+  background:#150c08;
+
+  border-radius:18px;
+
+  padding:16px;
+
+  margin-bottom:20px;
+
+  border:1px solid rgba(255,255,255,.06);
+
+}
+
+.info-title{
+
+  font-size:12px;
+
+  opacity:.6;
+
+  margin-bottom:6px;
+
+}
+
+#modeInfo{
+
+  font-size:14px;
+
+  color:#ff884d;
+
+  font-weight:700;
+
+}
+
+/* IMAGE */
+
+.image-wrap{
+
+  display:flex;
+
+  justify-content:center;
+
+  margin-bottom:20px;
+
+}
+
+#botImage{
+
+  width:220px;
+
+  height:220px;
+
+  object-fit:cover;
+
+  border-radius:28px;
+
+  border:3px solid rgba(255,120,80,.4);
+
+  box-shadow:
+  0 0 45px rgba(255,80,0,.35);
+
+  animation:pulse 2.5s infinite;
+
+}
+
+@keyframes pulse{
+
+  0%,100%{
+
+    transform:scale(1);
+
+    box-shadow:
+    0 0 45px rgba(255,80,0,.35);
+
+  }
+
+  50%{
+
+    transform:scale(1.03);
+
+    box-shadow:
+    0 0 65px rgba(255,80,0,.55);
+
+  }
+
+}
+
+/* LOADING */
+
+#loadingText{
+
+  display:none;
+
+  text-align:center;
+
+  margin-bottom:20px;
+
+  color:#ff884d;
+
+  font-weight:700;
+
+  animation:blink 1s infinite;
+
+}
+
+@keyframes blink{
+
+  0%,100%{
+    opacity:1;
+  }
+
+  50%{
+    opacity:.35;
+  }
+
+}
+
+/* BUTTON */
+
+#predictBtn{
+
+  width:100%;
+
+  border:none;
+
+  background:
+  linear-gradient(135deg,#ff3300,#ff6600);
+
+  color:white;
+
+  padding:18px;
+
+  border-radius:18px;
+
+  font-size:16px;
+
+  font-weight:800;
+
+  cursor:pointer;
+
+  transition:.25s;
+
+  box-shadow:
+  0 12px 35px rgba(255,80,0,.4);
+
+}
+
+#predictBtn:hover{
+
+  transform:translateY(-2px);
+
+}
+
+#predictBtn:active{
+
+  transform:scale(.98);
+
+}
+
+#predictBtn:disabled{
+
+  opacity:.6;
+
+  cursor:not-allowed;
+
+}
+
+/* PREDICTION */
+
+#predictionBox{
+
+  display:none;
+
+  margin-top:22px;
+
+  background:
+  linear-gradient(145deg,#1a0d08,#120906);
+
+  border-radius:22px;
+
+  padding:20px;
+
+  border:1px solid rgba(255,120,80,.18);
+
+  box-shadow:
+  0 0 35px rgba(255,80,0,.18);
+
+}
+
+.prediction-title{
+
+  color:#ff884d;
+
+  font-size:14px;
+
+  margin-bottom:14px;
+
+  font-weight:700;
+
+}
+
+.prediction-item{
+
+  display:flex;
+
+  justify-content:space-between;
+
+  align-items:center;
+
+  padding:14px 0;
+
+  border-bottom:1px solid rgba(255,255,255,.06);
+
+}
+
+.prediction-item:last-child{
+
+  border-bottom:none;
+
+}
+
+.label{
+
+  opacity:.65;
+
+  font-size:13px;
+
+}
+
+.value{
+
+  font-weight:800;
+
+  color:#ff884d;
+
+  font-size:17px;
+
+}
+
+/* ROCKET */
+
+.rocket{
+
+  position:fixed;
+
+  font-size:42px;
+
+  z-index:9999;
+
+  pointer-events:none;
+
+}
+
+/* TRAIL */
+
+.trail{
+
+  position:fixed;
+
+  width:10px;
+
+  height:10px;
+
+  background:#ff5500;
+
+  border-radius:50%;
+
+  z-index:9998;
+
+  pointer-events:none;
+
+  box-shadow:
+  0 0 15px #ff5500;
+
+}
+
+/* FOOTER */
+
+.footer{
+
+  text-align:center;
+
+  margin-top:18px;
+
+  opacity:.4;
+
+  font-size:12px;
+
+}
+
 </style>
+
 </head>
 
 <body>
 
-<h1>Dark Magic Ai Aviator Bot</h1>
+<div class="bg-glow"></div>
 
-<div id="balanceContainer">
-  <span id="balanceAmount">0</span> COINS
+<div class="app">
+
+  <!-- HEADER -->
+
+  <div class="topbar">
+
+    <div class="logo-wrap">
+
+      <div class="logo">
+        N
+      </div>
+
+      <div class="brand">
+
+        <h1>Nova Aviator</h1>
+
+        <p>Advanced Flight Engine</p>
+
+      </div>
+
+    </div>
+
+    <div class="balance-card">
+
+      <small>AVAILABLE COINS</small>
+
+      <h2>
+        <span id="balanceAmount">0</span>
+      </h2>
+
+    </div>
+
+  </div>
+
+  <!-- MAIN -->
+
+  <div class="main-card">
+
+    <!-- LIVE -->
+
+    <div class="live-bar">
+
+      <div class="live">
+        ● LIVE SIGNALS
+      </div>
+
+      <div class="session"
+      id="sessionId"></div>
+
+    </div>
+
+    <!-- TOGGLE -->
+
+    <div class="mode-toggle">
+
+      <div class="mode-btn active"
+      id="regularBtn">
+
+        Regular
+
+      </div>
+
+      <div class="mode-btn"
+      id="premiumBtn">
+
+        Premium
+
+      </div>
+
+    </div>
+
+    <!-- INFO -->
+
+    <div class="info-card">
+
+      <div class="info-title">
+        CURRENT ENGINE
+      </div>
+
+      <div id="modeInfo">
+        Regular Flight Engine Enabled
+      </div>
+
+    </div>
+
+    <!-- IMAGE -->
+
+    <div class="image-wrap">
+
+      <img id="botImage"
+      src="aviator.jpg"
+      alt="Nova Aviator">
+
+    </div>
+
+    <!-- LOADING -->
+
+    <div id="loadingText">
+      🚀 Calculating Flight Path...
+    </div>
+
+    <!-- BUTTON -->
+
+    <button id="predictBtn">
+
+      Generate Aviator Signal
+
+    </button>
+
+    <!-- PREDICTION -->
+
+    <div id="predictionBox">
+
+      <div class="prediction-title">
+
+        AVIATOR SIGNAL GENERATED
+
+      </div>
+
+      <div class="prediction-item">
+
+        <div class="label">
+          Predicted Time
+        </div>
+
+        <div class="value"
+        id="timeValue">
+          00:00
+        </div>
+
+      </div>
+
+      <div class="prediction-item">
+
+        <div class="label">
+          Flight Multiplier
+        </div>
+
+        <div class="value"
+        id="coefValue">
+          1.00x
+        </div>
+
+      </div>
+
+    </div>
+
+  </div>
+
+  <div class="footer">
+    Nova Flight System © 2026
+  </div>
+
 </div>
 
-<!-- 🔥 ADDED (no removal) -->
-<div class="mode-toggle">
-  <div class="mode-btn active" id="regularBtn">Regular</div>
-  <div class="mode-btn" id="premiumBtn">Premium</div>
-</div>
+<!-- FIREBASE -->
 
-<div id="modeInfo">You are using Regular Prediction</div>
-
-<img id="botImage" src="aviator.jpg" alt="Aviator Bot">
-
-<div id="loadingText">⏳ Predicting...</div>
-<button id="predictBtn">🚀 Predict Aviator</button>
-
-<div id="predictionBox"></div>
-
-<!-- Firebase -->
 <script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-app.js"></script>
+
 <script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-auth.js"></script>
+
 <script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-database.js"></script>
 
 <script>
-function padZero(num) { return num < 10 ? '0'+num : num; }
-function getRandomCoefficient() { return (Math.random() * (4.50 - 2.30) + 2.30).toFixed(2); }
-function getPremiumCoefficient() { return (Math.random() * (2.30 - 1.50) + 1.50).toFixed(2); }
-function getRandomMinuteOffset() { return Math.floor(Math.random() * 2) + 2; }
 
-const predictBtn = document.getElementById("predictBtn");
-const predictionBox = document.getElementById("predictionBox");
-const loadingText = document.getElementById("loadingText");
-const balanceDisplay = document.getElementById("balanceAmount");
+/* FUNCTIONS */
 
-const regularBtn = document.getElementById("regularBtn");
-const premiumBtn = document.getElementById("premiumBtn");
-const modeInfo = document.getElementById("modeInfo");
+function padZero(num){
+
+  return num < 10
+  ? '0' + num
+  : num;
+
+}
+
+function getRandomCoefficient(){
+
+  return (
+  Math.random() *
+  (4.50 - 2.30)
+  + 2.30
+  ).toFixed(2);
+
+}
+
+function getPremiumCoefficient(){
+
+  return (
+  Math.random() *
+  (2.30 - 1.50)
+  + 1.50
+  ).toFixed(2);
+
+}
+
+function getRandomMinuteOffset(){
+
+  return Math.floor(
+  Math.random() * 2
+  ) + 2;
+
+}
+
+/* ELEMENTS */
+
+const predictBtn =
+document.getElementById("predictBtn");
+
+const predictionBox =
+document.getElementById("predictionBox");
+
+const loadingText =
+document.getElementById("loadingText");
+
+const balanceDisplay =
+document.getElementById("balanceAmount");
+
+const regularBtn =
+document.getElementById("regularBtn");
+
+const premiumBtn =
+document.getElementById("premiumBtn");
+
+const modeInfo =
+document.getElementById("modeInfo");
+
+const timeValue =
+document.getElementById("timeValue");
+
+const coefValue =
+document.getElementById("coefValue");
+
+/* SESSION */
+
+document.getElementById("sessionId").innerText =
+"SESSION #" +
+Math.floor(Math.random()*99999);
+
+/* MODE */
 
 let mode = "regular";
 
 regularBtn.onclick = () => {
-    mode = "regular";
-    regularBtn.classList.add("active");
-    premiumBtn.classList.remove("active");
-    modeInfo.innerText = "You are using Regular Prediction";
+
+  mode = "regular";
+
+  regularBtn.classList.add("active");
+
+  premiumBtn.classList.remove("active");
+
+  modeInfo.innerText =
+  "Regular Flight Engine Enabled";
+
 };
 
 premiumBtn.onclick = () => {
-    mode = "premium";
-    premiumBtn.classList.add("active");
-    regularBtn.classList.remove("active");
-    modeInfo.innerText = "Premium Mode: costs 2 coins";
+
+  mode = "premium";
+
+  premiumBtn.classList.add("active");
+
+  regularBtn.classList.remove("active");
+
+  modeInfo.innerText =
+  "Premium Quantum Engine Enabled";
+
 };
+
+/* FIREBASE */
 
 const firebaseConfig = {
-  apiKey: "AIzaSyDvFDByPPo9zgwKLdPaREz1OVMQCXmPfrs",
-  authDomain: "bets-d795d.firebaseapp.com",
-  projectId: "bets-d795d",
-  storageBucket: "bets-d795d.appspot.com",
-  messagingSenderId: "384386108287",
-  appId: "1:384386108287:android:d238a5ec8068d9bb9be84a",
-  databaseURL: "https://bets-d795d-default-rtdb.firebaseio.com"
+
+  apiKey:
+  "AIzaSyDvFDByPPo9zgwKLdPaREz1OVMQCXmPfrs",
+
+  authDomain:
+  "bets-d795d.firebaseapp.com",
+
+  projectId:
+  "bets-d795d",
+
+  storageBucket:
+  "bets-d795d.appspot.com",
+
+  messagingSenderId:
+  "384386108287",
+
+  appId:
+  "1:384386108287:android:d238a5ec8068d9bb9be84a",
+
+  databaseURL:
+  "https://bets-d795d-default-rtdb.firebaseio.com"
+
 };
+
 firebase.initializeApp(firebaseConfig);
+
 const db = firebase.database();
+
 let currentUserUid = null;
 
+/* LOGIN */
+
 firebase.auth().onAuthStateChanged(user => {
-  if (!user) { alert("Please login first"); return; }
+
+  if(!user){
+
+    alert("Please login first");
+
+    return;
+
+  }
+
   currentUserUid = user.uid;
 
-  db.ref("users/" + currentUserUid + "/balance").on("value", snap => {
+  db.ref(
+  "users/" +
+  currentUserUid +
+  "/balance"
+  ).on("value", snap => {
+
     const val = snap.val();
-    balanceDisplay.innerText = val != null ? Math.floor(val) : 0;
+
+    balanceDisplay.innerText =
+    val != null
+    ? Math.floor(val)
+    : 0;
+
   });
+
 });
+
+/* BUTTON */
 
 predictBtn.addEventListener("click", () => {
-  if (!currentUserUid) return alert("User not logged in!");
 
-  const cost = mode === "premium" ? 2 : 1;
+  generatePrediction();
 
-  const userBalanceRef = db.ref("users/" + currentUserUid + "/balance");
+});
 
-  userBalanceRef.transaction(current => {
+/* GENERATE */
+
+function generatePrediction(){
+
+  if(!currentUserUid){
+
+    alert("User not logged in!");
+
+    return;
+
+  }
+
+  const cost =
+  mode === "premium"
+  ? 2
+  : 1;
+
+  const balanceRef =
+  db.ref(
+  "users/" +
+  currentUserUid +
+  "/balance"
+  );
+
+  balanceRef.transaction(current => {
+
     current = current || 0;
-    if (current < cost) { alert("Insufficient balance!"); return; }
-    return current - cost;
-  }, (err, committed, snapshot) => {
-    if (!committed) return;
 
-    db.ref("users/" + currentUserUid + "/transactions").push({
-      type: "bet",
-      coins: -cost,
-      amount: cost,
-      game: "Aviator",
-      ref: "BET-" + Date.now(),
-      time: Date.now(),
-      uid: currentUserUid
+    if(current < cost){
+
+      alert("Insufficient balance!");
+
+      return;
+
+    }
+
+    return current - cost;
+
+  }, (err, committed) => {
+
+    if(!committed) return;
+
+    db.ref(
+    "users/" +
+    currentUserUid +
+    "/transactions"
+    ).push({
+
+      type:"bet",
+
+      coins:-cost,
+
+      amount:cost,
+
+      game:"Aviator",
+
+      ref:"BET-" + Date.now(),
+
+      time:Date.now(),
+
+      uid:currentUserUid
+
     });
 
-    predictionBox.style.display = "none";
-    loadingText.style.display = "block";
-    predictBtn.disabled = true;
+    startAnimation();
 
-    const rocket = document.createElement("div");
-    rocket.classList.add("rocket");
-    rocket.textContent = "🚀";
-    document.body.appendChild(rocket);
-
-    const trails = [];
-    for(let i=0;i<15;i++){
-        const trail = document.createElement("div");
-        trail.classList.add("trail");
-        document.body.appendChild(trail);
-        trails.push({el: trail, offset: i*3});
-    }
-
-    let t=0;
-    const animInterval = setInterval(()=>{
-        t += 0.03;
-        const x = 10 + 90*t;
-        const y = 90 - (t*t*90);
-        rocket.style.left = x + "%";
-        rocket.style.top = y + "%";
-
-        trails.forEach(tr => {
-            const trailX = x - tr.offset;
-            const trailY = y + tr.offset/2;
-            tr.el.style.left = trailX + "%";
-            tr.el.style.top = trailY + "%";
-            tr.el.style.opacity = Math.max(0, 1 - t - tr.offset/30);
-        });
-
-        if(t>=1){
-            clearInterval(animInterval);
-            rocket.remove();
-            trails.forEach(tr => tr.el.remove());
-            showPrediction();
-        }
-    }, 30);
-
-    function showPrediction() {
-        loadingText.style.display = "none";
-
-        const now = new Date();
-        const offsetMinutes = getRandomMinuteOffset();
-        const predictedTime = new Date(now.getTime() + offsetMinutes * 60000);
-        const hour = padZero(predictedTime.getHours());
-        const minute = padZero(predictedTime.getMinutes());
-
-        const coef = parseFloat(mode === "premium" ? getPremiumCoefficient() : getRandomCoefficient());
-
-        const text = `AVIATOR PREDICTION
-┏━━━━━━━━━━━━━
-┠ ⭓➤𝐓𝐈𝐌𝐄 : ${hour}:${minute} 
-┠ ⭓➤𝐂𝐎𝐄𝐅𝐅𝐈𝐂𝐈𝐄𝐍𝐓: `;
-        predictionBox.textContent = text;
-        predictionBox.style.display = "block";
-
-        let start = 1.00;
-        const steps = 50;
-        const coefElement = document.createElement("span");
-        coefElement.style.color = "#ff4d4d";
-        coefElement.style.fontWeight = "700";
-        coefElement.textContent = start.toFixed(2) + "X";
-        predictionBox.appendChild(coefElement);
-
-        let currentStep = 0;
-        const coefInterval = setInterval(()=>{
-            currentStep++;
-            const value = 1.00 + ((coef-1.00)*(currentStep/steps));
-            coefElement.textContent = value.toFixed(2) + "X";
-            if(currentStep>=steps) clearInterval(coefInterval);
-        }, 20);
-
-        const closingText = document.createElement("div");
-        closingText.textContent = "┗━━━━━━━━━━━━━";
-        predictionBox.appendChild(document.createElement("br"));
-        predictionBox.appendChild(closingText);
-
-        const checkInterval = setInterval(()=>{
-            if(new Date()>=predictedTime){
-                predictBtn.disabled = false;
-                clearInterval(checkInterval);
-            }
-        },1000);
-    }
   });
-});
+
+}
+
+/* ROCKET */
+
+function startAnimation(){
+
+  predictionBox.style.display =
+  "none";
+
+  loadingText.style.display =
+  "block";
+
+  predictBtn.disabled = true;
+
+  const rocket =
+  document.createElement("div");
+
+  rocket.classList.add("rocket");
+
+  rocket.textContent = "🚀";
+
+  document.body.appendChild(rocket);
+
+  const trails = [];
+
+  for(let i=0;i<16;i++){
+
+    const trail =
+    document.createElement("div");
+
+    trail.classList.add("trail");
+
+    document.body.appendChild(trail);
+
+    trails.push({
+
+      el:trail,
+
+      offset:i * 3
+
+    });
+
+  }
+
+  let t = 0;
+
+  const anim =
+  setInterval(() => {
+
+    t += 0.03;
+
+    const x =
+    10 + 90 * t;
+
+    const y =
+    90 - (t * t * 90);
+
+    rocket.style.left =
+    x + "%";
+
+    rocket.style.top =
+    y + "%";
+
+    trails.forEach(tr => {
+
+      const tx =
+      x - tr.offset;
+
+      const ty =
+      y + tr.offset / 2;
+
+      tr.el.style.left =
+      tx + "%";
+
+      tr.el.style.top =
+      ty + "%";
+
+      tr.el.style.opacity =
+      Math.max(
+      0,
+      1 - t - tr.offset/30
+      );
+
+    });
+
+    if(t >= 1){
+
+      clearInterval(anim);
+
+      rocket.remove();
+
+      trails.forEach(tr => {
+
+        tr.el.remove();
+
+      });
+
+      showPrediction();
+
+    }
+
+  }, 30);
+
+}
+
+/* SHOW */
+
+function showPrediction(){
+
+  loadingText.style.display =
+  "none";
+
+  const now =
+  new Date();
+
+  const offsetMinutes =
+  getRandomMinuteOffset();
+
+  const predictedTime =
+  new Date(
+  now.getTime() +
+  offsetMinutes * 60000
+  );
+
+  const hour =
+  padZero(
+  predictedTime.getHours()
+  );
+
+  const minute =
+  padZero(
+  predictedTime.getMinutes()
+  );
+
+  const coef =
+  parseFloat(
+  mode === "premium"
+  ? getPremiumCoefficient()
+  : getRandomCoefficient()
+  );
+
+  predictionBox.style.display =
+  "block";
+
+  timeValue.innerText =
+  hour + ":" + minute;
+
+  animateCoefficient(coef);
+
+  const checkInterval =
+  setInterval(() => {
+
+    if(new Date() >= predictedTime){
+
+      predictBtn.disabled = false;
+
+      clearInterval(checkInterval);
+
+    }
+
+  }, 1000);
+
+}
+
+/* ANIMATE */
+
+function animateCoefficient(target){
+
+  let current = 1.00;
+
+  const steps = 50;
+
+  let count = 0;
+
+  const interval =
+  setInterval(() => {
+
+    count++;
+
+    current =
+    1.00 +
+    (
+    (target - 1.00) *
+    (count / steps)
+    );
+
+    coefValue.innerText =
+    current.toFixed(2) + "x";
+
+    if(count >= steps){
+
+      clearInterval(interval);
+
+    }
+
+  }, 20);
+
+}
+
 </script>
 
 </body>
