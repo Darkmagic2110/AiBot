@@ -1,234 +1,876 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-  <meta charset="UTF-8">
 
-  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+<meta charset="UTF-8">
 
-  <title>Lucky Jet Grand Prediction</title>
+<meta name="viewport"
+content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
 
-  <style>
-    * { box-sizing: border-box; }
-    body {
-      margin: 0;
-      padding: 0;
-      min-height: 100vh;
-      background: url("Luckys.jpg") no-repeat center center/cover;
-      display: flex;
-      flex-direction: column;
-      align-items: center;
-      justify-content: center;
-      font-family: Arial, sans-serif;
-      color: white;
-      text-align: center;
-    }
+<title>Nova Jet</title>
 
-    h1 {
-      font-size: clamp(20px, 6vw, 40px);
-      font-weight: bold;
-      margin-bottom: 20px;
-      text-shadow: 0 0 10px purple;
-    }
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
 
-    /* 🔥 PREMIUM TOGGLE */
-    .mode-box {
-      display: flex;
-      background: rgba(0,0,0,0.6);
-      border-radius: 30px;
-      overflow: hidden;
-      margin-bottom: 15px;
-      border: 1px solid #7f00ff;
-    }
+<style>
 
-    .mode-btn {
-      padding: 8px 18px;
-      cursor: pointer;
-      font-weight: bold;
-      font-size: 14px;
-      color: white;
-      transition: 0.3s;
-    }
+*{
+  margin:0;
+  padding:0;
+  box-sizing:border-box;
+  font-family:'Inter',sans-serif;
+}
 
-    .mode-btn.active {
-      background: #7f00ff;
-      color: white;
-    }
+body{
 
-    #modeText {
-      font-size: 12px;
-      margin-bottom: 10px;
-      opacity: 0.8;
-    }
+  min-height:100vh;
 
-    .circle {
-      width: min(60vw, 260px);
-      height: min(60vw, 260px);
-      border: 4px solid #7f00ff;
-      border-radius: 50%;
-      display: flex;
-      align-items: center;
-      justify-content: center;
-      font-size: clamp(24px, 8vw, 48px);
-      font-weight: bold;
-      color: white;
-      box-shadow: 0 0 20px #7f00ff;
-      animation: glow 1.5s infinite alternate;
-      margin-bottom: 25px;
-      background: rgba(0,0,0,0.5);
-    }
+  background:
+  radial-gradient(circle at top,#34125c 0%,#12081f 45%,#050507 100%);
 
-    @keyframes glow {
-      from { box-shadow: 0 0 10px #7f00ff; }
-      to { box-shadow: 0 0 30px #b266ff; }
-    }
+  overflow:hidden;
 
-    button {
-      padding: 12px 35px;
-      font-size: clamp(14px, 4vw, 20px);
-      font-weight: bold;
-      color: #b266ff;
-      background: transparent;
-      border: 2px solid #7f00ff;
-      border-radius: 30px;
-      cursor: pointer;
-      box-shadow: 0 0 10px #7f00ff;
-    }
+  color:white;
 
-    #balanceContainer {
-      position: fixed;
-      top: 10px;
-      right: 15px;
-      background: #1a1a1a;
-      padding: 5px 12px;
-      border-radius: 20px;
-      color: #fff;
-      font-weight: bold;
-      z-index: 9999;
-    }
-  </style>
+  position:relative;
+
+}
+
+/* BACKGROUND GLOW */
+
+.bg-glow{
+
+  position:absolute;
+
+  width:500px;
+  height:500px;
+
+  border-radius:50%;
+
+  background:rgba(140,0,255,.18);
+
+  filter:blur(100px);
+
+  top:-200px;
+  left:50%;
+
+  transform:translateX(-50%);
+
+}
+
+/* APP */
+
+.app{
+
+  position:relative;
+
+  z-index:10;
+
+  width:100%;
+
+  max-width:430px;
+
+  margin:auto;
+
+  padding:18px;
+
+}
+
+/* HEADER */
+
+.topbar{
+
+  display:flex;
+
+  justify-content:space-between;
+
+  align-items:center;
+
+  margin-bottom:28px;
+
+}
+
+.logo-wrap{
+
+  display:flex;
+
+  align-items:center;
+
+  gap:12px;
+
+}
+
+.logo{
+
+  width:56px;
+
+  height:56px;
+
+  border-radius:18px;
+
+  background:
+  linear-gradient(135deg,#7f00ff,#c44dff);
+
+  display:flex;
+
+  justify-content:center;
+
+  align-items:center;
+
+  font-size:24px;
+
+  font-weight:800;
+
+  box-shadow:
+  0 0 35px rgba(160,0,255,.55);
+
+}
+
+.brand h1{
+
+  font-size:20px;
+
+  font-weight:800;
+
+}
+
+.brand p{
+
+  font-size:12px;
+
+  opacity:.6;
+
+}
+
+/* BALANCE */
+
+.balance-card{
+
+  background:rgba(255,255,255,.05);
+
+  border:1px solid rgba(255,255,255,.08);
+
+  backdrop-filter:blur(18px);
+
+  border-radius:18px;
+
+  padding:10px 15px;
+
+  text-align:right;
+
+  box-shadow:0 12px 35px rgba(0,0,0,.35);
+
+}
+
+.balance-card small{
+
+  font-size:11px;
+
+  opacity:.65;
+
+}
+
+.balance-card h2{
+
+  margin-top:4px;
+
+  color:#d47cff;
+
+  font-size:20px;
+
+}
+
+/* MAIN CARD */
+
+.main-card{
+
+  background:rgba(255,255,255,.05);
+
+  border:1px solid rgba(255,255,255,.08);
+
+  backdrop-filter:blur(22px);
+
+  border-radius:30px;
+
+  padding:22px;
+
+  box-shadow:0 20px 50px rgba(0,0,0,.45);
+
+}
+
+/* LIVE */
+
+.live-bar{
+
+  display:flex;
+
+  justify-content:space-between;
+
+  align-items:center;
+
+  margin-bottom:18px;
+
+}
+
+.live{
+
+  background:#b266ff22;
+
+  border:1px solid #b266ff55;
+
+  color:#d58cff;
+
+  padding:8px 14px;
+
+  border-radius:999px;
+
+  font-size:12px;
+
+  font-weight:700;
+
+}
+
+.session{
+
+  font-size:12px;
+
+  opacity:.6;
+
+}
+
+/* TOGGLE */
+
+.mode-box{
+
+  display:flex;
+
+  background:#160d22;
+
+  border-radius:18px;
+
+  padding:5px;
+
+  margin-bottom:18px;
+
+}
+
+.mode-btn{
+
+  flex:1;
+
+  padding:14px;
+
+  border-radius:14px;
+
+  text-align:center;
+
+  cursor:pointer;
+
+  transition:.25s;
+
+  color:#b8b3c7;
+
+  font-weight:600;
+
+}
+
+.mode-btn.active{
+
+  background:
+  linear-gradient(135deg,#7f00ff,#c44dff);
+
+  color:white;
+
+  box-shadow:
+  0 10px 30px rgba(160,0,255,.45);
+
+}
+
+/* INFO */
+
+.info-card{
+
+  background:#140d1d;
+
+  border-radius:18px;
+
+  padding:16px;
+
+  margin-bottom:20px;
+
+  border:1px solid rgba(255,255,255,.06);
+
+}
+
+.info-title{
+
+  font-size:12px;
+
+  opacity:.6;
+
+  margin-bottom:6px;
+
+}
+
+#modeText{
+
+  font-size:14px;
+
+  color:#d47cff;
+
+  font-weight:700;
+
+}
+
+/* SIGNAL DISPLAY */
+
+.signal-container{
+
+  display:flex;
+
+  justify-content:center;
+
+  margin-bottom:24px;
+
+}
+
+.circle{
+
+  width:270px;
+
+  height:270px;
+
+  border-radius:50%;
+
+  position:relative;
+
+  display:flex;
+
+  justify-content:center;
+
+  align-items:center;
+
+  background:
+  radial-gradient(circle,#1d112d 0%,#12081f 70%);
+
+  border:4px solid rgba(196,77,255,.6);
+
+  box-shadow:
+  0 0 45px rgba(160,0,255,.45),
+  inset 0 0 40px rgba(160,0,255,.18);
+
+  overflow:hidden;
+
+}
+
+/* ROTATING RING */
+
+.circle::before{
+
+  content:'';
+
+  position:absolute;
+
+  width:120%;
+
+  height:120%;
+
+  border-radius:50%;
+
+  border:3px solid transparent;
+
+  border-top:3px solid #d47cff;
+
+  animation:rotate 3s linear infinite;
+
+}
+
+@keyframes rotate{
+
+  from{
+    transform:rotate(0deg);
+  }
+
+  to{
+    transform:rotate(360deg);
+  }
+
+}
+
+/* DISPLAY */
+
+#display{
+
+  position:relative;
+
+  z-index:10;
+
+  font-size:52px;
+
+  font-weight:800;
+
+  color:white;
+
+  text-shadow:
+  0 0 15px rgba(196,77,255,.8);
+
+}
+
+/* BUTTON */
+
+.signal-btn{
+
+  width:100%;
+
+  border:none;
+
+  background:
+  linear-gradient(135deg,#7f00ff,#c44dff);
+
+  color:white;
+
+  padding:18px;
+
+  border-radius:18px;
+
+  font-size:16px;
+
+  font-weight:800;
+
+  cursor:pointer;
+
+  transition:.25s;
+
+  box-shadow:
+  0 12px 35px rgba(160,0,255,.4);
+
+}
+
+.signal-btn:hover{
+
+  transform:translateY(-2px);
+
+}
+
+.signal-btn:active{
+
+  transform:scale(.98);
+
+}
+
+.signal-btn:disabled{
+
+  opacity:.6;
+
+  cursor:not-allowed;
+
+}
+
+/* FOOTER */
+
+.footer{
+
+  text-align:center;
+
+  margin-top:20px;
+
+  opacity:.4;
+
+  font-size:12px;
+
+}
+
+</style>
+
 </head>
 
 <body>
 
-<div id="balanceContainer">
-  <span id="balanceAmount">0</span> COINS
+<div class="bg-glow"></div>
+
+<div class="app">
+
+  <!-- HEADER -->
+
+  <div class="topbar">
+
+    <div class="logo-wrap">
+
+      <div class="logo">
+        N
+      </div>
+
+      <div class="brand">
+        <h1>Nova Jet</h1>
+        <p>Quantum Signal Engine</p>
+      </div>
+
+    </div>
+
+    <div class="balance-card">
+
+      <small>AVAILABLE COINS</small>
+
+      <h2>
+        <span id="balanceAmount">0</span>
+      </h2>
+
+    </div>
+
+  </div>
+
+  <!-- MAIN -->
+
+  <div class="main-card">
+
+    <!-- LIVE -->
+
+    <div class="live-bar">
+
+      <div class="live">
+        ● LIVE SIGNALS
+      </div>
+
+      <div class="session" id="sessionId"></div>
+
+    </div>
+
+    <!-- TOGGLE -->
+
+    <div class="mode-box">
+
+      <div class="mode-btn active"
+      id="regularBtn">
+        Regular
+      </div>
+
+      <div class="mode-btn"
+      id="premiumBtn">
+        Premium
+      </div>
+
+    </div>
+
+    <!-- INFO -->
+
+    <div class="info-card">
+
+      <div class="info-title">
+        CURRENT ENGINE
+      </div>
+
+      <div id="modeText">
+        Regular Signal Engine Enabled
+      </div>
+
+    </div>
+
+    <!-- DISPLAY -->
+
+    <div class="signal-container">
+
+      <div class="circle">
+
+        <div id="display">
+          0.00x
+        </div>
+
+      </div>
+
+    </div>
+
+    <!-- BUTTON -->
+
+    <button
+    class="signal-btn"
+    id="signalBtn">
+
+      Generate Signal
+
+    </button>
+
+  </div>
+
+  <div class="footer">
+    Nova Quantum System © 2026
+  </div>
+
 </div>
 
-<h1>LUCKY JET GRAND PREDICTION</h1>
+<!-- FIREBASE -->
 
-<!-- 🔥 MODE SELECT -->
-<div class="mode-box">
-  <div class="mode-btn active" id="regularBtn">Regular</div>
-  <div class="mode-btn" id="premiumBtn">Premium</div>
-</div>
-
-<div id="modeText">You are using Regular Mode</div>
-
-<div class="circle" id="display">0.00x</div>
-
-<button onclick="generateSignal()">GET SIGNALS</button>
-
-<!-- Firebase -->
 <script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-app.js"></script>
+
 <script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-auth.js"></script>
+
 <script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-database.js"></script>
 
 <script>
-const display = document.getElementById("display");
-const balanceDisplay = document.getElementById("balanceAmount");
 
-const regularBtn = document.getElementById("regularBtn");
-const premiumBtn = document.getElementById("premiumBtn");
-const modeText = document.getElementById("modeText");
+/* ELEMENTS */
+
+const display =
+document.getElementById("display");
+
+const balanceDisplay =
+document.getElementById("balanceAmount");
+
+const regularBtn =
+document.getElementById("regularBtn");
+
+const premiumBtn =
+document.getElementById("premiumBtn");
+
+const modeText =
+document.getElementById("modeText");
+
+const signalBtn =
+document.getElementById("signalBtn");
+
+/* SESSION */
+
+document.getElementById("sessionId").innerText =
+"SESSION #" +
+Math.floor(Math.random()*99999);
+
+/* MODE */
 
 let mode = "regular";
 
-// toggle
 regularBtn.onclick = () => {
+
   mode = "regular";
+
   regularBtn.classList.add("active");
+
   premiumBtn.classList.remove("active");
-  modeText.innerText = "You are using Regular Mode";
+
+  modeText.innerText =
+  "Regular Signal Engine Enabled";
+
 };
 
 premiumBtn.onclick = () => {
+
   mode = "premium";
+
   premiumBtn.classList.add("active");
+
   regularBtn.classList.remove("active");
-  modeText.innerText = "Premium Mode (cost: 2 coins)";
+
+  modeText.innerText =
+  "Premium Quantum Engine Enabled";
+
 };
 
-// Firebase config
+/* FIREBASE */
+
 const firebaseConfig = {
-  apiKey: "AIzaSyDvFDByPPo9zgwKLdPaREz1OVMQCXmPfrs",
-  authDomain: "bets-d795d.firebaseapp.com",
-  projectId: "bets-d795d",
-  storageBucket: "bets-d795d.appspot.com",
-  messagingSenderId: "384386108287",
-  appId: "1:384386108287:android:d238a5ec8068d9bb9be84a",
-  databaseURL: "https://bets-d795d-default-rtdb.firebaseio.com"
+
+  apiKey:
+  "AIzaSyDvFDByPPo9zgwKLdPaREz1OVMQCXmPfrs",
+
+  authDomain:
+  "bets-d795d.firebaseapp.com",
+
+  projectId:
+  "bets-d795d",
+
+  storageBucket:
+  "bets-d795d.appspot.com",
+
+  messagingSenderId:
+  "384386108287",
+
+  appId:
+  "1:384386108287:android:d238a5ec8068d9bb9be84a",
+
+  databaseURL:
+  "https://bets-d795d-default-rtdb.firebaseio.com"
+
 };
+
 firebase.initializeApp(firebaseConfig);
+
 const db = firebase.database();
 
 let currentUserUid = null;
 
+/* LOGIN */
+
 firebase.auth().onAuthStateChanged(user => {
-  if (!user) { alert("Please login first"); return; }
+
+  if(!user){
+
+    alert("Please login first");
+
+    return;
+
+  }
+
   currentUserUid = user.uid;
 
-  db.ref("users/" + currentUserUid + "/balance").on("value", snap => {
-    balanceDisplay.innerText = snap.val() || 0;
+  db.ref(
+  "users/" +
+  currentUserUid +
+  "/balance"
+  ).on("value", snap => {
+
+    balanceDisplay.innerText =
+    snap.val() || 0;
+
   });
+
 });
 
-function generateSignal() {
-  if (!currentUserUid) return alert("User not logged in!");
+/* BUTTON */
 
-  const cost = (mode === "premium") ? 2 : 1;
+signalBtn.onclick = () => {
 
-  const userBalanceRef = db.ref("users/" + currentUserUid + "/balance");
+  generateSignal();
 
-  userBalanceRef.transaction(current => {
+};
+
+/* SIGNAL */
+
+function generateSignal(){
+
+  if(!currentUserUid){
+
+    alert("User not logged in!");
+
+    return;
+
+  }
+
+  const cost =
+  mode === "premium" ? 2 : 1;
+
+  const balanceRef =
+  db.ref(
+  "users/" +
+  currentUserUid +
+  "/balance"
+  );
+
+  balanceRef.transaction(current => {
+
     current = current || 0;
-    if (current < cost) { alert("Insufficient balance!"); return; }
-    return current - cost;
-  }, (err, committed) => {
-    if (!committed) return;
 
-    db.ref("users/" + currentUserUid + "/transactions").push({
-      type: "bet",
-      coins: -cost,
-      game: "Lucky Jet",
-      time: Date.now(),
-      uid: currentUserUid
+    if(current < cost){
+
+      alert("Insufficient balance!");
+
+      return;
+
+    }
+
+    return current - cost;
+
+  }, (err, committed) => {
+
+    if(!committed) return;
+
+    db.ref(
+    "users/" +
+    currentUserUid +
+    "/transactions"
+    ).push({
+
+      type:"bet",
+
+      coins:-cost,
+
+      game:"Lucky Jet",
+
+      time:Date.now(),
+
+      uid:currentUserUid
+
     });
 
-    let count = 0;
-    const anim = setInterval(() => {
-      let fake = (Math.random() * 6.5).toFixed(2);
-      display.textContent = fake + "x";
-      count++;
+    startAnimation();
 
-      if (count > 15) {
-        clearInterval(anim);
+  });
 
-        let finalNumber;
+}
 
-        if (mode === "premium") {
-          // 🔥 PREMIUM RANGE
-          finalNumber = (Math.random() * (1.50 - 1.05) + 1.05).toFixed(2);
-        } else {
-          let chance = Math.random();
-          if (chance < 0.7) finalNumber = (1 + Math.random() * 1.99).toFixed(2);
-          else finalNumber = (3 + Math.random() * 3.5).toFixed(2);
+/* ANIMATION */
+
+function startAnimation(){
+
+  signalBtn.disabled = true;
+
+  signalBtn.innerText =
+  "Analyzing...";
+
+  let count = 0;
+
+  const anim = setInterval(() => {
+
+    const fake =
+    (
+    Math.random() * 8
+    ).toFixed(2);
+
+    display.textContent =
+    fake + "x";
+
+    count++;
+
+    if(count > 22){
+
+      clearInterval(anim);
+
+      let finalNumber;
+
+      if(mode === "premium"){
+
+        finalNumber =
+        (
+        Math.random() *
+        (1.50 - 1.05)
+        + 1.05
+        ).toFixed(2);
+
+      }else{
+
+        let chance =
+        Math.random();
+
+        if(chance < 0.7){
+
+          finalNumber =
+          (
+          1 +
+          Math.random() * 1.99
+          ).toFixed(2);
+
+        }else{
+
+          finalNumber =
+          (
+          3 +
+          Math.random() * 4
+          ).toFixed(2);
+
         }
 
-        display.textContent = finalNumber + "x";
       }
-    }, 80);
-  });
+
+      display.textContent =
+      finalNumber + "x";
+
+      signalBtn.disabled = false;
+
+      signalBtn.innerText =
+      "Generate Signal";
+
+    }
+
+  }, 75);
+
 }
+
 </script>
 
 </body>
