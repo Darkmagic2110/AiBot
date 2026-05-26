@@ -1,1286 +1,287 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-
 <meta charset="UTF-8">
-
-<meta name="viewport"
-content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-
-<title>Dark Magic AI</title>
-
-<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>CHICKEN RUN</title>
 
 <style>
-
-*{
-margin:0;
-padding:0;
-box-sizing:border-box;
-font-family:'Inter',sans-serif;
-}
-
-body{
-
-min-height:100vh;
-
-background:
-radial-gradient(circle at top,#220505 0%,#120404 45%,#040101 100%);
-
-overflow-x:hidden;
-
-color:white;
-
-position:relative;
-
-}
-
-/* BACKGROUND */
-
-.bg-glow{
-
-position:absolute;
-
-width:500px;
-
-height:500px;
-
-border-radius:50%;
-
-background:rgba(255,60,0,.15);
-
-filter:blur(120px);
-
-top:-220px;
-
-left:50%;
-
-transform:translateX(-50%);
-
-}
-
-/* APP */
-
-.app{
-
-position:relative;
-
-z-index:10;
-
-width:100%;
-
-max-width:430px;
-
-margin:auto;
-
-padding:18px;
-
-}
-
-/* TOPBAR */
-
-.topbar{
-
-display:flex;
-
-justify-content:space-between;
-
-align-items:center;
-
-margin-bottom:24px;
-
-}
-
-.logo-wrap{
-
-display:flex;
-
-align-items:center;
-
-gap:12px;
-
-}
-
-.logo{
-
-width:56px;
-
-height:56px;
-
-border-radius:18px;
-
-background:
-linear-gradient(135deg,#ff3300,#ff6600);
-
-display:flex;
-
-justify-content:center;
-
-align-items:center;
-
-font-size:24px;
-
-font-weight:800;
-
-color:#fff;
-
-box-shadow:
-0 0 35px rgba(255,80,0,.45);
-
-}
-
-.brand h1{
-
-font-size:20px;
-
-font-weight:800;
-
-}
-
-.brand p{
-
-font-size:12px;
-
-opacity:.6;
-
-}
-
-/* BALANCE */
-
-.balance-card{
-
-background:rgba(255,255,255,.05);
-
-border:1px solid rgba(255,255,255,.08);
-
-backdrop-filter:blur(18px);
-
-border-radius:18px;
-
-padding:10px 15px;
-
-text-align:right;
-
-box-shadow:
-0 12px 35px rgba(0,0,0,.35);
-
-}
-
-.balance-card small{
-
-font-size:11px;
-
-opacity:.65;
-
-}
-
-.balance-card h2{
-
-margin-top:4px;
-
-color:#ff8a66;
-
-font-size:20px;
-
-}
-
-/* MAIN */
-
-.main-card{
-
-background:rgba(255,255,255,.05);
-
-border:1px solid rgba(255,255,255,.08);
-
-backdrop-filter:blur(22px);
-
-border-radius:30px;
-
-padding:22px;
-
-box-shadow:
-0 20px 55px rgba(0,0,0,.45);
-
-}
-
-/* LIVE */
-
-.live-bar{
-
-display:flex;
-
-justify-content:space-between;
-
-align-items:center;
-
-margin-bottom:18px;
-
-}
-
-.live{
-
-background:#ff330022;
-
-border:1px solid #ff330055;
-
-color:#ff8a66;
-
-padding:8px 14px;
-
-border-radius:999px;
-
-font-size:12px;
-
-font-weight:700;
-
-}
-
-.session{
-
-font-size:12px;
-
-opacity:.6;
-
-}
-
-/* TOGGLE */
-
-.mode-toggle{
-
-display:flex;
-
-background:#130707;
-
-border-radius:18px;
-
-padding:5px;
-
-margin-bottom:18px;
-
-}
-
-.mode-btn{
-
-flex:1;
-
-padding:14px;
-
-border-radius:14px;
-
-text-align:center;
-
-cursor:pointer;
-
-transition:.25s;
-
-color:#c5aaaa;
-
-font-weight:600;
-
-}
-
-.mode-btn.active{
-
-background:
-linear-gradient(135deg,#ff3300,#ff6600);
-
-color:#fff;
-
-box-shadow:
-0 10px 30px rgba(255,80,0,.35);
-
-}
-
-/* INFO */
-
-.info-card{
-
-background:#130707;
-
-border-radius:18px;
-
-padding:16px;
-
-margin-bottom:20px;
-
-border:1px solid rgba(255,255,255,.06);
-
-}
-
-.info-title{
-
-font-size:12px;
-
-opacity:.6;
-
-margin-bottom:6px;
-
-}
-
-#modeInfo{
-
-font-size:14px;
-
-color:#ff8a66;
-
-font-weight:700;
-
-}
-
-/* IMAGE */
-
-.image-wrap{
-
-display:flex;
-
-justify-content:center;
-
-margin-bottom:22px;
-
-}
-
-#botImage{
-
-width:220px;
-
-height:220px;
-
-object-fit:cover;
-
-border-radius:28px;
-
-border:3px solid rgba(255,80,0,.3);
-
-box-shadow:
-0 0 45px rgba(255,80,0,.35);
-
-animation:pulse 2.5s infinite;
-
-}
-
-@keyframes pulse{
-
-0%,100%{
-
-transform:scale(1);
-
-box-shadow:
-0 0 45px rgba(255,80,0,.35);
-
-}
-
-50%{
-
-transform:scale(1.03);
-
-box-shadow:
-0 0 70px rgba(255,80,0,.55);
-
-}
-
-}
-
-/* LOADING */
-
-#loadingText{
-
-display:none;
-
-text-align:center;
-
-margin-bottom:20px;
-
-color:#ff8a66;
-
-font-weight:700;
-
-animation:blink 1s infinite;
-
-}
-
-@keyframes blink{
-
-0%,100%{
-opacity:1;
-}
-
-50%{
-opacity:.35;
-}
-
-}
-
-/* BUTTON */
-
-#predictBtn{
-
-width:100%;
-
-border:none;
-
-background:
-linear-gradient(135deg,#ff3300,#ff6600);
-
-color:white;
-
-padding:18px;
-
-border-radius:18px;
-
-font-size:16px;
-
-font-weight:800;
-
-cursor:pointer;
-
-transition:.25s;
-
-box-shadow:
-0 12px 35px rgba(255,80,0,.4);
-
-}
-
-#predictBtn:hover{
-
-transform:translateY(-2px);
-
-}
-
-#predictBtn:active{
-
-transform:scale(.98);
-
-}
-
-#predictBtn:disabled{
-
-opacity:.6;
-
-cursor:not-allowed;
-
-}
-
-/* PREDICTION BOX */
-
-#predictionBox{
-
-display:none;
-
-margin-top:22px;
-
-background:
-linear-gradient(145deg,#130707,#080202);
-
-border-radius:22px;
-
-padding:20px;
-
-border:1px solid rgba(255,80,0,.18);
-
-box-shadow:
-0 0 35px rgba(255,80,0,.18);
-
-}
-
-.prediction-title{
-
-color:#ff8a66;
-
-font-size:14px;
-
-margin-bottom:14px;
-
-font-weight:700;
-
-}
-
-.prediction-item{
-
-display:flex;
-
-justify-content:space-between;
-
-align-items:center;
-
-padding:14px 0;
-
-border-bottom:1px solid rgba(255,255,255,.06);
-
-}
-
-.prediction-item:last-child{
-
-border-bottom:none;
-
-}
-
-.label{
-
-opacity:.65;
-
-font-size:13px;
-
-}
-
-.value{
-
-font-weight:800;
-
-color:#ff8a66;
-
-font-size:17px;
-
-}
-
-/* ROCKET */
-
-.rocket{
-
-position:fixed;
-
-font-size:42px;
-
-z-index:9999;
-
-pointer-events:none;
-
-}
-
-/* TRAIL */
-
-.trail{
-
-position:fixed;
-
-width:10px;
-
-height:10px;
-
-background:#ff6600;
-
-border-radius:50%;
-
-z-index:9998;
-
-pointer-events:none;
-
-box-shadow:
-0 0 15px #ff6600;
-
-}
-
-/* TOAST */
-
-#toast{
-
-visibility:hidden;
-
-min-width:220px;
-
-background:
-linear-gradient(135deg,#ff3300,#ff6600);
-
-color:white;
-
-text-align:center;
-
-border-radius:14px;
-
-padding:14px;
-
-position:fixed;
-
-bottom:40px;
-
-left:50%;
-
-transform:translateX(-50%);
-
-z-index:99999;
-
-font-weight:700;
-
-box-shadow:
-0 12px 35px rgba(255,80,0,.35);
-
-}
-
-#toast.show{
-
-visibility:visible;
-
-animation:fadein .4s, fadeout .4s 2.2s;
-
-}
-
-@keyframes fadein{
-
-from{
-opacity:0;
-bottom:10px;
-}
-
-to{
-opacity:1;
-bottom:40px;
-}
-
-}
-
-@keyframes fadeout{
-
-from{
-opacity:1;
-bottom:40px;
-}
-
-to{
-opacity:0;
-bottom:10px;
-}
-
-}
-
-/* FOOTER */
-
-.footer{
-
-text-align:center;
-
-margin-top:18px;
-
-opacity:.4;
-
-font-size:12px;
-
-}
-
+  body {
+    margin: 0;
+    padding: 0;
+    height: 100vh;
+    background: rgba(0, 50, 0, 0.9);
+    backdrop-filter: blur(10px);
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    font-family: "Arial Black", sans-serif;
+    color: yellow;
+    text-align: center;
+  }
+
+  h1 {
+    font-size: 50px;
+    font-weight: bold;
+    color: yellow;
+    margin-bottom: 20px;
+    text-shadow: 0 0 15px yellow;
+  }
+
+  #balanceContainer {
+    position: fixed;
+    top: 10px;
+    right: 15px;
+    background: #1a1a1a;
+    padding: 5px 12px;
+    border-radius: 20px;
+    color: #fff;
+    font-weight: bold;
+    z-index: 9999;
+  }
+
+  #coefficient {
+    font-size: 55px;
+    font-weight: 900;
+    color: yellow;
+    text-shadow: 0 0 20px yellow;
+    margin-bottom: 10px;
+    display: none;
+  }
+
+  #chicken {
+    width: 200px;
+    height: 200px;
+    object-fit: cover;
+    border-radius: 25px;
+    display: none;
+    margin-bottom: 15px;
+  }
+
+  .difficulty {
+    display: flex;
+    gap: 10px;
+    margin-top: 10px;
+    flex-wrap: wrap;
+    justify-content: center;
+  }
+
+  .option {
+    border: 2px solid yellow;
+    padding: 8px 20px;
+    border-radius: 10px;
+    cursor: pointer;
+    font-weight: bold;
+    color: yellow;
+    transition: 0.3s;
+  }
+
+  .option.active {
+    background: yellow;
+    color: darkgreen;
+  }
+
+  button {
+    background: transparent;
+    border: 2px solid yellow;
+    color: yellow;
+    font-size: 22px;
+    font-weight: bold;
+    padding: 10px 30px;
+    border-radius: 10px;
+    cursor: pointer;
+    transition: 0.3s;
+    margin-top: 25px;
+  }
+
+  button:hover {
+    background: yellow;
+    color: darkgreen;
+  }
+
+  .blink {
+    animation: blink 4s infinite alternate ease-in-out;
+  }
+
+  @keyframes blink {
+    from { opacity: 0.4; }
+    to { opacity: 1.0; }
+  }
+
+  #toast {
+    visibility: hidden;
+    min-width: 240px;
+    background-color: rgba(255, 255, 0, 0.95);
+    color: darkgreen;
+    text-align: center;
+    border-radius: 10px;
+    padding: 14px;
+    position: fixed;
+    z-index: 1;
+    left: 50%;
+    bottom: 30px;
+    font-weight: bold;
+    font-size: 18px;
+    transform: translateX(-50%);
+    box-shadow: 0 0 20px yellow;
+  }
+
+  #toast.show {
+    visibility: visible;
+    animation: fadein 0.6s, fadeout 0.6s 2.4s;
+  }
+
+  @keyframes fadein {
+    from { bottom: 10px; opacity: 0; }
+    to { bottom: 30px; opacity: 1; }
+  }
+
+  @keyframes fadeout {
+    from { bottom: 30px; opacity: 1; }
+    to { bottom: 10px; opacity: 0; }
+  }
 </style>
-
 </head>
 
 <body>
 
-<div class="bg-glow"></div>
+  <h1>𝐂𝐇𝐈𝐂𝐊𝐄𝐍 𝐑𝐔𝐍</h1>
 
-<div class="app">
+  <!-- Balance -->
+  <div id="balanceContainer">
+      Balance: <span id="balanceAmount">0</span> COINS
+  </div>
 
-<!-- TOP -->
+  <!-- Coefficient above the chicken -->
+  <div id="coefficient" class="blink"></div>
 
-<div class="topbar">
+  <!-- Chicken image -->
+  <img id="chicken" src="chicken.jpg" alt="Chicken" class="blink">
 
-<div class="logo-wrap">
+  <!-- Difficulty options -->
+  <div class="difficulty">
+    <div class="option" id="easy">𝐄𝐀𝐒𝐘</div>
+    <div class="option" id="medium">𝐌𝐄𝐃𝐈𝐔𝐌</div>
+    <div class="option" id="hard">𝐇𝐀𝐑𝐃</div>
+    <div class="option" id="hardcore">𝐇𝐀𝐑𝐃𝐂𝐎𝐑𝐄</div>
+  </div>
 
-<div class="logo">
-D
-</div>
+  <!-- Predict button -->
+  <button id="predictBtn">𝐏𝐑𝐄𝐃𝐈𝐂𝐓</button>
 
-<div class="brand">
+  <!-- Toast message -->
+  <div id="toast"></div>
 
-<h1>Dark Magic AI</h1>
-
-<p>Quantum Aviator Engine</p>
-
-</div>
-
-</div>
-
-<div class="balance-card">
-
-<small>AVAILABLE COINS</small>
-
-<h2>
-<span id="balanceAmount">0</span>
-</h2>
-
-</div>
-
-</div>
-
-<!-- MAIN -->
-
-<div class="main-card">
-
-<!-- LIVE -->
-
-<div class="live-bar">
-
-<div class="live">
-● LIVE SIGNALS
-</div>
-
-<div class="session"
-id="sessionId"></div>
-
-</div>
-
-<!-- MODES -->
-
-<div class="mode-toggle">
-
-<div class="mode-btn active"
-id="regularBtn">
-
-Regular
-
-</div>
-
-<div class="mode-btn"
-id="premiumBtn">
-
-Premium
-
-</div>
-
-</div>
-
-<!-- INFO -->
-
-<div class="info-card">
-
-<div class="info-title">
-CURRENT ENGINE
-</div>
-
-<div id="modeInfo">
-Regular Quantum Engine Enabled
-</div>
-
-</div>
-
-<!-- IMAGE -->
-
-<div class="image-wrap">
-
-<img id="botImage"
-src="aviator.jpg"
-alt="Dark Magic AI">
-
-</div>
-
-<!-- LOADING -->
-
-<div id="loadingText">
-🚀 Calculating Flight Route...
-</div>
-
-<!-- BUTTON -->
-
-<button id="predictBtn">
-
-Generate Aviator Signal
-
-</button>
-
-<!-- PREDICTION -->
-
-<div id="predictionBox">
-
-<div class="prediction-title">
-
-AVIATOR SIGNAL GENERATED
-
-</div>
-
-<div class="prediction-item">
-
-<div class="label">
-Predicted Time
-</div>
-
-<div class="value"
-id="timeValue">
-00:00
-</div>
-
-</div>
-
-<div class="prediction-item">
-
-<div class="label">
-Flight Multiplier
-</div>
-
-<div class="value"
-id="coefValue">
-1.00x
-</div>
-
-</div>
-
-</div>
-
-</div>
-
-<div class="footer">
-Dark Magic Quantum System © 2026
-</div>
-
-</div>
-
-<div id="toast"></div>
-
-<!-- FIREBASE -->
-
+<!-- Firebase -->
 <script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-app.js"></script>
-
 <script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-auth.js"></script>
-
 <script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-database.js"></script>
 
 <script>
-
-function padZero(num){
-
-return num < 10
-? '0' + num
-: num;
-
-}
-
-function getRandomCoefficient(){
-
-return (
-Math.random() *
-(4.50 - 2.30)
-+ 2.30
-).toFixed(2);
-
-}
-
-function getPremiumCoefficient(){
-
-return (
-Math.random() *
-(2.30 - 1.50)
-+ 1.50
-).toFixed(2);
-
-}
-
-function getRandomMinuteOffset(){
-
-return Math.floor(
-Math.random() * 2
-) + 2;
-
-}
-
-const predictBtn =
-document.getElementById("predictBtn");
-
-const predictionBox =
-document.getElementById("predictionBox");
-
-const loadingText =
-document.getElementById("loadingText");
-
-const balanceDisplay =
-document.getElementById("balanceAmount");
-
-const toast =
-document.getElementById("toast");
-
-const regularBtn =
-document.getElementById("regularBtn");
-
-const premiumBtn =
-document.getElementById("premiumBtn");
-
-const modeInfo =
-document.getElementById("modeInfo");
-
-const timeValue =
-document.getElementById("timeValue");
-
-const coefValue =
-document.getElementById("coefValue");
-
-/* SESSION */
-
-document.getElementById("sessionId").innerText =
-"SESSION #" +
-Math.floor(Math.random()*99999);
-
-/* MODE */
-
-let mode = "regular";
-
-regularBtn.onclick = () => {
-
-mode = "regular";
-
-regularBtn.classList.add("active");
-
-premiumBtn.classList.remove("active");
-
-modeInfo.innerText =
-"Regular Quantum Engine Enabled";
-
-};
-
-premiumBtn.onclick = () => {
-
-mode = "premium";
-
-premiumBtn.classList.add("active");
-
-regularBtn.classList.remove("active");
-
-modeInfo.innerText =
-"Premium Neural Engine Enabled";
-
-};
-
-/* FIREBASE */
-
-const firebaseConfig = {
-
-apiKey:
-"AIzaSyDvFDByPPo9zgwKLdPaREz1OVMQCXmPfrs",
-
-authDomain:
-"bets-d795d.firebaseapp.com",
-
-projectId:
-"bets-d795d",
-
-storageBucket:
-"bets-d795d.appspot.com",
-
-messagingSenderId:
-"384386108287",
-
-appId:
-"1:384386108287:android:d238a5ec8068d9bb9be84a",
-
-databaseURL:
-"https://bets-d795d-default-rtdb.firebaseio.com"
-
-};
-
-firebase.initializeApp(firebaseConfig);
-
-const db = firebase.database();
-
-let currentUserUid = null;
-
-/* LOGIN */
-
-firebase.auth().onAuthStateChanged(user => {
-
-if(!user){
-
-showToast("Please login first");
-
-return;
-
-}
-
-currentUserUid = user.uid;
-
-db.ref(
-"users/" +
-currentUserUid +
-"/balance"
-).on("value", snap => {
-
-balanceDisplay.innerText =
-snap.val() || 0;
-
-});
-
-});
-
-/* TOAST */
-
-function showToast(msg){
-
-toast.textContent = msg;
-
-toast.className = "show";
-
-setTimeout(() => {
-
-toast.className = "";
-
-}, 2600);
-
-}
-
-/* BUTTON */
-
-predictBtn.addEventListener("click", () => {
-
-generatePrediction();
-
-});
-
-/* GENERATE */
-
-function generatePrediction(){
-
-if(!currentUserUid){
-
-showToast("Login first");
-
-return;
-
-}
-
-const cost =
-mode === "premium"
-? 2
-: 1;
-
-const ref =
-db.ref(
-"users/" +
-currentUserUid +
-"/balance"
-);
-
-ref.transaction(current => {
-
-current = current || 0;
-
-if(current < cost){
-
-showToast("Insufficient balance!");
-
-return;
-
-}
-
-return current - cost;
-
-}, (err, committed) => {
-
-if(!committed) return;
-
-db.ref(
-"users/" +
-currentUserUid +
-"/transactions"
-).push({
-
-type:"bet",
-
-coins:-cost,
-
-game:"Aviator",
-
-ref:"BET-" + Date.now(),
-
-time:Date.now(),
-
-uid:currentUserUid
-
-});
-
-startAnimation();
-
-});
-
-}
-
-/* ANIMATION */
-
-function startAnimation(){
-
-predictBtn.disabled = true;
-
-predictionBox.style.display =
-"none";
-
-loadingText.style.display =
-"block";
-
-const rocket =
-document.createElement("div");
-
-rocket.classList.add("rocket");
-
-rocket.textContent = "🚀";
-
-document.body.appendChild(rocket);
-
-const trails = [];
-
-for(let i=0;i<12;i++){
-
-const trail =
-document.createElement("div");
-
-trail.classList.add("trail");
-
-document.body.appendChild(trail);
-
-trails.push({
-
-el:trail,
-
-offset:i * 3
-
-});
-
-}
-
-let t = 0;
-
-const anim =
-setInterval(() => {
-
-t += 0.03;
-
-const x =
-10 + 90 * t;
-
-const y =
-90 - (t * t * 90);
-
-rocket.style.left =
-x + "%";
-
-rocket.style.top =
-y + "%";
-
-trails.forEach(tr => {
-
-const tx =
-x - tr.offset;
-
-const ty =
-y + tr.offset / 2;
-
-tr.el.style.left =
-tx + "%";
-
-tr.el.style.top =
-ty + "%";
-
-tr.el.style.opacity =
-Math.max(
-0,
-1 - t - tr.offset/30
-);
-
-});
-
-if(t >= 1){
-
-clearInterval(anim);
-
-rocket.remove();
-
-trails.forEach(tr => {
-
-tr.el.remove();
-
-});
-
-showPrediction();
-
-}
-
-}, 30);
-
-}
-
-/* SHOW */
-
-function showPrediction(){
-
-loadingText.style.display =
-"none";
-
-const now =
-new Date();
-
-const offset =
-getRandomMinuteOffset();
-
-const future =
-new Date(
-now.getTime() +
-offset * 60000
-);
-
-const hour =
-padZero(
-future.getHours()
-);
-
-const minute =
-padZero(
-future.getMinutes()
-);
-
-const coef =
-parseFloat(
-mode === "premium"
-? getPremiumCoefficient()
-: getRandomCoefficient()
-);
-
-predictionBox.style.display =
-"block";
-
-timeValue.innerText =
-hour + ":" + minute;
-
-animateCoefficient(coef);
-
-const check =
-setInterval(() => {
-
-if(new Date() >= future){
-
-predictBtn.disabled = false;
-
-clearInterval(check);
-
-}
-
-}, 1000);
-
-}
-
-/* COEFFICIENT */
-
-function animateCoefficient(target){
-
-let current = 1.00;
-
-const steps = 50;
-
-let count = 0;
-
-const interval =
-setInterval(() => {
-
-count++;
-
-current =
-1.00 +
-(
-(target - 1.00) *
-(count / steps)
-);
-
-coefValue.innerText =
-current.toFixed(2) + "x";
-
-if(count >= steps){
-
-clearInterval(interval);
-
-}
-
-}, 20);
-
-}
-
+  const options = document.querySelectorAll(".option");
+  const predictBtn = document.getElementById("predictBtn");
+  const coeff = document.getElementById("coefficient");
+  const chicken = document.getElementById("chicken");
+  const toast = document.getElementById("toast");
+  const balanceDisplay = document.getElementById("balanceAmount");
+
+  let selected = null;
+  let currentUserUid = null;
+
+  // Firebase config
+  const firebaseConfig = {
+    apiKey: "AIzaSyDvFDByPPo9zgwKLdPaREz1OVMQCXmPfrs",
+    authDomain: "bets-d795d.firebaseapp.com",
+    projectId: "bets-d795d",
+    storageBucket: "bets-d795d.appspot.com",
+    messagingSenderId: "384386108287",
+    appId: "1:384386108287:android:d238a5ec8068d9bb9be84a",
+    databaseURL: "https://bets-d795d-default-rtdb.firebaseio.com"
+  };
+  firebase.initializeApp(firebaseConfig);
+  const db = firebase.database();
+
+  // Auth check
+  firebase.auth().onAuthStateChanged(user => {
+    if (!user) { alert("Please login first"); return; }
+    currentUserUid = user.uid;
+
+    // Fetch balance
+    db.ref("users/" + currentUserUid + "/balance").once("value").then(snap => {
+      const val = snap.val();
+      balanceDisplay.innerText = val != null ? Math.floor(val) : 0;
+    });
+
+    // Real-time listener
+    db.ref("users/" + currentUserUid + "/balance").on("value", snap => {
+      const val = snap.val();
+      balanceDisplay.innerText = val != null ? Math.floor(val) : 0;
+    });
+  });
+
+  // Difficulty selection
+  options.forEach(opt => {
+    opt.addEventListener("click", () => {
+      options.forEach(o => o.classList.remove("active"));
+      opt.classList.add("active");
+      selected = opt.id;
+    });
+  });
+
+  // Toast function
+  function showToast(message) {
+    toast.textContent = message;
+    toast.className = "show";
+    setTimeout(() => {
+      toast.className = toast.className.replace("show", "");
+    }, 3000);
+  }
+
+  // Predict button click
+  predictBtn.addEventListener("click", () => {
+    if (!selected) {
+      showToast("Please choose a difficulty first!");
+      return;
+    }
+
+    if (!currentUserUid) {
+      showToast("Please login first!");
+      return;
+    }
+
+    // Deduct 1 coin and log transaction
+    const userBalanceRef = db.ref("users/" + currentUserUid + "/balance");
+    userBalanceRef.transaction(current => {
+      current = current || 0;
+      if (current < 1) { showToast("Insufficient balance!"); return; }
+      return current - 1;
+    }, (err, committed, snapshot) => {
+      if (!committed) return;
+
+      // ✅ Add transaction log for deduction
+      db.ref("users/" + currentUserUid + "/transactions").push({
+        type: "bet",
+        coins: -1,
+        game: "Chicken Run",
+        ref: "BET-" + Date.now(),
+        time: Date.now(),
+        uid: currentUserUid
+      });
+
+      // Proceed with coefficient
+      let values = [];
+      if (selected === "easy") values = ["1.3X","1.4X","1.5X","1.6X","1.7X","1.8X","1.9X","2.0X","2.2X","2.4X","2.6X","2.8X","3.0X","3.5X"];
+      else if (selected === "medium") values = ["1.4X","1.6X","1.8X","2.0X","2.2X","2.4X","2.7X","3.0X"];
+      else if (selected === "hard") values = ["1.5X","1.7X","2.0X","3.0X","4.5X"];
+      else if (selected === "hardcore") values = ["2.5X","5.0X","10.0X"];
+
+      const randomCoeff = values[Math.floor(Math.random() * values.length)];
+      coeff.textContent = randomCoeff;
+      coeff.style.display = "block";
+      chicken.style.display = "block";
+    });
+  });
 </script>
 
 </body>
