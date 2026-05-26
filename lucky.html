@@ -1,368 +1,1290 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-<meta charset="UTF-8">
-<meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>Dark Magic Ai Lucky Jet Bot</title>
 
-<link href="https://fonts.googleapis.com/css2?family=UnifrakturCook:wght@700&display=swap" rel="stylesheet">
-<link href="https://fonts.googleapis.com/css2?family=Poppins:wght@500;600&display=swap" rel="stylesheet">
+<meta charset="UTF-8">
+
+<meta name="viewport"
+content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+
+<title>Nova Lucky Jet</title>
+
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
 
 <style>
-    body {
-        background: black;
-        color: #00bfff;
-        font-family: 'Poppins', sans-serif;
-        text-align: center;
-        padding: 15px;
-    }
 
-    h1 {
-        font-family: 'UnifrakturCook', cursive;
-        font-size: 30px;
-        color: cyan;
-        margin-bottom: 20px;
-        text-shadow: 0 0 8px #00bfff, 0 0 15px #00ffff;
-    }
+*{
+  margin:0;
+  padding:0;
+  box-sizing:border-box;
+  font-family:'Inter',sans-serif;
+}
 
-    #balanceContainer {
-        position: fixed;
-        top: 10px;
-        right: 15px;
-        background: #111;
-        padding: 5px 12px;
-        border-radius: 20px;
-        color: #00ffff;
-        font-weight: bold;
-        z-index: 9999;
-    }
+body{
 
-    /* 🔥 MODERN TOGGLE */
-    .mode-toggle {
-        display: flex;
-        justify-content: center;
-        background: #111;
-        border-radius: 30px;
-        padding: 4px;
-        margin-bottom: 10px;
-        width: 220px;
-        margin-left: auto;
-        margin-right: auto;
-        box-shadow: 0 0 10px #00bfff;
-    }
+  min-height:100vh;
 
-    .mode-btn {
-        flex: 1;
-        padding: 8px;
-        border-radius: 25px;
-        cursor: pointer;
-        font-size: 14px;
-        transition: 0.3s;
-    }
+  background:
+  radial-gradient(circle at top,#051a22 0%,#041017 45%,#010405 100%);
 
-    .mode-btn.active {
-        background: #00bfff;
-        color: black;
-        font-weight: bold;
-        box-shadow: 0 0 10px #00bfff;
-    }
+  overflow-x:hidden;
 
-    #modeInfo {
-        font-size: 13px;
-        margin-bottom: 10px;
-        color: #00ffff;
-    }
+  color:white;
 
-    #botImage {
-        width: 200px;
-        height: 200px;
-        border-radius: 20px;
-        object-fit: cover;
-        margin-bottom: 20px;
-        border: 3px solid #00bfff;
-        box-shadow: 0 0 20px #00bfff, 0 0 35px #00ffff;
-        animation: pulse 2s infinite;
-    }
+  position:relative;
 
-    @keyframes pulse {
-        0%, 100% {box-shadow: 0 0 20px #00bfff, 0 0 35px #00ffff;}
-        50% {box-shadow: 0 0 30px #00bfff, 0 0 50px #00ffff;}
-    }
+}
 
-    #predictBtn {
-        padding: 14px 20px;
-        font-size: 18px;
-        font-weight: 600;
-        border-radius: 12px;
-        border: none;
-        background: #00bfff;
-        color: black;
-        cursor: pointer;
-        margin-bottom: 20px;
-        box-shadow: 0 0 18px #00bfff, 0 0 25px #00ffff;
-        transition: 0.3s ease-in-out;
-        position: relative;
-        overflow: hidden;
-    }
+/* BACKGROUND GLOW */
 
-    #predictBtn:disabled {
-        background: #005f7f;
-        cursor: not-allowed;
-        box-shadow: 0 0 10px #005f7f;
-    }
+.bg-glow{
 
-    #predictionBox {
-        background: linear-gradient(145deg, #000000, #001f2f);
-        border: 2px solid #00bfff;
-        border-radius: 16px;
-        padding: 20px;
-        color: #00ffff;
-        font-size: 16px;
-        text-align: left;
-        white-space: pre-line;
-        display: none;
-        max-width: 400px;
-        margin: 0 auto;
-        box-shadow: 0 0 25px #00bfff, 0 0 40px #00ffff, 0 0 55px #00bfff inset;
-    }
+  position:absolute;
 
-    #loadingText {
-        color: #00bfff;
-        font-size: 18px;
-        margin-bottom: 20px;
-        display: none;
-        font-weight: 600;
-        animation: blink 1s infinite;
-    }
+  width:500px;
 
-    @keyframes blink {
-        0%, 50%, 100% {opacity: 1;}
-        25%, 75% {opacity: 0.2;}
-    }
+  height:500px;
 
-    .rocket {
-        position: absolute;
-        font-size: 24px;
-        animation: flyRocket 1.5s linear forwards;
-    }
+  border-radius:50%;
 
-    @keyframes flyRocket {
-        0% {top: 100%; left: 10%;}
-        25% {top: 70%; left: 40%;}
-        50% {top: 40%; left: 60%;}
-        75% {top: 20%; left: 80%;}
-        100% {top: 0%; left: 100%;}
-    }
+  background:rgba(0,191,255,.15);
 
-    .trail {
-        position: absolute;
-        width: 4px;
-        height: 4px;
-        background: #00ffff;
-        border-radius: 50%;
-        opacity: 0.8;
-        animation: trailAnim 1.5s linear forwards;
-    }
+  filter:blur(120px);
 
-    @keyframes trailAnim {
-        0% {transform: translate(0, 0); opacity: 1;}
-        100% {transform: translate(-50px, -100px); opacity: 0;}
-    }
+  top:-220px;
 
-    #toast {
-        visibility: hidden;
-        min-width: 200px;
-        background-color: #00bfff;
-        color: black;
-        text-align: center;
-        border-radius: 8px;
-        padding: 10px;
-        position: fixed;
-        bottom: 50px;
-        z-index: 999;
-        font-weight: bold;
-    }
+  left:50%;
 
-    #toast.show {
-        visibility: visible;
-        animation: fadein 0.5s, fadeout 0.5s 2s;
-    }
+  transform:translateX(-50%);
+
+}
+
+/* APP */
+
+.app{
+
+  position:relative;
+
+  z-index:10;
+
+  width:100%;
+
+  max-width:430px;
+
+  margin:auto;
+
+  padding:18px;
+
+}
+
+/* TOPBAR */
+
+.topbar{
+
+  display:flex;
+
+  justify-content:space-between;
+
+  align-items:center;
+
+  margin-bottom:24px;
+
+}
+
+.logo-wrap{
+
+  display:flex;
+
+  align-items:center;
+
+  gap:12px;
+
+}
+
+.logo{
+
+  width:56px;
+
+  height:56px;
+
+  border-radius:18px;
+
+  background:
+  linear-gradient(135deg,#00bfff,#00ffff);
+
+  display:flex;
+
+  justify-content:center;
+
+  align-items:center;
+
+  font-size:24px;
+
+  font-weight:800;
+
+  color:#00131a;
+
+  box-shadow:
+  0 0 35px rgba(0,191,255,.55);
+
+}
+
+.brand h1{
+
+  font-size:20px;
+
+  font-weight:800;
+
+}
+
+.brand p{
+
+  font-size:12px;
+
+  opacity:.6;
+
+}
+
+/* BALANCE */
+
+.balance-card{
+
+  background:rgba(255,255,255,.05);
+
+  border:1px solid rgba(255,255,255,.08);
+
+  backdrop-filter:blur(18px);
+
+  border-radius:18px;
+
+  padding:10px 15px;
+
+  text-align:right;
+
+  box-shadow:
+  0 12px 35px rgba(0,0,0,.35);
+
+}
+
+.balance-card small{
+
+  font-size:11px;
+
+  opacity:.65;
+
+}
+
+.balance-card h2{
+
+  margin-top:4px;
+
+  color:#55e6ff;
+
+  font-size:20px;
+
+}
+
+/* MAIN */
+
+.main-card{
+
+  background:rgba(255,255,255,.05);
+
+  border:1px solid rgba(255,255,255,.08);
+
+  backdrop-filter:blur(22px);
+
+  border-radius:30px;
+
+  padding:22px;
+
+  box-shadow:
+  0 20px 55px rgba(0,0,0,.45);
+
+}
+
+/* LIVE */
+
+.live-bar{
+
+  display:flex;
+
+  justify-content:space-between;
+
+  align-items:center;
+
+  margin-bottom:18px;
+
+}
+
+.live{
+
+  background:#00bfff22;
+
+  border:1px solid #00bfff55;
+
+  color:#55e6ff;
+
+  padding:8px 14px;
+
+  border-radius:999px;
+
+  font-size:12px;
+
+  font-weight:700;
+
+}
+
+.session{
+
+  font-size:12px;
+
+  opacity:.6;
+
+}
+
+/* TOGGLE */
+
+.mode-toggle{
+
+  display:flex;
+
+  background:#07131a;
+
+  border-radius:18px;
+
+  padding:5px;
+
+  margin-bottom:18px;
+
+}
+
+.mode-btn{
+
+  flex:1;
+
+  padding:14px;
+
+  border-radius:14px;
+
+  text-align:center;
+
+  cursor:pointer;
+
+  transition:.25s;
+
+  color:#9db1b8;
+
+  font-weight:600;
+
+}
+
+.mode-btn.active{
+
+  background:
+  linear-gradient(135deg,#00bfff,#00ffff);
+
+  color:#00131a;
+
+  box-shadow:
+  0 10px 30px rgba(0,191,255,.45);
+
+}
+
+/* INFO */
+
+.info-card{
+
+  background:#07131a;
+
+  border-radius:18px;
+
+  padding:16px;
+
+  margin-bottom:20px;
+
+  border:1px solid rgba(255,255,255,.06);
+
+}
+
+.info-title{
+
+  font-size:12px;
+
+  opacity:.6;
+
+  margin-bottom:6px;
+
+}
+
+#modeInfo{
+
+  font-size:14px;
+
+  color:#55e6ff;
+
+  font-weight:700;
+
+}
+
+/* IMAGE */
+
+.image-wrap{
+
+  display:flex;
+
+  justify-content:center;
+
+  margin-bottom:22px;
+
+}
+
+#botImage{
+
+  width:220px;
+
+  height:220px;
+
+  object-fit:cover;
+
+  border-radius:28px;
+
+  border:3px solid rgba(0,191,255,.3);
+
+  box-shadow:
+  0 0 45px rgba(0,191,255,.35);
+
+  animation:pulse 2.5s infinite;
+
+}
+
+@keyframes pulse{
+
+  0%,100%{
+
+    transform:scale(1);
+
+    box-shadow:
+    0 0 45px rgba(0,191,255,.35);
+
+  }
+
+  50%{
+
+    transform:scale(1.03);
+
+    box-shadow:
+    0 0 65px rgba(0,191,255,.55);
+
+  }
+
+}
+
+/* LOADING */
+
+#loadingText{
+
+  display:none;
+
+  text-align:center;
+
+  margin-bottom:20px;
+
+  color:#55e6ff;
+
+  font-weight:700;
+
+  animation:blink 1s infinite;
+
+}
+
+@keyframes blink{
+
+  0%,100%{
+    opacity:1;
+  }
+
+  50%{
+    opacity:.35;
+  }
+
+}
+
+/* BUTTON */
+
+#predictBtn{
+
+  width:100%;
+
+  border:none;
+
+  background:
+  linear-gradient(135deg,#00bfff,#00ffff);
+
+  color:#00131a;
+
+  padding:18px;
+
+  border-radius:18px;
+
+  font-size:16px;
+
+  font-weight:800;
+
+  cursor:pointer;
+
+  transition:.25s;
+
+  box-shadow:
+  0 12px 35px rgba(0,191,255,.4);
+
+}
+
+#predictBtn:hover{
+
+  transform:translateY(-2px);
+
+}
+
+#predictBtn:active{
+
+  transform:scale(.98);
+
+}
+
+#predictBtn:disabled{
+
+  opacity:.6;
+
+  cursor:not-allowed;
+
+}
+
+/* PREDICTION BOX */
+
+#predictionBox{
+
+  display:none;
+
+  margin-top:22px;
+
+  background:
+  linear-gradient(145deg,#07131a,#031018);
+
+  border-radius:22px;
+
+  padding:20px;
+
+  border:1px solid rgba(0,191,255,.18);
+
+  box-shadow:
+  0 0 35px rgba(0,191,255,.18);
+
+}
+
+.prediction-title{
+
+  color:#55e6ff;
+
+  font-size:14px;
+
+  margin-bottom:14px;
+
+  font-weight:700;
+
+}
+
+.prediction-item{
+
+  display:flex;
+
+  justify-content:space-between;
+
+  align-items:center;
+
+  padding:14px 0;
+
+  border-bottom:1px solid rgba(255,255,255,.06);
+
+}
+
+.prediction-item:last-child{
+
+  border-bottom:none;
+
+}
+
+.label{
+
+  opacity:.65;
+
+  font-size:13px;
+
+}
+
+.value{
+
+  font-weight:800;
+
+  color:#55e6ff;
+
+  font-size:17px;
+
+}
+
+/* ROCKET */
+
+.rocket{
+
+  position:fixed;
+
+  font-size:42px;
+
+  z-index:9999;
+
+  pointer-events:none;
+
+}
+
+/* TRAIL */
+
+.trail{
+
+  position:fixed;
+
+  width:10px;
+
+  height:10px;
+
+  background:#00ffff;
+
+  border-radius:50%;
+
+  z-index:9998;
+
+  pointer-events:none;
+
+  box-shadow:
+  0 0 15px #00ffff;
+
+}
+
+/* TOAST */
+
+#toast{
+
+  visibility:hidden;
+
+  min-width:220px;
+
+  background:
+  linear-gradient(135deg,#00bfff,#00ffff);
+
+  color:#00131a;
+
+  text-align:center;
+
+  border-radius:14px;
+
+  padding:14px;
+
+  position:fixed;
+
+  bottom:40px;
+
+  left:50%;
+
+  transform:translateX(-50%);
+
+  z-index:99999;
+
+  font-weight:700;
+
+  box-shadow:
+  0 12px 35px rgba(0,191,255,.35);
+
+}
+
+#toast.show{
+
+  visibility:visible;
+
+  animation:fadein .4s, fadeout .4s 2.2s;
+
+}
+
+@keyframes fadein{
+
+  from{
+    opacity:0;
+    bottom:10px;
+  }
+
+  to{
+    opacity:1;
+    bottom:40px;
+  }
+
+}
+
+@keyframes fadeout{
+
+  from{
+    opacity:1;
+    bottom:40px;
+  }
+
+  to{
+    opacity:0;
+    bottom:10px;
+  }
+
+}
+
+/* FOOTER */
+
+.footer{
+
+  text-align:center;
+
+  margin-top:18px;
+
+  opacity:.4;
+
+  font-size:12px;
+
+}
+
 </style>
+
 </head>
 
 <body>
 
-<h1>Dark Magic Ai Lucky Jet Bot</h1>
+<div class="bg-glow"></div>
 
-<div id="balanceContainer">
-    Balance: <span id="balanceAmount">0</span> COINS
+<div class="app">
+
+  <!-- TOP -->
+
+  <div class="topbar">
+
+    <div class="logo-wrap">
+
+      <div class="logo">
+        N
+      </div>
+
+      <div class="brand">
+
+        <h1>Nova Lucky Jet</h1>
+
+        <p>Skyline Intelligence Engine</p>
+
+      </div>
+
+    </div>
+
+    <div class="balance-card">
+
+      <small>AVAILABLE COINS</small>
+
+      <h2>
+        <span id="balanceAmount">0</span>
+      </h2>
+
+    </div>
+
+  </div>
+
+  <!-- MAIN -->
+
+  <div class="main-card">
+
+    <!-- LIVE -->
+
+    <div class="live-bar">
+
+      <div class="live">
+        ● LIVE SIGNALS
+      </div>
+
+      <div class="session"
+      id="sessionId"></div>
+
+    </div>
+
+    <!-- MODES -->
+
+    <div class="mode-toggle">
+
+      <div class="mode-btn active"
+      id="regularBtn">
+
+        Regular
+
+      </div>
+
+      <div class="mode-btn"
+      id="premiumBtn">
+
+        Premium
+
+      </div>
+
+    </div>
+
+    <!-- INFO -->
+
+    <div class="info-card">
+
+      <div class="info-title">
+        CURRENT ENGINE
+      </div>
+
+      <div id="modeInfo">
+        Regular Skyline Engine Enabled
+      </div>
+
+    </div>
+
+    <!-- IMAGE -->
+
+    <div class="image-wrap">
+
+      <img id="botImage"
+      src="lucky.jpg"
+      alt="Nova Lucky Jet">
+
+    </div>
+
+    <!-- LOADING -->
+
+    <div id="loadingText">
+      🚀 Calculating Skyline Route...
+    </div>
+
+    <!-- BUTTON -->
+
+    <button id="predictBtn">
+
+      Generate Lucky Jet Signal
+
+    </button>
+
+    <!-- PREDICTION -->
+
+    <div id="predictionBox">
+
+      <div class="prediction-title">
+
+        LUCKY JET SIGNAL GENERATED
+
+      </div>
+
+      <div class="prediction-item">
+
+        <div class="label">
+          Predicted Time
+        </div>
+
+        <div class="value"
+        id="timeValue">
+          00:00
+        </div>
+
+      </div>
+
+      <div class="prediction-item">
+
+        <div class="label">
+          Flight Multiplier
+        </div>
+
+        <div class="value"
+        id="coefValue">
+          1.00x
+        </div>
+
+      </div>
+
+    </div>
+
+  </div>
+
+  <div class="footer">
+    Nova Skyline System © 2026
+  </div>
+
 </div>
 
-<!-- ✅ ADDED -->
-<div class="mode-toggle">
-  <div class="mode-btn active" id="regularBtn">Regular</div>
-  <div class="mode-btn" id="premiumBtn">Premium</div>
-</div>
-<div id="modeInfo">You are currently using Regular Prediction</div>
-
-<img id="botImage" src="lucky.jpg">
-
-<div id="loadingText">⏳ Predicting...</div>
-<button id="predictBtn">🚀 Predict Lucky Jet</button>
-
-<div id="predictionBox"></div>
 <div id="toast"></div>
 
+<!-- FIREBASE -->
+
 <script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-app.js"></script>
+
 <script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-auth.js"></script>
+
 <script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-database.js"></script>
 
 <script>
-function padZero(num){return num<10?'0'+num:num;}
-function getRandomCoefficient(){return (Math.random()*(4.50-2.50)+2.50).toFixed(2);}
-function getPremiumCoefficient(){return (Math.random()*(2.30-1.50)+1.50).toFixed(2);}
-function getRandomMinuteOffset(){return Math.floor(Math.random()*2)+2;}
 
-const predictBtn=document.getElementById("predictBtn");
-const predictionBox=document.getElementById("predictionBox");
-const loadingText=document.getElementById("loadingText");
-const balanceDisplay=document.getElementById("balanceAmount");
-const toast=document.getElementById("toast");
+/* FUNCTIONS */
 
-const regularBtn=document.getElementById("regularBtn");
-const premiumBtn=document.getElementById("premiumBtn");
-const modeInfo=document.getElementById("modeInfo");
+function padZero(num){
 
-let mode="regular";
+  return num < 10
+  ? '0' + num
+  : num;
 
-regularBtn.onclick=()=>{
- mode="regular";
- regularBtn.classList.add("active");
- premiumBtn.classList.remove("active");
- modeInfo.innerText="You are currently using Regular Prediction";
-};
-
-premiumBtn.onclick=()=>{
- mode="premium";
- premiumBtn.classList.add("active");
- regularBtn.classList.remove("active");
- modeInfo.innerText="Premium Mode: costs 2 coins";
-};
-
-const firebaseConfig={
- apiKey:"AIzaSyDvFDByPPo9zgwKLdPaREz1OVMQCXmPfrs",
- authDomain:"bets-d795d.firebaseapp.com",
- projectId:"bets-d795d",
- storageBucket:"bets-d795d.appspot.com",
- messagingSenderId:"384386108287",
- appId:"1:384386108287:android:d238a5ec8068d9bb9be84a",
- databaseURL:"https://bets-d795d-default-rtdb.firebaseio.com"
-};
-firebase.initializeApp(firebaseConfig);
-const db=firebase.database();
-
-let currentUserUid=null;
-
-firebase.auth().onAuthStateChanged(user=>{
- if(!user){alert("Please login first");return;}
- currentUserUid=user.uid;
-
- db.ref("users/"+currentUserUid+"/balance").on("value",snap=>{
-  balanceDisplay.innerText=snap.val()||0;
- });
-});
-
-function showToast(msg){
- toast.textContent=msg;
- toast.className="show";
- setTimeout(()=>toast.className="",2500);
 }
 
-predictBtn.addEventListener("click",()=>{
- if(!currentUserUid){showToast("Login first");return;}
+function getRandomCoefficient(){
 
- const cost=(mode==="premium")?2:1;
+  return (
+  Math.random() *
+  (4.50 - 2.50)
+  + 2.50
+  ).toFixed(2);
 
- const ref=db.ref("users/"+currentUserUid+"/balance");
+}
 
- ref.transaction(current=>{
-  current=current||0;
-  if(current<cost){showToast("Insufficient balance!");return;}
-  return current-cost;
- },(err,committed)=>{
-  if(!committed)return;
+function getPremiumCoefficient(){
 
-  db.ref("users/"+currentUserUid+"/transactions").push({
-   type:"bet",
-   coins:-cost,
-   game:"Lucky Jet",
-   ref:"BET-"+Date.now(),
-   time:Date.now(),
-   uid:currentUserUid
-  });
+  return (
+  Math.random() *
+  (2.30 - 1.50)
+  + 1.50
+  ).toFixed(2);
 
-  predictBtn.disabled=true;
-  predictionBox.style.display="none";
-  loadingText.style.display="block";
+}
 
-  const rocket=document.createElement("div");
-  rocket.classList.add("rocket");
-  rocket.textContent="🚀";
-  document.body.appendChild(rocket);
+function getRandomMinuteOffset(){
 
-  for(let i=0;i<8;i++){
-   const trail=document.createElement("div");
-   trail.classList.add("trail");
-   document.body.appendChild(trail);
-   setTimeout(()=>trail.remove(),1500);
+  return Math.floor(
+  Math.random() * 2
+  ) + 2;
+
+}
+
+/* ELEMENTS */
+
+const predictBtn =
+document.getElementById("predictBtn");
+
+const predictionBox =
+document.getElementById("predictionBox");
+
+const loadingText =
+document.getElementById("loadingText");
+
+const balanceDisplay =
+document.getElementById("balanceAmount");
+
+const toast =
+document.getElementById("toast");
+
+const regularBtn =
+document.getElementById("regularBtn");
+
+const premiumBtn =
+document.getElementById("premiumBtn");
+
+const modeInfo =
+document.getElementById("modeInfo");
+
+const timeValue =
+document.getElementById("timeValue");
+
+const coefValue =
+document.getElementById("coefValue");
+
+/* SESSION */
+
+document.getElementById("sessionId").innerText =
+"SESSION #" +
+Math.floor(Math.random()*99999);
+
+/* MODE */
+
+let mode = "regular";
+
+regularBtn.onclick = () => {
+
+  mode = "regular";
+
+  regularBtn.classList.add("active");
+
+  premiumBtn.classList.remove("active");
+
+  modeInfo.innerText =
+  "Regular Skyline Engine Enabled";
+
+};
+
+premiumBtn.onclick = () => {
+
+  mode = "premium";
+
+  premiumBtn.classList.add("active");
+
+  regularBtn.classList.remove("active");
+
+  modeInfo.innerText =
+  "Premium Quantum Engine Enabled";
+
+};
+
+/* FIREBASE */
+
+const firebaseConfig = {
+
+ apiKey:
+ "AIzaSyDvFDByPPo9zgwKLdPaREz1OVMQCXmPfrs",
+
+ authDomain:
+ "bets-d795d.firebaseapp.com",
+
+ projectId:
+ "bets-d795d",
+
+ storageBucket:
+ "bets-d795d.appspot.com",
+
+ messagingSenderId:
+ "384386108287",
+
+ appId:
+ "1:384386108287:android:d238a5ec8068d9bb9be84a",
+
+ databaseURL:
+ "https://bets-d795d-default-rtdb.firebaseio.com"
+
+};
+
+firebase.initializeApp(firebaseConfig);
+
+const db = firebase.database();
+
+let currentUserUid = null;
+
+/* LOGIN */
+
+firebase.auth().onAuthStateChanged(user => {
+
+  if(!user){
+
+    showToast("Please login first");
+
+    return;
+
   }
 
-  setTimeout(()=>{
-   loadingText.style.display="none";
-   rocket.remove();
+  currentUserUid = user.uid;
 
-   const now=new Date();
-   const offset=getRandomMinuteOffset();
-   const future=new Date(now.getTime()+offset*60000);
+  db.ref(
+  "users/" +
+  currentUserUid +
+  "/balance"
+  ).on("value", snap => {
 
-   const hour=padZero(future.getHours());
-   const minute=padZero(future.getMinutes());
+    balanceDisplay.innerText =
+    snap.val() || 0;
 
-   const coef=parseFloat(mode==="premium"?getPremiumCoefficient():getRandomCoefficient());
+  });
 
-   predictionBox.style.display="block";
-   predictionBox.textContent=`LUCKY JET PREDICTION
-┏━━━━━━━━━━━━━
-┠ TIME : ${hour}:${minute}
-┠ COEFFICIENT: `;
-
-   let span=document.createElement("span");
-   span.textContent="1.00X";
-   predictionBox.appendChild(span);
-
-   let step=0;
-   let interval=setInterval(()=>{
-    step++;
-    let val=1+((coef-1)*(step/50));
-    span.textContent=val.toFixed(2)+"X";
-    if(step>=50)clearInterval(interval);
-   },20);
-
-   let end=document.createElement("div");
-   end.textContent="┗━━━━━━━━━━━━━";
-   predictionBox.appendChild(document.createElement("br"));
-   predictionBox.appendChild(end);
-
-   let check=setInterval(()=>{
-    if(new Date()>=future){
-     predictBtn.disabled=false;
-     clearInterval(check);
-    }
-   },1000);
-
-  },1500);
- });
 });
+
+/* TOAST */
+
+function showToast(msg){
+
+  toast.textContent = msg;
+
+  toast.className = "show";
+
+  setTimeout(() => {
+
+    toast.className = "";
+
+  }, 2600);
+
+}
+
+/* BUTTON */
+
+predictBtn.addEventListener("click", () => {
+
+  generatePrediction();
+
+});
+
+/* GENERATE */
+
+function generatePrediction(){
+
+  if(!currentUserUid){
+
+    showToast("Login first");
+
+    return;
+
+  }
+
+  const cost =
+  mode === "premium"
+  ? 2
+  : 1;
+
+  const ref =
+  db.ref(
+  "users/" +
+  currentUserUid +
+  "/balance"
+  );
+
+  ref.transaction(current => {
+
+    current = current || 0;
+
+    if(current < cost){
+
+      showToast("Insufficient balance!");
+
+      return;
+
+    }
+
+    return current - cost;
+
+  }, (err, committed) => {
+
+    if(!committed) return;
+
+    db.ref(
+    "users/" +
+    currentUserUid +
+    "/transactions"
+    ).push({
+
+      type:"bet",
+
+      coins:-cost,
+
+      game:"Lucky Jet",
+
+      ref:"BET-" + Date.now(),
+
+      time:Date.now(),
+
+      uid:currentUserUid
+
+    });
+
+    startAnimation();
+
+  });
+
+}
+
+/* ANIMATION */
+
+function startAnimation(){
+
+  predictBtn.disabled = true;
+
+  predictionBox.style.display =
+  "none";
+
+  loadingText.style.display =
+  "block";
+
+  const rocket =
+  document.createElement("div");
+
+  rocket.classList.add("rocket");
+
+  rocket.textContent = "🚀";
+
+  document.body.appendChild(rocket);
+
+  const trails = [];
+
+  for(let i=0;i<12;i++){
+
+    const trail =
+    document.createElement("div");
+
+    trail.classList.add("trail");
+
+    document.body.appendChild(trail);
+
+    trails.push({
+
+      el:trail,
+
+      offset:i * 3
+
+    });
+
+  }
+
+  let t = 0;
+
+  const anim =
+  setInterval(() => {
+
+    t += 0.03;
+
+    const x =
+    10 + 90 * t;
+
+    const y =
+    90 - (t * t * 90);
+
+    rocket.style.left =
+    x + "%";
+
+    rocket.style.top =
+    y + "%";
+
+    trails.forEach(tr => {
+
+      const tx =
+      x - tr.offset;
+
+      const ty =
+      y + tr.offset / 2;
+
+      tr.el.style.left =
+      tx + "%";
+
+      tr.el.style.top =
+      ty + "%";
+
+      tr.el.style.opacity =
+      Math.max(
+      0,
+      1 - t - tr.offset/30
+      );
+
+    });
+
+    if(t >= 1){
+
+      clearInterval(anim);
+
+      rocket.remove();
+
+      trails.forEach(tr => {
+
+        tr.el.remove();
+
+      });
+
+      showPrediction();
+
+    }
+
+  }, 30);
+
+}
+
+/* SHOW */
+
+function showPrediction(){
+
+  loadingText.style.display =
+  "none";
+
+  const now =
+  new Date();
+
+  const offset =
+  getRandomMinuteOffset();
+
+  const future =
+  new Date(
+  now.getTime() +
+  offset * 60000
+  );
+
+  const hour =
+  padZero(
+  future.getHours()
+  );
+
+  const minute =
+  padZero(
+  future.getMinutes()
+  );
+
+  const coef =
+  parseFloat(
+  mode === "premium"
+  ? getPremiumCoefficient()
+  : getRandomCoefficient()
+  );
+
+  predictionBox.style.display =
+  "block";
+
+  timeValue.innerText =
+  hour + ":" + minute;
+
+  animateCoefficient(coef);
+
+  const check =
+  setInterval(() => {
+
+    if(new Date() >= future){
+
+      predictBtn.disabled = false;
+
+      clearInterval(check);
+
+    }
+
+  }, 1000);
+
+}
+
+/* COEFFICIENT */
+
+function animateCoefficient(target){
+
+  let current = 1.00;
+
+  const steps = 50;
+
+  let count = 0;
+
+  const interval =
+  setInterval(() => {
+
+    count++;
+
+    current =
+    1.00 +
+    (
+    (target - 1.00) *
+    (count / steps)
+    );
+
+    coefValue.innerText =
+    current.toFixed(2) + "x";
+
+    if(count >= steps){
+
+      clearInterval(interval);
+
+    }
+
+  }, 20);
+
+}
+
 </script>
 
 </body>
