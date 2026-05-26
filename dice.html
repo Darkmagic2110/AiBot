@@ -2,153 +2,146 @@
 <html lang="en">
 <head>
 <meta charset="UTF-8">
-<meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>DICE</title>
+<meta name="viewport" content="width=device-width,initial-scale=1.0">
+<title>Dice Pro</title>
 
 <style>
-body {
-    background: linear-gradient(135deg, #001a00, #003300);
-    color: white;
-    font-family: 'Segoe UI', sans-serif;
-    text-align: center;
-    padding-top: 40px;
+body{
+margin:0;
+font-family:Segoe UI,sans-serif;
+background:linear-gradient(135deg,#001a00,#002b1f);
+color:#fff;
+text-align:center;
 }
 
-#balanceContainer {
-    position: fixed;
-    top: 10px;
-    right: 15px;
-    background: #111;
-    padding: 6px 14px;
-    border-radius: 20px;
-    font-weight: bold;
-    box-shadow: 0 0 10px #00ff88;
+#balanceContainer{
+position:fixed;
+top:10px;
+right:12px;
+background:rgba(0,0,0,.6);
+backdrop-filter:blur(10px);
+padding:6px 14px;
+border-radius:20px;
+font-weight:700;
+box-shadow:0 0 12px #00ff88;
 }
 
-.dice-header {
-    font-size: 70px;
-    font-weight: 900;
-    letter-spacing: 12px;
-    margin-bottom: 20px;
+.header{
+font-size:50px;
+font-weight:900;
+letter-spacing:8px;
+margin-top:35px;
+opacity:.9;
 }
 
-#numberDisplay {
-    font-size: 110px;
-    font-weight: 900;
-    margin-top: 20px;
-    color: #00ffcc;
-    text-shadow: 0 0 20px #00ffcc;
+#numberDisplay{
+font-size:110px;
+font-weight:900;
+margin:20px 0;
+color:#00ffcc;
+text-shadow:0 0 25px #00ffcc;
 }
 
-/* MODE SWITCH */
-.mode-box {
-    display: flex;
-    justify-content: center;
-    margin-bottom: 15px;
-    background: #111;
-    border-radius: 30px;
-    width: 220px;
-    margin-left: auto;
-    margin-right: auto;
-    padding: 4px;
+.mode-box{
+display:flex;
+justify-content:center;
+width:220px;
+margin:10px auto;
+background:#111;
+border-radius:30px;
+padding:4px;
 }
 
-.mode-btn {
-    flex: 1;
-    padding: 8px;
-    border-radius: 25px;
-    cursor: pointer;
-    transition: 0.3s;
-    font-weight: bold;
+.mode-btn{
+flex:1;
+padding:8px;
+border-radius:25px;
+cursor:pointer;
+font-weight:700;
+transition:.25s;
+color:#aaa;
 }
 
-.mode-btn.active {
-    background: #00ff88;
-    color: black;
+.mode-btn.active{
+background:#00ff88;
+color:#000;
 }
 
-#modeText {
-    font-size: 13px;
-    margin-bottom: 10px;
-    opacity: 0.8;
+#modeText{
+font-size:13px;
+opacity:.7;
+margin-bottom:10px;
 }
 
-.option-box {
-    margin-top: 30px;
-    display: flex;
-    justify-content: center;
-    gap: 20px;
+.option-box{
+display:flex;
+justify-content:center;
+gap:15px;
+margin-top:25px;
 }
 
-.btn {
-    padding: 14px 26px;
-    font-size: 20px;
-    border-radius: 12px;
-    border: 2px solid #00ff88;
-    background: transparent;
-    color: white;
-    font-weight: 800;
-    cursor: pointer;
-    transition: .3s;
+.btn{
+padding:12px 22px;
+border-radius:12px;
+border:2px solid #00ff88;
+background:transparent;
+color:#fff;
+font-weight:800;
+cursor:pointer;
+transition:.2s;
 }
 
-/* 🔥 ONLY ONE ACTIVE */
-.btn.active-choice {
-    background: #00ff88;
-    color: black;
-    box-shadow: 0 0 15px #00ff88, 0 0 30px #00ff88;
+.btn.active-choice,
+.btn:hover{
+background:#00ff88;
+color:#000;
 }
 
-.btn:hover {
-    background: #00ff88;
-    color: black;
+.predict-btn{
+margin-top:35px;
+padding:15px 30px;
+font-size:20px;
+font-weight:900;
+border:none;
+border-radius:14px;
+background:#00ff88;
+color:#000;
+cursor:pointer;
+box-shadow:0 0 15px #00ff88;
 }
 
-.predict-btn {
-    margin-top: 40px;
-    padding: 16px 36px;
-    font-size: 24px;
-    font-weight: 900;
-    background: #00ff88;
-    color: black;
-    border: none;
-    border-radius: 14px;
-    cursor: pointer;
-    box-shadow: 0 0 15px #00ff88;
-}
-
-#toast {
-    visibility: hidden;
-    background: black;
-    padding: 10px 16px;
-    border-radius: 8px;
-    position: fixed;
-    bottom: 60px;
-    left: 50%;
-    transform: translateX(-50%);
+#toast{
+position:fixed;
+bottom:50px;
+left:50%;
+transform:translateX(-50%);
+background:#000;
+padding:10px 16px;
+border-radius:10px;
+visibility:hidden;
+font-size:13px;
 }
 </style>
 </head>
 
 <body>
 
-<div id="balanceContainer">
-  <span id="balanceAmount">0</span> COINS
-</div>
+<div id="balanceContainer"><span id="balanceAmount">0</span> COINS</div>
 
-<div class="dice-header">DICE</div>
+<div class="header">DICE</div>
 
 <div class="mode-box">
-  <div class="mode-btn active" id="regularBtn">Regular</div>
-  <div class="mode-btn" id="premiumBtn">Premium</div>
+<div class="mode-btn active" id="regularBtn">Regular</div>
+<div class="mode-btn" id="premiumBtn">Premium</div>
 </div>
+
 <div id="modeText">Regular Mode Active</div>
 
 <div id="numberDisplay">00</div>
 
 <div class="option-box">
-    <button id="overBtn" class="btn">OVER</button>
-    <button id="underBtn" class="btn">UNDER</button>
+<button id="overBtn" class="btn">OVER</button>
+<button id="underBtn" class="btn">UNDER</button>
 </div>
 
 <button class="predict-btn" onclick="predict()">PREDICT</button>
@@ -160,126 +153,101 @@ body {
 <script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-database.js"></script>
 
 <script>
-let choice = "";
-let mode = "regular";
-let anim = null;
+let choice="",mode="regular",anim=null;
 
-const balanceDisplay = document.getElementById("balanceAmount");
-const regularBtn = document.getElementById("regularBtn");
-const premiumBtn = document.getElementById("premiumBtn");
-const modeText = document.getElementById("modeText");
+const balanceDisplay=document.getElementById("balanceAmount"),
+regularBtn=document.getElementById("regularBtn"),
+premiumBtn=document.getElementById("premiumBtn"),
+modeText=document.getElementById("modeText"),
+overBtn=document.getElementById("overBtn"),
+underBtn=document.getElementById("underBtn"),
+display=document.getElementById("numberDisplay"),
+toast=document.getElementById("toast");
 
-const overBtn = document.getElementById("overBtn");
-const underBtn = document.getElementById("underBtn");
-
-// mode switch
-regularBtn.onclick = () => {
-    mode = "regular";
-    regularBtn.classList.add("active");
-    premiumBtn.classList.remove("active");
-    modeText.innerText = "Regular Mode Active";
+regularBtn.onclick=()=>{
+mode="regular";
+regularBtn.classList.add("active");
+premiumBtn.classList.remove("active");
+modeText.innerText="Regular Mode Active";
 };
 
-premiumBtn.onclick = () => {
-    mode = "premium";
-    premiumBtn.classList.add("active");
-    regularBtn.classList.remove("active");
-    modeText.innerText = "Premium Mode (2 coins)";
+premiumBtn.onclick=()=>{
+mode="premium";
+premiumBtn.classList.add("active");
+regularBtn.classList.remove("active");
+modeText.innerText="Premium Mode (2 coins)";
 };
+
+overBtn.onclick=()=>{
+choice="over";
+overBtn.classList.add("active-choice");
+underBtn.classList.remove("active-choice");
+show("OVER selected");
+};
+
+underBtn.onclick=()=>{
+choice="under";
+underBtn.classList.add("active-choice");
+overBtn.classList.remove("active-choice");
+show("UNDER selected");
+};
+
+function show(msg){
+toast.innerText=msg;
+toast.style.visibility="visible";
+setTimeout(()=>toast.style.visibility="hidden",1200);
+}
+
+function rand(min,max){
+return Math.floor(Math.random()*(max-min+1))+min;
+}
 
 // firebase
-const firebaseConfig = {
-  apiKey: "AIzaSyDvFDByPPo9zgwKLdPaREz1OVMQCXmPfrs",
-  authDomain: "bets-d795d.firebaseapp.com",
-  databaseURL: "https://bets-d795d-default-rtdb.firebaseio.com"
+const firebaseConfig={
+apiKey:"AIzaSyDvFDByPPo9zgwKLdPaREz1OVMQCXmPfrs",
+authDomain:"bets-d795d.firebaseapp.com",
+databaseURL:"https://bets-d795d-default-rtdb.firebaseio.com"
 };
+
 firebase.initializeApp(firebaseConfig);
-const db = firebase.database();
+const db=firebase.database();
+let uid=null;
 
-let currentUserUid = null;
-
-firebase.auth().onAuthStateChanged(user => {
-    if (!user) return alert("Login first");
-    currentUserUid = user.uid;
-
-    db.ref("users/" + currentUserUid + "/balance").on("value", snap => {
-        balanceDisplay.innerText = snap.val() || 0;
-    });
+firebase.auth().onAuthStateChanged(u=>{
+if(!u)return alert("Login first");
+uid=u.uid;
+db.ref("users/"+uid+"/balance").on("value",s=>balanceDisplay.innerText=s.val()||0);
 });
 
-function showToast(msg) {
-    const toast = document.getElementById("toast");
-    toast.innerText = msg;
-    toast.style.visibility = "visible";
-    setTimeout(()=>toast.style.visibility="hidden",1500);
-}
+function predict(){
+if(!uid)return;
+if(!choice)return show("Select option");
 
-// 🔥 ONLY ONE BUTTON GLOW
-overBtn.onclick = function () {
-    choice = "over";
-    overBtn.classList.add("active-choice");
-    underBtn.classList.remove("active-choice");
-    showToast("OVER selected");
-};
+const cost=mode==="premium"?2:1;
 
-underBtn.onclick = function () {
-    choice = "under";
-    underBtn.classList.add("active-choice");
-    overBtn.classList.remove("active-choice");
-    showToast("UNDER selected");
-};
+db.ref("users/"+uid+"/balance").transaction(c=>{
+c=c||0;
+if(c<cost){show("No balance");return;}
+return c-cost;
+},(e,ok)=>{
+if(!ok)return;
 
-// random helper
-function rand(min, max) {
-    return Math.floor(Math.random() * (max - min + 1)) + min;
-}
+if(anim)clearInterval(anim);
 
-function predict() {
-    if (!currentUserUid) return;
-    if (!choice) return showToast("Select option");
+anim=setInterval(()=>{
+display.innerText=Math.floor(Math.random()*99).toString().padStart(2,'0');
+},60);
 
-    const cost = mode === "premium" ? 2 : 1;
-    const ref = db.ref("users/" + currentUserUid + "/balance");
+setTimeout(()=>{
+clearInterval(anim);
 
-    ref.transaction(current => {
-        current = current || 0;
-        if (current < cost) { showToast("No balance"); return; }
-        return current - cost;
-    }, (err, committed) => {
-        if (!committed) return;
+display.innerText=mode==="premium"
+?(choice==="over"?rand(15,35):rand(70,85))
+:(choice==="over"?rand(35,55):rand(55,75));
 
-        db.ref("users/" + currentUserUid + "/transactions").push({
-            coins: -cost,
-            game: "Dice",
-            time: Date.now()
-        });
-
-        const display = document.getElementById("numberDisplay");
-
-        if (anim) clearInterval(anim);
-
-        anim = setInterval(() => {
-            display.innerText = Math.floor(Math.random()*99)
-                .toString().padStart(2,'0');
-        },70);
-
-        setTimeout(() => {
-            clearInterval(anim);
-            anim = null;
-
-            let result;
-
-            if (mode === "premium") {
-                result = (choice === "over") ? rand(15,35) : rand(70,85);
-            } else {
-                result = (choice === "over") ? rand(35,55) : rand(55,75);
-            }
-
-            display.innerText = result.toString().padStart(2,'0');
-            showToast("Done");
-
-        },2600);
-    });
+show("Done");
+},2000);
+});
 }
 </script>
 
