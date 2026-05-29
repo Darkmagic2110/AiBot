@@ -82,6 +82,7 @@ button:hover {
     color: cyan;
     margin-top: 5px;
 }
+
 #refreshNotice {
     font-size: 14px;
     color: yellow;
@@ -89,6 +90,7 @@ button:hover {
     font-weight: bold;
     animation: blinkGlow 1s infinite alternate;
 }
+
 @keyframes blinkGlow {
     0% {
         opacity: 1;
@@ -99,6 +101,7 @@ button:hover {
         text-shadow: 0 0 20px yellow, 0 0 30px red;
     }
 }
+
 #historyBox {
     margin-top: 25px;
     text-align: left;
@@ -118,6 +121,7 @@ button:hover {
 .history-sub { font-size: 12px; color: #aaa; }
 .history-naira { color: cyan; font-size: 13px; }
 
+/* ADDED */
 #instructionModal {
     display: none;
     position: fixed;
@@ -153,16 +157,13 @@ button:hover {
 
 <h1>Deposit Coins</h1>
 
-<input type="number" id="depositAmount" placeholder="Enter deposit amount" min="1" />
-<div id="coinRate">Loading currency...</div>
-
+<input type="number" id="depositAmount" placeholder="Enter deposit amount (₦)" min="1000" />
+<div id="coinRate">₦200 = 1 coin</div>
 <button id="submitDepositBtn">💰 Buy Coins</button>
 
 <div id="depositStatus"></div>
 
-<div id="refreshNotice">
-⚡ Make sure to return back to the site immediately after payment ⚡
-</div>
+<div id="refreshNotice">⚡ Make sure to return back to the site immediately after payment ⚡</div>
 
 <div id="historyBox">
     <h3>📜 Transactions</h3>
@@ -171,46 +172,27 @@ button:hover {
 
 <div id="toast"></div>
 
+<!-- ADDED MODAL -->
 <div id="instructionModal">
     <div id="instructionContent">
-
         <h2 class="bold">HOW TO DEPOSIT</h2>
 
-        <p class="bold">
-        READ THIS INSTRUCTION CAREFULLY TO AVOID COINS MISPLACE
-        </p>
+        <p class="bold">READ THIS INSTRUCTION CAREFULLY TO AVOID COINS MISPLACE</p>
 
         <p>1. You will be redirected to a payment page</p>
 
-        <p>
-        2. If you don’t use card payment, below you will see a change payment method text,
-        <span class="bold">
-        CLICK IT AND CHOOSE YOUR DESIRE PAYMENT METHOD
-        </span>
-        </p>
+        <p>2. If you don’t use card payment, below you will see a change payment method text, 
+        <span class="bold">CLICK IT AND CHOOSE YOUR DESIRE PAYMENT METHOD</span></p>
 
-        <p>
-        3. After sending the money to the account given to you,
-        <span class="bold">
-        COME BACK TO THE PAYMENT PAGE
-        </span>
-        </p>
+        <p>3. After sending the money to the account given to you, 
+        <span class="bold">COME BACK TO THE PAYMENT PAGE</span></p>
 
-        <p>
-        4. Swipe Up (DO NOT REFRESH THE PAGE) and click on
-        <span class="bold">
-        I HAVE MADE THIS BANK TRANSFER (VERY IMPORTANT)
-        </span>
-        </p>
+        <p>4. Swipe Up (DO NOT REFRESH THE PAGE) and click on 
+        <span class="bold">I HAVE MADE THIS BANK TRANSFER (VERY IMPORTANT)</span></p>
 
-        <p class="bold">
-        MAKE SURE YOU READ THIS BECAUSE YOU WILL BE ACCOUNTABLE FOR COIN LOSS AFTER PAYMENT
-        </p>
+        <p class="bold">MAKE SURE YOU READ THIS BECAUSE YOU WILL BE ACCOUNTABLE FOR COIN LOSS AFTER PAYMENT</p>
 
-        <button id="agreeBtn">
-        I HAVE READ AND UNDERSTOOD
-        </button>
-
+        <button id="agreeBtn">I HAVE READ AND UNDERSTOOD</button>
     </div>
 </div>
 
@@ -220,7 +202,6 @@ button:hover {
 <script src="https://checkout.flutterwave.com/v3.js"></script>
 
 <script>
-
 const firebaseConfig = {
     apiKey: "AIzaSyDvFDByPPo9zgwKLdPaREz1OVMQCXmPfrs",
     authDomain: "bets-d795d.firebaseapp.com",
@@ -230,9 +211,7 @@ const firebaseConfig = {
     appId: "1:384386108287:android:d238a5ec8068d9bb9be84a",
     databaseURL: "https://bets-d795d-default-rtdb.firebaseio.com"
 };
-
 firebase.initializeApp(firebaseConfig);
-
 const db = firebase.database();
 
 const depositStatus = document.getElementById("depositStatus");
@@ -240,189 +219,45 @@ const submitBtn = document.getElementById("submitDepositBtn");
 const depositInput = document.getElementById("depositAmount");
 const historyList = document.getElementById("historyList");
 
-let userCurrency = "NGN";
-let currencySymbol = "₦";
-let minimumDeposit = 1000;
-let coinRate = 200;
-
-const currencySymbols = {
-    NGN: "₦",
-    USD: "$",
-    GBP: "£",
-    EUR: "€",
-    GHS: "GH₵",
-    KES: "KSh",
-    UGX: "USh",
-    TZS: "TSh",
-    ZAR: "R",
-    RWF: "FRw",
-    XAF: "FCFA",
-    XOF: "CFA",
-    EGP: "E£",
-    PKR: "₨"
-};
-
-const supportedCurrencies = [
-    "NGN",
-    "USD",
-    "GBP",
-    "EUR",
-    "KES",
-    "UGX",
-    "TZS",
-    "GHS",
-    "ZAR",
-    "RWF",
-    "XAF",
-    "XOF",
-    "EGP",
-    "PKR"
-];
-
-async function detectUserCurrency() {
-
-    try {
-
-        const locationRes = await fetch("https://ipapi.co/json/");
-        const locationData = await locationRes.json();
-
-        let detectedCurrency =
-        locationData.currency || "USD";
-
-        if (!supportedCurrencies.includes(detectedCurrency)) {
-            detectedCurrency = "USD";
-        }
-
-        userCurrency = detectedCurrency;
-
-        currencySymbol =
-        currencySymbols[userCurrency] || userCurrency;
-
-        if (userCurrency === "NGN") {
-
-            minimumDeposit = 1000;
-            coinRate = 200;
-
-            document.getElementById("coinRate").innerHTML =
-            "₦200 = 1 coin";
-
-        } else {
-
-            const convertRes = await fetch(
-            `https://api.exchangerate.host/convert?from=USD&to=${userCurrency}&amount=3`
-            );
-
-            const convertData = await convertRes.json();
-
-            minimumDeposit =
-            Math.ceil(convertData.result || 3);
-
-            coinRate = minimumDeposit / 10;
-
-            document.getElementById("coinRate").innerHTML =
-            `${currencySymbol}${minimumDeposit} = 10 coins`;
-        }
-
-        depositInput.placeholder =
-        `Enter deposit amount (${currencySymbol})`;
-
-        depositInput.min = minimumDeposit;
-
-    }
-
-    catch (e) {
-
-        userCurrency = "USD";
-        currencySymbol = "$";
-        minimumDeposit = 3;
-        coinRate = 0.3;
-
-        depositInput.placeholder =
-        "Enter deposit amount ($)";
-
-        depositInput.min = 3;
-
-        document.getElementById("coinRate").innerHTML =
-        "$3 = 10 coins";
-    }
-}
-
-detectUserCurrency();
-
 function toast(msg) {
-
     const t = document.getElementById("toast");
-
     t.innerHTML = msg;
-
     t.className = "show";
-
-    setTimeout(() => {
-
-        t.className =
-        t.className.replace("show", "");
-
-    }, 3000);
+    setTimeout(() => { t.className = t.className.replace("show", ""); }, 3000);
 }
 
 firebase.auth().onAuthStateChanged(user => {
-
     if (!user) {
-
         window.location.href = "login.html";
         return;
     }
 
-    db.ref("users/" + user.uid + "/transactions")
-    .once("value")
-    .then(snap => {
-
+    db.ref("users/" + user.uid + "/transactions").once("value").then(snap => {
         historyList.innerHTML = "";
-
         let arr = [];
 
         snap.forEach(child => {
-
             let tx = child.val();
-
             tx.key = child.key;
-
             arr.push(tx);
         });
 
         arr.sort((a,b)=> b.time - a.time);
 
         arr.forEach(tx => {
-
-            if(tx.type === "deposit") {
-
-                const d =
-                new Date(tx.time).toLocaleString();
+            if(tx.type === "deposit"){
+                const d = new Date(tx.time).toLocaleString();
 
                 historyList.innerHTML += `
                 <div class="history-item">
                     <div class="history-left">
-                        <div class="history-title">
-                        +${tx.coins} Coins
-                        </div>
-
-                        <div class="history-sub">
-                        Ref: ${tx.ref}
-                        </div>
-
-                        <div class="history-sub">
-                        ${d}
-                        </div>
+                        <div class="history-title">+${tx.coins} Coins</div>
+                        <div class="history-sub">Ref: ${tx.ref}</div>
+                        <div class="history-sub">${d}</div>
                     </div>
-
                     <div class="history-right">
-                        <div>
-                        +${tx.coins}
-                        </div>
-
-                        <div class="history-naira">
-                        ${tx.currencySymbol || "₦"}${tx.amount}
-                        </div>
+                        <div>+${tx.coins}</div>
+                        <div class="history-naira">₦${tx.amount}</div>
                     </div>
                 </div>`;
             }
@@ -432,175 +267,106 @@ firebase.auth().onAuthStateChanged(user => {
 });
 
 let flutterwaveKey = null;
-
-db.ref("settings/flutterwaveKeys/public")
-.once("value")
-.then(snap => {
-
+db.ref("settings/flutterwaveKeys/public").once("value").then(snap => {
     flutterwaveKey = snap.val() || "";
 });
 
 function validateAmount(amount) {
-
-    if (amount < minimumDeposit) {
-
-        return {
-            valid: false,
-            msg: `Minimum deposit is ${currencySymbol}${minimumDeposit}`
-        };
+    const min = 1000;
+    const rate = 200;
+    if (amount < min) return { valid: false, msg: `Minimum deposit is ₦${min}` };
+    if (amount % rate !== 0) {
+        const lower = amount - (amount % rate);
+        const upper = amount + (rate - (amount % rate));
+        return { valid: false, msg: `Enter a multiple of ₦${rate}. Try ₦${lower} or ₦${upper}` };
     }
-
-    return {
-        valid: true,
-        coins: Math.floor(amount / coinRate)
-    };
+    return { valid: true, coins: amount / rate };
 }
 
 function startPayment(user, amountRaw, coins) {
-
     FlutterwaveCheckout({
-
         public_key: flutterwaveKey,
-
         tx_ref: "TX-" + Date.now(),
-
         amount: amountRaw,
-
-        currency: userCurrency,
-
+        currency: "NGN",
         payment_options: "card, banktransfer, ussd",
-
         customer: {
             email: user.email
         },
 
         callback: function (response) {
 
-            const txId =
-            response.transaction_id;
+            const txId = response.transaction_id;
 
             if (!txId) {
-
                 return toast("Payment not completed");
             }
 
-            const userRef =
-            db.ref("users/" + user.uid);
+            const userRef = db.ref("users/" + user.uid);
 
-            db.ref("processedPayments/" + txId)
-            .once("value")
-            .then(snap => {
+            db.ref("processedPayments/" + txId).once("value").then(snap => {
 
                 if (!snap.exists()) {
 
-                    if (
-                        response.status === "successful" ||
-                        response.status === "completed"
-                    ) {
+                    if (response.status === "successful" || response.status === "completed") {
 
-                        db.ref("processedPayments/" + txId)
-                        .set(true);
+                        db.ref("processedPayments/" + txId).set(true);
 
-                        userRef.child("balance")
-                        .transaction(current => {
-
+                        userRef.child("balance").transaction(current => {
                             return (current || 0) + coins;
                         });
 
                         userRef.child("transactions").push({
-
                             type: "deposit",
-
                             coins: coins,
-
                             amount: amountRaw,
-
-                            currency: userCurrency,
-
-                            currencySymbol: currencySymbol,
-
                             ref: txId,
-
                             time: Date.now()
                         });
 
-                        toast(
-                        "Payment successful! Ref: " + txId
-                        );
-
-                        depositStatus.innerHTML =
-                        `Payment complete! Coins added: ${coins}`;
+                        toast("Payment successful! Ref: " + txId);
+                        depositStatus.innerHTML = `Payment complete! Coins added: ${coins}`;
 
                     } else {
-
-                        return toast(
-                        "Payment not verified yet"
-                        );
+                        return toast("Payment not verified yet");
                     }
                 }
 
                 setTimeout(()=>{
-
-                    window.location.href =
-                    "maining.html";
-
+                    window.location.href = "maining.html";
                 },1500);
 
             });
         },
 
         onclose: function() {
-
             toast("Payment cancelled");
         }
     });
 }
 
 submitBtn.onclick = () => {
+    const user = firebase.auth().currentUser;
+    if (!user) return toast("Please login again");
 
-    const user =
-    firebase.auth().currentUser;
+    const amountRaw = Number(depositInput.value);
+    if (!amountRaw) return toast("Enter a valid deposit amount");
 
-    if (!user)
-        return toast("Please login again");
-
-    const amountRaw =
-    Number(depositInput.value);
-
-    if (!amountRaw)
-        return toast(
-        "Enter a valid deposit amount"
-        );
-
-    const validation =
-    validateAmount(amountRaw);
-
-    if (!validation.valid)
-        return toast(validation.msg);
+    const validation = validateAmount(amountRaw);
+    if (!validation.valid) return toast(validation.msg);
 
     const coins = validation.coins;
+    depositStatus.innerHTML = `You will receive ${coins} coin(s) for ₦${amountRaw}`;
 
-    depositStatus.innerHTML =
-    `You will receive ${coins} coin(s) for ${currencySymbol}${amountRaw}`;
+    if (!flutterwaveKey) return toast("Payment key not loaded — try again");
 
-    if (!flutterwaveKey)
-        return toast(
-        "Payment key not loaded — try again"
-        );
+    document.getElementById("instructionModal").style.display = "block";
 
-    document.getElementById("instructionModal")
-    .style.display = "block";
-
-    document.getElementById("agreeBtn")
-    .onclick = function() {
-
-        document.getElementById("instructionModal")
-        .style.display = "none";
-
+    document.getElementById("agreeBtn").onclick = function() {
+        document.getElementById("instructionModal").style.display = "none";
         startPayment(user, amountRaw, coins);
     };
 };
-
 </script>
 
 </body>
