@@ -466,7 +466,7 @@ function register() {
     const referralCode = generateReferralCode().toUpperCase();
 
     const urlParams = new URLSearchParams(window.location.search);
-    const referredBy = urlParams.get("ref") || "";
+    const referredBy = urlParams.get("ref");
 
     let newUid = "";
 
@@ -484,12 +484,12 @@ function register() {
             balance: 0,
 
             referralCode: referralCode,
-            referredBy: referredBy,
+            referredBy: referredBy || "",
 
             totalReferralEarned: 0,
-totalReferralUsers: 0,
-activeReferralCount: 0,
-firstDepositDone: false,
+            totalReferralUsers: 0,
+            activeReferralCount: 0,
+            firstDepositDone: false,
 
             createdAt: Date.now()
         });
@@ -498,39 +498,36 @@ firstDepositDone: false,
 
     .then(() => {
 
-        // SAVE REFERRAL RECORD
-        if (!referredBy) {
-            return;
-        }
-
         if (!referredBy) return;
 
-return db.ref("users").once("value").then(usersSnap => {
+        // FAST REFERRER LOOKUP (NO LOOPING ALL USERS)
+        return db.ref("users")
+            .orderByChild("referralCode")
+            .equalTo(referredBy)
+            .once("value")
+            .then(snapshot => {
 
-    usersSnap.forEach(userSnap => {
+                snapshot.forEach(refSnap => {
 
-        const data = userSnap.val();
+                    const refUserId = refSnap.key;
 
-        if (data.referralCode === referredBy) {
+                    // SAVE REFERRAL RECORD
+                    db.ref("referrals/" + refUserId + "/" + newUid).set({
+                        uid: newUid,
+                        name: name,
+                        email: email,
+                        deposited: false,
+                        totalDeposited: 0,
+                        joinedAt: Date.now()
+                    });
 
-            const refUserId = userSnap.key;
+                    // COUNT ONLY REGISTRATION REFERRALS
+                    db.ref("users/" + refUserId + "/totalReferralUsers")
+                        .transaction(v => (v || 0) + 1);
+                });
 
-            // save referral record
-            db.ref("referrals/" + refUserId + "/" + newUid).set({
-                uid: newUid,
-                name: name,
-                email: email,
-                deposited: false,
-                totalDeposited: 0,
-                joinedAt: Date.now()
             });
 
-            // total referral USERS (ONLY REGISTRATION)
-            db.ref("users/" + refUserId + "/totalReferralUsers")
-                .transaction(v => (v || 0) + 1);
-        }
-    });
-});
     })
 
     .then(() => {
@@ -539,8 +536,7 @@ return db.ref("users").once("value").then(usersSnap => {
 
         alert(
             "Account created successfully ✅\n\n" +
-            "Your Referral Code: " +
-            referralCode
+            "Your Referral Code: " + referralCode
         );
 
         window.location.href = "loging.html";

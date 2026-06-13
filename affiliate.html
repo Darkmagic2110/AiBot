@@ -181,7 +181,7 @@ let userData = null;
 let currentUser = null;
 
 firebase.auth().onAuthStateChanged(user=>{
-if(!user) return location.href="login.html";
+if(!user) return location.href="loging.html";
 currentUser = user;
 load(user.uid);
 });
@@ -195,8 +195,9 @@ const code = userData.referralCode || "";
 document.getElementById("refLink").value =
 window.location.origin + "/index.html?ref=" + code;
 
+// show affiliate earnings
 document.getElementById("balance").innerText =
-"₦" + (userData.totalReferralEarned || 0);
+"₦" + (userData.affiliateEarned || 0);
 
 loadStats(code);
 });
@@ -206,27 +207,29 @@ loadStats(code);
 function loadStats(myCode){
 
 db.ref("users").once("value").then(all=>{
-let total=0;
-let active=0;
-let earned=0;
-let list="";
+let total = 0;
+let active = 0;
+let earned = 0;
+let list = "";
 
 all.forEach(u=>{
-const v=u.val();
+const v = u.val();
 
 if(v.referredBy === myCode){
 
 total++;
 
+// active only once (first successful deposit)
 if(v.firstDepositDone === true) active++;
 
-earned += v.totalReferralEarned || 0;
+// total earned from this referral user (always updates)
+earned += (v.affiliateEarned || 0);
 
 list += `
 <div class="item">
 <div>${v.email || "User"}</div>
-<div class="${v.firstDeposit ? 'ok':'no'}">
-${v.firstDeposit ? "Active":"New"}
+<div class="${v.firstDepositDone ? 'ok':'no'}">
+${v.firstDepositDone ? "Active":"New"}
 </div>
 </div>`;
 }
@@ -239,6 +242,7 @@ document.getElementById("list").innerHTML = list;
 });
 }
 
+/* COPY */
 function copyLink(){
 let i=document.getElementById("refLink");
 i.select();
@@ -259,11 +263,32 @@ function submitWithdraw(){
 
 let amt = Number(amount.value);
 
+// minimum withdraw
 if(amt < 5000){
 alert("Minimum withdrawal is ₦5000");
 return;
 }
 
+// prevent overdraft (IMPORTANT FIX)
+let currentBalance = Number(userData.affiliateEarned || 0);
+
+if(amt > currentBalance){
+alert("Insufficient affiliate balance");
+return;
+}
+
+// store bank details for reuse (NEW FEATURE)
+db.ref("users/"+currentUser.uid+"/withdrawalDetails").set({
+accountNumber: accNumber.value,
+bankName: bankName.value,
+accountName: accName.value
+});
+
+// subtract balance
+db.ref("users/"+currentUser.uid+"/affiliateEarned")
+.transaction(c => (c || 0) - amt);
+
+// log withdrawal
 db.ref("withdrawals").push({
 uid: currentUser.uid,
 accountNumber: accNumber.value,
