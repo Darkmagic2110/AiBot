@@ -214,7 +214,7 @@ function loadAffiliate(uid) {
 
         const code = data.referralCode;
         document.getElementById("refLink").value =
-        window.location.origin + "/register.html?ref=" + code;
+        window.location.origin + "/index.html?ref=" + code;
 
         document.getElementById("balance").innerText =
         "₦" + (data.totalReferralEarned || 0);
