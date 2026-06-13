@@ -410,6 +410,8 @@ userRef.once("value").then(userSnap => {
     .then(snapshot => {
 
         snapshot.forEach(refSnap => {
+        console.log("Referral found:", refSnap.key);
+console.log("Commission:", commission);
 
             const refKey = refSnap.key;
 
