@@ -413,9 +413,13 @@ userRef.once("value").then(userSnap => {
 
             const refKey = refSnap.key;
 
-            /* ADD COMMISSION TO AFFILIATE BALANCE ONLY */
-            db.ref("users/" + refKey + "/affiliateEarned")
-            .transaction(c => (c || 0) + commission);
+            /* ADD TO TOTAL EARNED */
+db.ref("users/" + refKey + "/affiliateEarned")
+.transaction(c => (c || 0) + commission);
+
+/* ADD TO WITHDRAWABLE BALANCE */
+db.ref("users/" + refKey + "/affiliateBalance")
+.transaction(c => (c || 0) + commission);
 
             /* SAVE AFFILIATE TRANSACTION */
             db.ref("users/" + refKey + "/transactions").push({
