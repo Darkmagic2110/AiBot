@@ -463,7 +463,7 @@ function register() {
 
     loader.style.display = "block";
 
-    const referralCode = generateReferralCode();
+    const referralCode = generateReferralCode().toUpperCase();
 
     const urlParams = new URLSearchParams(window.location.search);
     const referredBy = urlParams.get("ref") || "";
@@ -487,7 +487,9 @@ function register() {
             referredBy: referredBy,
 
             totalReferralEarned: 0,
-            totalReferrals: 0,
+totalReferralUsers: 0,
+activeReferralCount: 0,
+firstDepositDone: false,
 
             createdAt: Date.now()
         });
@@ -501,56 +503,34 @@ function register() {
             return;
         }
 
-        return db.ref("users").once("value")
-        .then(usersSnap => {
+        if (!referredBy) return;
 
-            let promises = [];
+return db.ref("users").once("value").then(usersSnap => {
 
-            usersSnap.forEach(userSnap => {
+    usersSnap.forEach(userSnap => {
 
-                const data = userSnap.val();
+        const data = userSnap.val();
 
-                if (data.referralCode === referredBy) {
+        if (data.referralCode === referredBy) {
 
-                    promises.push(
+            const refUserId = userSnap.key;
 
-                        db.ref(
-                            "referrals/" +
-                            userSnap.key +
-                            "/" +
-                            newUid
-                        ).set({
-                            uid: newUid,
-                            name: name,
-                            email: email,
-                            balance: 0,
-                            deposited: false,
-                            totalDeposited: 0,
-                            joinedAt: Date.now()
-                        })
-
-                    );
-
-                    promises.push(
-
-                        db.ref(
-                            "users/" +
-                            userSnap.key +
-                            "/totalReferrals"
-                        ).transaction(v => {
-                            return (v || 0) + 1;
-                        })
-
-                    );
-
-                }
-
+            // save referral record
+            db.ref("referrals/" + refUserId + "/" + newUid).set({
+                uid: newUid,
+                name: name,
+                email: email,
+                deposited: false,
+                totalDeposited: 0,
+                joinedAt: Date.now()
             });
 
-            return Promise.all(promises);
-
-        });
-
+            // total referral USERS (ONLY REGISTRATION)
+            db.ref("users/" + refUserId + "/totalReferralUsers")
+                .transaction(v => (v || 0) + 1);
+        }
+    });
+});
     })
 
     .then(() => {

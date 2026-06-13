@@ -16,23 +16,11 @@ body {
     padding: 15px;
 }
 
-.container {
-    max-width: 420px;
-    margin: auto;
-}
+.container { max-width: 420px; margin: auto; }
 
-h1 {
-    text-align: center;
-    color: #ff1a1a;
-    margin-bottom: 5px;
-}
+h1 { text-align: center; color: #ff1a1a; }
 
-.subtitle {
-    text-align: center;
-    font-size: 14px;
-    color: #ff9999;
-    margin-bottom: 20px;
-}
+.subtitle { text-align: center; font-size: 14px; color: #ff9999; margin-bottom: 20px; }
 
 .card {
     background: rgba(255,0,0,0.08);
@@ -40,16 +28,15 @@ h1 {
     padding: 15px;
     border-radius: 14px;
     margin-bottom: 12px;
-    box-shadow: 0 0 20px rgba(255,0,0,0.1);
 }
 
-.ref-link {
+input {
     width: 100%;
     padding: 10px;
-    border-radius: 10px;
+    margin-top: 6px;
+    border-radius: 8px;
     border: none;
     outline: none;
-    margin-top: 10px;
 }
 
 button {
@@ -77,14 +64,7 @@ button {
     text-align: center;
 }
 
-.stat h3 {
-    margin: 0;
-    color: #ff4d4d;
-}
-
-.list {
-    margin-top: 10px;
-}
+.stat h3 { margin: 0; color: #ff4d4d; }
 
 .item {
     display: flex;
@@ -95,20 +75,14 @@ button {
     margin-bottom: 8px;
 }
 
-.badge {
-    font-size: 12px;
-    padding: 3px 8px;
-    border-radius: 20px;
-}
-
 .ok { background: green; }
 .no { background: red; }
 
 .modal {
     display: none;
     position: fixed;
-    top: 0; left: 0;
     width: 100%; height: 100%;
+    top: 0; left: 0;
     background: rgba(0,0,0,0.8);
 }
 
@@ -137,7 +111,7 @@ button {
 
 <div class="card">
     <b>Your Referral Link</b>
-    <input id="refLink" class="ref-link" readonly />
+    <input id="refLink" readonly />
     <button onclick="copyLink()">Copy Link</button>
 </div>
 
@@ -149,7 +123,7 @@ button {
 
     <div class="stat">
         <h3 id="activeRefs">0</h3>
-        <small>Active Referrals</small>
+        <small>Active (First Deposit)</small>
     </div>
 
     <div class="stat">
@@ -159,24 +133,34 @@ button {
 
     <div class="stat">
         <h3 id="balance">₦0</h3>
-        <small>Balance</small>
+        <small>Withdrawable Balance</small>
     </div>
 </div>
+
+<button onclick="openWithdraw()">💸 Withdraw</button>
 
 <div class="card">
     <b>Referral List</b>
-    <div id="list" class="list"></div>
+    <div id="list"></div>
 </div>
 
 </div>
 
-<!-- MODAL -->
-<div class="modal" id="modal">
-    <div class="modal-content">
-        <span class="close" onclick="closeModal()">✖</span>
-        <h3>Referral Details</h3>
-        <div id="modalBody"></div>
-    </div>
+<!-- WITHDRAW MODAL -->
+<div class="modal" id="withdrawModal">
+<div class="modal-content">
+<span class="close" onclick="closeWithdraw()">✖</span>
+
+<h3>Withdraw Funds</h3>
+
+<input id="accNumber" placeholder="Account Number">
+<input id="bankName" placeholder="Bank Name">
+<input id="accName" placeholder="Account Name">
+<input id="amount" placeholder="Amount">
+
+<button onclick="submitWithdraw()">Submit Withdrawal</button>
+
+</div>
 </div>
 
 <script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-app.js"></script>
@@ -184,115 +168,114 @@ button {
 <script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-database.js"></script>
 
 <script>
-const firebaseConfig = {
-    apiKey: "AIzaSyDvFDByPPo9zgwKLdPaREz1OVMQCXmPfrs",
-    authDomain: "bets-d795d.firebaseapp.com",
-    databaseURL: "https://bets-d795d-default-rtdb.firebaseio.com",
-    projectId: "bets-d795d",
-    storageBucket: "bets-d795d.appspot.com",
-    messagingSenderId: "384386108287",
-    appId: "1:384386108287:android:d238a5ec8068d9bb9be84a"
-};
-
-firebase.initializeApp(firebaseConfig);
-const db = firebase.database();
-
-let currentUser = null;
-
-firebase.auth().onAuthStateChanged(user => {
-    if (!user) return window.location.href = "login.html";
-
-    currentUser = user;
-
-    loadAffiliate(user.uid);
+firebase.initializeApp({
+apiKey: "AIzaSyDvFDByPPo9zgwKLdPaREz1OVMQCXmPfrs",
+authDomain: "bets-d795d.firebaseapp.com",
+databaseURL: "https://bets-d795d-default-rtdb.firebaseio.com",
+projectId: "bets-d795d"
 });
 
-function loadAffiliate(uid) {
+const db = firebase.database();
 
-    db.ref("users/" + uid).once("value").then(snap => {
-        const data = snap.val();
+let userData = null;
+let currentUser = null;
 
-        const code = data.referralCode;
-        document.getElementById("refLink").value =
-        window.location.origin + "/index.html?ref=" + code;
+firebase.auth().onAuthStateChanged(user=>{
+if(!user) return location.href="login.html";
+currentUser = user;
+load(user.uid);
+});
 
-        document.getElementById("balance").innerText =
-        "₦" + (data.totalReferralEarned || 0);
+function load(uid){
 
-    });
+db.ref("users/"+uid).once("value").then(snap=>{
+userData = snap.val() || {};
 
-    db.ref("users").once("value").then(all => {
+const code = userData.referralCode || "";
+document.getElementById("refLink").value =
+window.location.origin + "/index.html?ref=" + code;
 
-        let total = 0;
-        let active = 0;
-        let earnings = 0;
+document.getElementById("balance").innerText =
+"₦" + (userData.totalReferralEarned || 0);
 
-        let listHTML = "";
+loadStats(code);
+});
 
-        all.forEach(u => {
-            const v = u.val();
-
-            if (v.referredBy && currentUser) {
-                if (v.referredBy === data.referralCode) {
-
-                    total++;
-
-                    let status = "❌ Not Deposited";
-                    let badge = "no";
-
-                    if ((v.balance || 0) > 0) {
-                        active++;
-                        status = "✅ Deposited";
-                        badge = "ok";
-                    }
-
-                    earnings += (v.totalDeposit || 0);
-
-                    listHTML += `
-                    <div class="item" onclick="viewUser('${u.key}')">
-                        <div>
-                            ${v.email || "No Email"}
-                        </div>
-                        <div class="badge ${badge}">
-                            ${status}
-                        </div>
-                    </div>`;
-                }
-            }
-        });
-
-        document.getElementById("totalRefs").innerText = total;
-        document.getElementById("activeRefs").innerText = active;
-        document.getElementById("earnings").innerText = "₦" + earnings;
-        document.getElementById("list").innerHTML = listHTML;
-
-    });
 }
 
-function copyLink() {
-    let input = document.getElementById("refLink");
-    input.select();
-    document.execCommand("copy");
-    alert("Referral link copied!");
+function loadStats(myCode){
+
+db.ref("users").once("value").then(all=>{
+let total=0;
+let active=0;
+let earned=0;
+let list="";
+
+all.forEach(u=>{
+const v=u.val();
+
+if(v.referredBy === myCode){
+
+total++;
+
+if(v.firstDepositDone === true) active++;
+
+earned += v.totalReferralEarned || 0;
+
+list += `
+<div class="item">
+<div>${v.email || "User"}</div>
+<div class="${v.firstDeposit ? 'ok':'no'}">
+${v.firstDeposit ? "Active":"New"}
+</div>
+</div>`;
+}
+});
+
+document.getElementById("totalRefs").innerText = total;
+document.getElementById("activeRefs").innerText = active;
+document.getElementById("earnings").innerText = "₦"+earned;
+document.getElementById("list").innerHTML = list;
+});
 }
 
-function viewUser(uid) {
-    db.ref("users/" + uid).once("value").then(snap => {
-        const u = snap.val();
-
-        document.getElementById("modalBody").innerHTML = `
-        <p>Email: ${u.email}</p>
-        <p>Balance: ₦${u.balance || 0}</p>
-        <p>Total Deposited: ₦${u.totalDeposit || 0}</p>
-        <p>Last Deposit: ${u.lastDeposit ? new Date(u.lastDeposit).toLocaleString() : "None"}</p>
-        `;
-
-        document.getElementById("modal").style.display = "block";
-    });
+function copyLink(){
+let i=document.getElementById("refLink");
+i.select();
+document.execCommand("copy");
+alert("Copied");
 }
 
-function closeModal() {
-    document.getElementById("modal").style.display = "none";
+/* WITHDRAW */
+function openWithdraw(){
+document.getElementById("withdrawModal").style.display="block";
+}
+
+function closeWithdraw(){
+document.getElementById("withdrawModal").style.display="none";
+}
+
+function submitWithdraw(){
+
+let amt = Number(amount.value);
+
+if(amt < 5000){
+alert("Minimum withdrawal is ₦5000");
+return;
+}
+
+db.ref("withdrawals").push({
+uid: currentUser.uid,
+accountNumber: accNumber.value,
+bankName: bankName.value,
+accountName: accName.value,
+amount: amt,
+status: "pending",
+time: Date.now()
+});
+
+alert("Withdrawal submitted");
+closeWithdraw();
 }
 </script>
 

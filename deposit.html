@@ -387,110 +387,62 @@ function startPayment(user, amountRaw, coins) {
                             time: Date.now()
                         });
 
-                        // AFFILIATE SYSTEM
-                        userRef.once("value")
-                        .then(userSnap => {
+                        // AFFILIATE SYSTEM (FIXED)
+userRef.once("value").then(userSnap => {
 
-                            const userData = userSnap.val();
+    const userData = userSnap.val();
+    if (!userData || !userData.referredBy) return;
 
-                            if (
-                                userData &&
-                                userData.referredBy
-                            ) {
+    const referralCode = userData.referredBy;
 
-                                const referralCode =
-                                userData.referredBy;
+    db.ref("users").once("value").then(allUsers => {
 
-                                db.ref("users")
-                                .once("value")
-                                .then(allUsers => {
+        allUsers.forEach(refSnap => {
 
-                                    allUsers.forEach(refUser => {
+            const refUser = refSnap.val();
 
-                                        const refData =
-                                        refUser.val();
+            if (refUser.referralCode === referralCode) {
 
-                                        if (
-    refData.referralCode ===
-    referralCode
-) {
+                const isFirstDeposit = !userData.firstDepositDone;
 
-    const commission =
-    Math.floor(
-        amountRaw * 0.30
-    );
+                const commission = Math.floor(amountRaw * 0.30);
 
-    db.ref(
-        "users/" +
-        refUser.key +
-        "/balance"
-    ).transaction(current => {
-        return (
-            current || 0
-        ) + commission;
+                // ONLY FIRST DEPOSIT COUNTS FOR "ACTIVE REFERRAL"
+                if (isFirstDeposit) {
+
+                    db.ref("users/" + refSnap.key + "/activeReferralCount")
+                        .transaction(c => (c || 0) + 1);
+                }
+
+                // TOTAL REFERRALS (REGISTERED USERS ONLY)
+                db.ref("users/" + refSnap.key + "/totalReferralUsers")
+                    .transaction(c => (c || 0) + 1);
+
+                // COMMISSION ONLY ON FIRST DEPOSIT
+                if (isFirstDeposit) {
+
+                    db.ref("users/" + refSnap.key + "/balance")
+                        .transaction(c => (c || 0) + commission);
+
+                    db.ref("users/" + refSnap.key + "/totalReferralEarned")
+                        .transaction(c => (c || 0) + commission);
+                }
+
+                // mark first deposit
+                db.ref("users/" + user.uid).update({
+                    firstDepositDone: true
+                });
+
+                // referral tracking
+                db.ref("referrals/" + refSnap.key + "/" + user.uid).update({
+                    registered: true,
+                    deposited: true,
+                    lastDeposit: Date.now()
+                });
+            }
+        });
     });
-
-    db.ref(
-        "users/" +
-        refUser.key +
-        "/totalReferralEarned"
-    ).transaction(current => {
-        return (
-            current || 0
-        ) + commission;
-    });
-
-    db.ref(
-        "users/" +
-        refUser.key +
-        "/transactions"
-    ).push({
-        type: "affiliate",
-        amount: commission,
-        depositAmount: amountRaw,
-        fromUser: user.uid,
-        time: Date.now()
-    });
-
-    // REFERRAL TRACKING
-    db.ref(
-        "referrals/" +
-        refUser.key +
-        "/" +
-        user.uid
-    ).update({
-        deposited: true,
-        lastDeposit: Date.now()
-    });
-
-    db.ref(
-        "referrals/" +
-        refUser.key +
-        "/" +
-        user.uid +
-        "/totalDeposited"
-    ).transaction(current => {
-        return (
-            current || 0
-        ) + amountRaw;
-    });
-
-    db.ref(
-        "referrals/" +
-        refUser.key +
-        "/" +
-        user.uid +
-        "/balance"
-    ).set(coins);
-
-}
-                                    });
-
-                                });
-
-                            }
-
-                        });
+});
 
                         toast(
                             "Payment successful! Ref: " +
