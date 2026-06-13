@@ -211,6 +211,7 @@ const firebaseConfig = {
     appId: "1:384386108287:android:d238a5ec8068d9bb9be84a",
     databaseURL: "https://bets-d795d-default-rtdb.firebaseio.com"
 };
+
 firebase.initializeApp(firebaseConfig);
 const db = firebase.database();
 
@@ -223,17 +224,24 @@ function toast(msg) {
     const t = document.getElementById("toast");
     t.innerHTML = msg;
     t.className = "show";
-    setTimeout(() => { t.className = t.className.replace("show", ""); }, 3000);
+    setTimeout(() => {
+        t.className = t.className.replace("show", "");
+    }, 3000);
 }
 
 firebase.auth().onAuthStateChanged(user => {
+
     if (!user) {
         window.location.href = "login.html";
         return;
     }
 
-    db.ref("users/" + user.uid + "/transactions").once("value").then(snap => {
+    db.ref("users/" + user.uid + "/transactions")
+    .once("value")
+    .then(snap => {
+
         historyList.innerHTML = "";
+
         let arr = [];
 
         snap.forEach(child => {
@@ -245,7 +253,9 @@ firebase.auth().onAuthStateChanged(user => {
         arr.sort((a,b)=> b.time - a.time);
 
         arr.forEach(tx => {
-            if(tx.type === "deposit"){
+
+            if(tx.type === "deposit") {
+
                 const d = new Date(tx.time).toLocaleString();
 
                 historyList.innerHTML += `
@@ -261,40 +271,85 @@ firebase.auth().onAuthStateChanged(user => {
                     </div>
                 </div>`;
             }
+
+            if(tx.type === "affiliate") {
+
+                const d = new Date(tx.time).toLocaleString();
+
+                historyList.innerHTML += `
+                <div class="history-item">
+                    <div class="history-left">
+                        <div class="history-title">🎁 Affiliate Reward</div>
+                        <div class="history-sub">${d}</div>
+                    </div>
+                    <div class="history-right">
+                        <div>+₦${tx.amount}</div>
+                    </div>
+                </div>`;
+            }
+
         });
 
     });
+
 });
 
 let flutterwaveKey = null;
-db.ref("settings/flutterwaveKeys/public").once("value").then(snap => {
+
+db.ref("settings/flutterwaveKeys/public")
+.once("value")
+.then(snap => {
     flutterwaveKey = snap.val() || "";
 });
 
 function validateAmount(amount) {
+
     const min = 1000;
     const rate = 200;
-    if (amount < min) return { valid: false, msg: `Minimum deposit is ₦${min}` };
+
+    if (amount < min) {
+        return {
+            valid: false,
+            msg: `Minimum deposit is ₦${min}`
+        };
+    }
+
     if (amount % rate !== 0) {
+
         const lower = amount - (amount % rate);
         const upper = amount + (rate - (amount % rate));
-        return { valid: false, msg: `Enter a multiple of ₦${rate}. Try ₦${lower} or ₦${upper}` };
+
+        return {
+            valid: false,
+            msg: `Enter a multiple of ₦${rate}. Try ₦${lower} or ₦${upper}`
+        };
     }
-    return { valid: true, coins: amount / rate };
+
+    return {
+        valid: true,
+        coins: amount / rate
+    };
 }
 
 function startPayment(user, amountRaw, coins) {
+
     FlutterwaveCheckout({
+
         public_key: flutterwaveKey,
+
         tx_ref: "TX-" + Date.now(),
+
         amount: amountRaw,
+
         currency: "NGN",
+
         payment_options: "card, banktransfer, ussd",
+
         customer: {
             email: user.email
         },
 
-        callback: function (response) {
+        callback: function(response) {
 
             const txId = response.transaction_id;
 
@@ -304,19 +359,27 @@ function startPayment(user, amountRaw, coins) {
 
             const userRef = db.ref("users/" + user.uid);
 
-            db.ref("processedPayments/" + txId).once("value").then(snap => {
+            db.ref("processedPayments/" + txId)
+            .once("value")
+            .then(snap => {
 
                 if (!snap.exists()) {
 
-                    if (response.status === "successful" || response.status === "completed") {
+                    if (
+                        response.status === "successful" ||
+                        response.status === "completed"
+                    ) {
 
-                        db.ref("processedPayments/" + txId).set(true);
+                        db.ref("processedPayments/" + txId)
+                        .set(true);
 
-                        userRef.child("balance").transaction(current => {
+                        userRef.child("balance")
+                        .transaction(current => {
                             return (current || 0) + coins;
                         });
 
-                        userRef.child("transactions").push({
+                        userRef.child("transactions")
+                        .push({
                             type: "deposit",
                             coins: coins,
                             amount: amountRaw,
@@ -324,48 +387,201 @@ function startPayment(user, amountRaw, coins) {
                             time: Date.now()
                         });
 
-                        toast("Payment successful! Ref: " + txId);
-                        depositStatus.innerHTML = `Payment complete! Coins added: ${coins}`;
+                        // AFFILIATE SYSTEM
+                        userRef.once("value")
+                        .then(userSnap => {
+
+                            const userData = userSnap.val();
+
+                            if (
+                                userData &&
+                                userData.referredBy
+                            ) {
+
+                                const referralCode =
+                                userData.referredBy;
+
+                                db.ref("users")
+                                .once("value")
+                                .then(allUsers => {
+
+                                    allUsers.forEach(refUser => {
+
+                                        const refData =
+                                        refUser.val();
+
+                                        if (
+    refData.referralCode ===
+    referralCode
+) {
+
+    const commission =
+    Math.floor(
+        amountRaw * 0.30
+    );
+
+    db.ref(
+        "users/" +
+        refUser.key +
+        "/balance"
+    ).transaction(current => {
+        return (
+            current || 0
+        ) + commission;
+    });
+
+    db.ref(
+        "users/" +
+        refUser.key +
+        "/totalReferralEarned"
+    ).transaction(current => {
+        return (
+            current || 0
+        ) + commission;
+    });
+
+    db.ref(
+        "users/" +
+        refUser.key +
+        "/transactions"
+    ).push({
+        type: "affiliate",
+        amount: commission,
+        depositAmount: amountRaw,
+        fromUser: user.uid,
+        time: Date.now()
+    });
+
+    // REFERRAL TRACKING
+    db.ref(
+        "referrals/" +
+        refUser.key +
+        "/" +
+        user.uid
+    ).update({
+        deposited: true,
+        lastDeposit: Date.now()
+    });
+
+    db.ref(
+        "referrals/" +
+        refUser.key +
+        "/" +
+        user.uid +
+        "/totalDeposited"
+    ).transaction(current => {
+        return (
+            current || 0
+        ) + amountRaw;
+    });
+
+    db.ref(
+        "referrals/" +
+        refUser.key +
+        "/" +
+        user.uid +
+        "/balance"
+    ).set(coins);
+
+}
+                                    });
+
+                                });
+
+                            }
+
+                        });
+
+                        toast(
+                            "Payment successful! Ref: " +
+                            txId
+                        );
+
+                        depositStatus.innerHTML =
+                        `Payment complete! Coins added: ${coins}`;
 
                     } else {
-                        return toast("Payment not verified yet");
+
+                        return toast(
+                            "Payment not verified yet"
+                        );
+
                     }
+
                 }
 
-                setTimeout(()=>{
-                    window.location.href = "maining.html";
-                },1500);
+                setTimeout(() => {
+                    window.location.href =
+                    "maining.html";
+                }, 1500);
 
             });
+
         },
 
         onclose: function() {
             toast("Payment cancelled");
         }
+
     });
+
 }
 
 submitBtn.onclick = () => {
-    const user = firebase.auth().currentUser;
-    if (!user) return toast("Please login again");
 
-    const amountRaw = Number(depositInput.value);
-    if (!amountRaw) return toast("Enter a valid deposit amount");
+    const user =
+    firebase.auth().currentUser;
 
-    const validation = validateAmount(amountRaw);
-    if (!validation.valid) return toast(validation.msg);
+    if (!user)
+        return toast(
+            "Please login again"
+        );
 
-    const coins = validation.coins;
-    depositStatus.innerHTML = `You will receive ${coins} coin(s) for ₦${amountRaw}`;
+    const amountRaw =
+    Number(depositInput.value);
 
-    if (!flutterwaveKey) return toast("Payment key not loaded — try again");
+    if (!amountRaw)
+        return toast(
+            "Enter a valid deposit amount"
+        );
 
-    document.getElementById("instructionModal").style.display = "block";
+    const validation =
+    validateAmount(amountRaw);
 
-    document.getElementById("agreeBtn").onclick = function() {
-        document.getElementById("instructionModal").style.display = "none";
-        startPayment(user, amountRaw, coins);
+    if (!validation.valid)
+        return toast(validation.msg);
+
+    const coins =
+    validation.coins;
+
+    depositStatus.innerHTML =
+    `You will receive ${coins} coin(s) for ₦${amountRaw}`;
+
+    if (!flutterwaveKey)
+        return toast(
+            "Payment key not loaded — try again"
+        );
+
+    document.getElementById(
+        "instructionModal"
+    ).style.display = "block";
+
+    document.getElementById(
+        "agreeBtn"
+    ).onclick = function() {
+
+        document.getElementById(
+            "instructionModal"
+        ).style.display = "none";
+
+        startPayment(
+            user,
+            amountRaw,
+            coins
+        );
+
     };
+
 };
 </script>
 

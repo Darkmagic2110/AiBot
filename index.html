@@ -414,7 +414,7 @@ button:hover {
 </div>
 
 <script>
-// FIREBASE CONFIG (UNCHANGED)
+// FIREBASE CONFIG
 var firebaseConfig = {
     apiKey: "AIzaSyDvFDByPPo9zgwKLdPaREz1OVMQCXmPfrs",
     authDomain: "bets-d795d.firebaseapp.com",
@@ -428,8 +428,14 @@ var firebaseConfig = {
 firebase.initializeApp(firebaseConfig);
 var db = firebase.database();
 
-// REGISTER FUNCTION (FIXED)
+// GENERATE REFERRAL CODE
+function generateReferralCode() {
+    return Math.random().toString(36).substring(2, 10).toUpperCase();
+}
+
+// REGISTER FUNCTION
 function register() {
+
     let name = document.getElementById("name").value.trim();
     let email = document.getElementById("email").value.trim().toLowerCase();
     let password = document.getElementById("password").value;
@@ -457,35 +463,126 @@ function register() {
 
     loader.style.display = "block";
 
-    firebase.auth().createUserWithEmailAndPassword(email, password)
+    const referralCode = generateReferralCode();
+
+    const urlParams = new URLSearchParams(window.location.search);
+    const referredBy = urlParams.get("ref") || "";
+
+    let newUid = "";
+
+    firebase.auth()
+    .createUserWithEmailAndPassword(email, password)
+
     .then((userCredential) => {
 
-        let uid = userCredential.user.uid;
+        newUid = userCredential.user.uid;
 
-        return db.ref("users/" + uid).set({
+        return db.ref("users/" + newUid).set({
+            uid: newUid,
             name: name,
             email: email,
             balance: 0,
+
+            referralCode: referralCode,
+            referredBy: referredBy,
+
+            totalReferralEarned: 0,
+            totalReferrals: 0,
+
             createdAt: Date.now()
         });
 
     })
+
     .then(() => {
-        loader.style.display = "none";
-        alert("Account created successfully ✅");
-        window.location.href = "loging.html";
+
+        // SAVE REFERRAL RECORD
+        if (!referredBy) {
+            return;
+        }
+
+        return db.ref("users").once("value")
+        .then(usersSnap => {
+
+            let promises = [];
+
+            usersSnap.forEach(userSnap => {
+
+                const data = userSnap.val();
+
+                if (data.referralCode === referredBy) {
+
+                    promises.push(
+
+                        db.ref(
+                            "referrals/" +
+                            userSnap.key +
+                            "/" +
+                            newUid
+                        ).set({
+                            uid: newUid,
+                            name: name,
+                            email: email,
+                            balance: 0,
+                            deposited: false,
+                            totalDeposited: 0,
+                            joinedAt: Date.now()
+                        })
+
+                    );
+
+                    promises.push(
+
+                        db.ref(
+                            "users/" +
+                            userSnap.key +
+                            "/totalReferrals"
+                        ).transaction(v => {
+                            return (v || 0) + 1;
+                        })
+
+                    );
+
+                }
+
+            });
+
+            return Promise.all(promises);
+
+        });
+
     })
+
+    .then(() => {
+
+        loader.style.display = "none";
+
+        alert(
+            "Account created successfully ✅\n\n" +
+            "Your Referral Code: " +
+            referralCode
+        );
+
+        window.location.href = "loging.html";
+
+    })
+
     .catch((err) => {
+
         loader.style.display = "none";
 
         if (err.code === "auth/email-already-in-use") {
             error.innerText = "Email already exists ❌";
-        } else if (err.code === "auth/weak-password") {
+        }
+        else if (err.code === "auth/weak-password") {
             error.innerText = "Password must be at least 6 characters";
-        } else {
+        }
+        else {
             error.innerText = err.message;
         }
+
     });
+
 }
 </script>
 

@@ -306,11 +306,14 @@ h1 {
         </div>
 
         <div id="toolbar">
-            <button onclick="openTelegram()">JOIN TELEGRAM CHANNEL</button>
-            <button onclick="contactSupport()">CUSTOMER SUPPORT</button>
-            <button onclick="goHelp()">HELP</button>
-            <button onclick="goAbout()">ABOUT</button>
-        </div>
+    <button onclick="openTelegram()">JOIN TELEGRAM CHANNEL</button>
+    <button onclick="contactSupport()">CUSTOMER SUPPORT</button>
+    <button onclick="goHelp()">HELP</button>
+    <button onclick="goAbout()">ABOUT</button>
+
+    <!-- ADDED AFFILIATE BUTTON -->
+    <button onclick="openAffiliate()">AFFILIATE PROGRAM</button>
+</div>
 
     </div>
 
@@ -561,6 +564,9 @@ function listenBalance(uid){
         :0;
 
     });
+}
+function openAffiliate() {
+    window.location.href = "affiliate.html";
 }
 </script>
 </body>
