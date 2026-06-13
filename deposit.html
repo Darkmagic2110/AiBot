@@ -388,52 +388,65 @@ function startPayment(user, amountRaw, coins) {
                         time: Date.now()
                     });
 
-                    /* =========================
-                       AFFILIATE SYSTEM (FIXED)
-                       ALWAYS 30% PER DEPOSIT
-                    ========================= */
-                    userRef.once("value").then(userSnap => {
+                   /* =========================
+   AFFILIATE SYSTEM
+   COMMISSION ONLY TO AFFILIATE BALANCE
+========================= */
+userRef.once("value").then(userSnap => {
 
-                        const userData = userSnap.val();
-                        if (!userData || !userData.referredBy) return;
+    const userData = userSnap.val();
 
-                        const referralCode = userData.referredBy;
+    if (!userData || !userData.referredBy) {
+        return;
+    }
 
-                        const commission = Math.floor(amountRaw * 0.30);
+    const referralCode = userData.referredBy;
+    const commission = Math.floor(amountRaw * 0.30);
 
-                        db.ref("users")
-                        .orderByChild("referralCode")
-                        .equalTo(referralCode)
-                        .once("value")
-                        .then(snapshot => {
+    db.ref("users")
+    .orderByChild("referralCode")
+    .equalTo(referralCode)
+    .once("value")
+    .then(snapshot => {
 
-                            snapshot.forEach(refSnap => {
+        snapshot.forEach(refSnap => {
 
-                                const refKey = refSnap.key;
+            const refKey = refSnap.key;
 
-                                /* TOTAL REFERRALS */
-                                db.ref("users/" + refKey + "/totalReferralUsers")
-                                    .transaction(c => (c || 0) + 1);
+            /* ADD COMMISSION TO AFFILIATE BALANCE ONLY */
+            db.ref("users/" + refKey + "/affiliateEarned")
+            .transaction(c => (c || 0) + commission);
 
-                                /* ALWAYS PAY COMMISSION */
-                                db.ref("users/" + refKey + "/balance")
-                                    .transaction(c => (c || 0) + commission);
+            /* SAVE AFFILIATE TRANSACTION */
+            db.ref("users/" + refKey + "/transactions").push({
+                type: "affiliate",
+                amount: commission,
+                fromUser: user.uid,
+                time: Date.now()
+            });
 
-                                db.ref("users/" + refKey + "/affiliateEarned")
-                                    .transaction(c => (c || 0) + commission);
+          /* UPDATE REFERRAL RECORD */
+const referralRef = db.ref("referrals/" + refKey + "/" + user.uid);
 
-                                /* TRACK */
-                                db.ref("referrals/" + refKey + "/" + user.uid).update({
-                                    registered: true,
-                                    deposited: true,
-                                    lastDeposit: Date.now()
-                                });
+referralRef.once("value").then(refSnap => {
 
-                            });
+    const referralData = refSnap.val() || {};
+    const totalDeposited =
+        Number(referralData.totalDeposited || 0) + amountRaw;
 
-                        });
+    referralRef.update({
+        deposited: true,
+        totalDeposited: totalDeposited,
+        lastDeposit: Date.now()
+    });
 
-                    });
+});
+
+        });
+
+    });
+
+});
 
                     toast("Payment successful! Ref: " + txId);
 

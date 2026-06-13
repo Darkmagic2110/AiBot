@@ -182,6 +182,7 @@ let currentUser = null;
 
 firebase.auth().onAuthStateChanged(user=>{
 if(!user) return location.href="loging.html";
+
 currentUser = user;
 load(user.uid);
 });
@@ -189,17 +190,41 @@ load(user.uid);
 function load(uid){
 
 db.ref("users/"+uid).once("value").then(snap=>{
+
 userData = snap.val() || {};
 
 const code = userData.referralCode || "";
+
 document.getElementById("refLink").value =
 window.location.origin + "/index.html?ref=" + code;
 
-// show affiliate earnings
+/* Withdrawable affiliate balance */
 document.getElementById("balance").innerText =
+"₦" + (userData.affiliateBalance || 0);
+
+/* Total lifetime affiliate earnings */
+document.getElementById("earnings").innerText =
 "₦" + (userData.affiliateEarned || 0);
 
 loadStats(code);
+
+/* Auto-fill saved bank details */
+if(userData.withdrawalDetails){
+
+if(document.getElementById("accNumber"))
+document.getElementById("accNumber").value =
+userData.withdrawalDetails.accountNumber || "";
+
+if(document.getElementById("bankName"))
+document.getElementById("bankName").value =
+userData.withdrawalDetails.bankName || "";
+
+if(document.getElementById("accName"))
+document.getElementById("accName").value =
+userData.withdrawalDetails.accountName || "";
+
+}
+
 });
 
 }
@@ -207,100 +232,148 @@ loadStats(code);
 function loadStats(myCode){
 
 db.ref("users").once("value").then(all=>{
+
 let total = 0;
-let active = 0;
-let earned = 0;
 let list = "";
 
 all.forEach(u=>{
+
 const v = u.val();
 
 if(v.referredBy === myCode){
 
 total++;
 
-// active only once (first successful deposit)
-if(v.firstDepositDone === true) active++;
-
-// total earned from this referral user (always updates)
-earned += (v.affiliateEarned || 0);
-
 list += `
 <div class="item">
 <div>${v.email || "User"}</div>
-<div class="${v.firstDepositDone ? 'ok':'no'}">
-${v.firstDepositDone ? "Active":"New"}
+<div class="ok">Referred</div>
 </div>
-</div>`;
+`;
+
 }
+
 });
 
 document.getElementById("totalRefs").innerText = total;
-document.getElementById("activeRefs").innerText = active;
-document.getElementById("earnings").innerText = "₦"+earned;
 document.getElementById("list").innerHTML = list;
+
 });
+
 }
 
-/* COPY */
+/* COPY LINK */
 function copyLink(){
-let i=document.getElementById("refLink");
+
+let i = document.getElementById("refLink");
+
 i.select();
+i.setSelectionRange(0,99999);
+
 document.execCommand("copy");
+
 alert("Copied");
+
 }
 
 /* WITHDRAW */
 function openWithdraw(){
-document.getElementById("withdrawModal").style.display="block";
+
+document.getElementById("withdrawModal").style.display = "block";
+
 }
 
 function closeWithdraw(){
-document.getElementById("withdrawModal").style.display="none";
+
+document.getElementById("withdrawModal").style.display = "none";
+
 }
 
 function submitWithdraw(){
 
-let amt = Number(amount.value);
+let amt = Number(
+document.getElementById("amount").value
+);
 
-// minimum withdraw
+let accountNumber =
+document.getElementById("accNumber").value.trim();
+
+let bankName =
+document.getElementById("bankName").value.trim();
+
+let accountName =
+document.getElementById("accName").value.trim();
+
+/* Minimum withdrawal */
 if(amt < 5000){
+
 alert("Minimum withdrawal is ₦5000");
 return;
+
 }
 
-// prevent overdraft (IMPORTANT FIX)
-let currentBalance = Number(userData.affiliateEarned || 0);
+/* Validate bank details */
+if(!accountNumber || !bankName || !accountName){
+
+alert("Fill all bank details");
+return;
+
+}
+
+/* Check affiliate balance */
+let currentBalance =
+Number(userData.affiliateBalance || 0);
 
 if(amt > currentBalance){
+
 alert("Insufficient affiliate balance");
 return;
+
 }
 
-// store bank details for reuse (NEW FEATURE)
-db.ref("users/"+currentUser.uid+"/withdrawalDetails").set({
-accountNumber: accNumber.value,
-bankName: bankName.value,
-accountName: accName.value
+/* Save bank details */
+db.ref(
+"users/"+currentUser.uid+"/withdrawalDetails"
+).set({
+
+accountNumber: accountNumber,
+bankName: bankName,
+accountName: accountName
+
 });
 
-// subtract balance
-db.ref("users/"+currentUser.uid+"/affiliateEarned")
-.transaction(c => (c || 0) - amt);
+/* Deduct ONLY from affiliate balance */
+db.ref(
+"users/"+currentUser.uid+"/affiliateBalance"
+).transaction(current=>{
 
-// log withdrawal
+return (current || 0) - amt;
+
+});
+
+/* Save withdrawal request */
 db.ref("withdrawals").push({
+
 uid: currentUser.uid,
-accountNumber: accNumber.value,
-bankName: bankName.value,
-accountName: accName.value,
+
+accountNumber: accountNumber,
+bankName: bankName,
+accountName: accountName,
+
 amount: amt,
+
 status: "pending",
+
 time: Date.now()
+
 });
 
-alert("Withdrawal submitted");
+alert("Withdrawal submitted successfully");
+
 closeWithdraw();
+
+load(currentUser.uid);
+
 }
 </script>
 
