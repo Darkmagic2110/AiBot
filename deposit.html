@@ -388,7 +388,73 @@ function startPayment(user, amountRaw, coins) {
                         time: Date.now()
                     });
 
-                 
+                   /* =========================
+   AFFILIATE SYSTEM
+========================= */
+userRef.once("value").then(userSnap => {
+
+    const userData = userSnap.val();
+
+    console.log("Depositing user:", userData);
+
+    if (!userData || !userData.referredBy) {
+        console.log("No referral code found");
+        return;
+    }
+
+    const referralCode = userData.referredBy.trim().toUpperCase();
+    const commission = Math.floor(amountRaw * 0.30);
+
+    console.log("Referral Code:", referralCode);
+    console.log("Commission:", commission);
+
+    db.ref("users")
+    .orderByChild("referralCode")
+    .equalTo(referralCode)
+    .once("value")
+    .then(snapshot => {
+
+        console.log("Matches found:", snapshot.numChildren());
+
+        if (!snapshot.exists()) {
+            console.log("No matching referrer found");
+            return;
+        }
+
+        snapshot.forEach(refSnap => {
+
+            const refKey = refSnap.key;
+
+            console.log("Referrer UID:", refKey);
+
+            /* TOTAL EARNED */
+            db.ref("users/" + refKey + "/affiliateEarned")
+            .transaction(v => (v || 0) + commission);
+
+            /* WITHDRAWABLE BALANCE */
+            db.ref("users/" + refKey + "/affiliateBalance")
+            .transaction(v => (v || 0) + commission);
+
+            /* TRANSACTION */
+            db.ref("users/" + refKey + "/transactions").push({
+                type: "affiliate",
+                amount: commission,
+                fromUser: user.uid,
+                time: Date.now()
+            });
+
+            /* REFERRAL RECORD */
+            db.ref("referrals/" + refKey + "/" + user.uid).update({
+                deposited: true,
+                totalDeposited: amountRaw,
+                lastDeposit: Date.now()
+            });
+
+        });
+
+    });
+
+});
 
                     toast("Payment successful! Ref: " + txId);
 
