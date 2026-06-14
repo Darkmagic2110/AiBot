@@ -388,7 +388,7 @@ function startPayment(user, amountRaw, coins) {
                         time: Date.now()
                     });
 
-                   /* =========================
+                  /* =========================
    AFFILIATE SYSTEM
 ========================= */
 userRef.once("value").then(userSnap => {
@@ -444,10 +444,20 @@ userRef.once("value").then(userSnap => {
             });
 
             /* REFERRAL RECORD */
-            db.ref("referrals/" + refKey + "/" + user.uid).update({
-                deposited: true,
-                totalDeposited: amountRaw,
-                lastDeposit: Date.now()
+            const referralRef =
+                db.ref("referrals/" + refKey + "/" + user.uid);
+
+            referralRef.once("value").then(referralSnap => {
+
+                const referralData = referralSnap.val() || {};
+
+                referralRef.update({
+                    deposited: true,
+                    totalDeposited:
+                        Number(referralData.totalDeposited || 0) + amountRaw,
+                    lastDeposit: Date.now()
+                });
+
             });
 
         });
