@@ -179,12 +179,15 @@ const db = firebase.database();
 
 let userData = null;
 let currentUser = null;
+let referralsVisible = false;
 
 firebase.auth().onAuthStateChanged(user=>{
+
 if(!user) return location.href="loging.html";
 
 currentUser = user;
 load(user.uid);
+
 });
 
 function load(uid){
@@ -205,6 +208,10 @@ document.getElementById("balance").innerText =
 /* Total lifetime affiliate earnings */
 document.getElementById("earnings").innerText =
 "₦" + (userData.affiliateEarned || 0);
+
+/* Total referrals */
+document.getElementById("totalRefs").innerText =
+userData.totalReferralUsers || 0;
 
 loadStats(code);
 
@@ -233,7 +240,6 @@ function loadStats(myCode){
 
 db.ref("users").once("value").then(all=>{
 
-let total = 0;
 let list = "";
 
 all.forEach(u=>{
@@ -242,11 +248,13 @@ const v = u.val();
 
 if(v.referredBy === myCode){
 
-total++;
+const maskedEmail =
+(v.email || "User")
+.replace(/(.{2}).+(@.+)/, "$1****$2");
 
 list += `
 <div class="item">
-<div>${v.email || "User"}</div>
+<div>${maskedEmail}</div>
 <div class="ok">Referred</div>
 </div>
 `;
@@ -255,10 +263,29 @@ list += `
 
 });
 
-document.getElementById("totalRefs").innerText = total;
-document.getElementById("list").innerHTML = list;
+document.getElementById("list").innerHTML =
+list || "<div style='padding:10px'>No referrals yet</div>";
 
 });
+
+}
+
+/* SHOW / HIDE REFERRALS */
+function toggleReferrals(){
+
+const list = document.getElementById("list");
+
+referralsVisible = !referralsVisible;
+
+if(referralsVisible){
+
+list.style.display = "block";
+
+}else{
+
+list.style.display = "none";
+
+}
 
 }
 
@@ -272,7 +299,7 @@ i.setSelectionRange(0,99999);
 
 document.execCommand("copy");
 
-alert("Copied");
+alert("Referral link copied");
 
 }
 
@@ -342,12 +369,16 @@ accountName: accountName
 
 });
 
-/* Deduct ONLY from affiliate balance */
+/* Deduct from affiliate balance */
 db.ref(
 "users/"+currentUser.uid+"/affiliateBalance"
 ).transaction(current=>{
 
-return (current || 0) - amt;
+if((current || 0) < amt){
+return;
+}
+
+return current - amt;
 
 });
 
