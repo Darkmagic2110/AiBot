@@ -389,10 +389,10 @@ function startPayment(user, amountRaw, coins) {
                     });
 
                    /* =========================
-   AFFILIATE SYSTEM (CLEAN START)
+   AFFILIATE SYSTEM (FINAL FIXED)
 ========================= */
 
-const txId = response.transaction_id;
+const txRef = "TX-" + Date.now(); // use this consistently
 
 userRef.once("value").then(userSnap => {
 
@@ -415,13 +415,14 @@ userRef.once("value").then(userSnap => {
 
             const refKey = refSnap.key;
 
-            const checkRef = db.ref(
-                "processedAffiliates/" + txId + "_" + refKey
-            );
+            /* 🔥 USE TX_REF (NOT transaction_id) */
+            const processKey = "affiliate_" + txRef + "_" + refKey;
+
+            const checkRef = db.ref("processedAffiliates/" + processKey);
 
             checkRef.once("value").then(exists => {
 
-                if (exists.exists()) return; // already paid
+                if (exists.exists()) return;
 
                 checkRef.set(true);
 
@@ -437,7 +438,7 @@ userRef.once("value").then(userSnap => {
                     type: "affiliate",
                     amount: commission,
                     fromUser: user.uid,
-                    txId: txId,
+                    txRef: txRef,
                     time: Date.now()
                 });
 
