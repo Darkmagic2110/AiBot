@@ -389,25 +389,23 @@ function startPayment(user, amountRaw, coins) {
                     });
 
                    /* =========================
-   AFFILIATE SYSTEM (FIXED)
+   AFFILIATE SYSTEM
 ========================= */
 
 userRef.once("value").then(userSnap => {
 
     const userData = userSnap.val();
 
-    console.log("Depositing user:", userData);
-
     if (!userData || !userData.referredBy) {
-        console.log("No referral code found");
+        console.log("No referrer");
         return;
     }
 
-    const referralCode = String(userData.referredBy).trim().toUpperCase();
-    const commission = Math.floor(amountRaw * 0.30);
+    const referralCode =
+        String(userData.referredBy).trim().toUpperCase();
 
-    console.log("Referral Code:", referralCode);
-    console.log("Commission:", commission);
+    const commission =
+        Math.floor(amountRaw * 0.30);
 
     db.ref("users")
     .orderByChild("referralCode")
@@ -416,7 +414,7 @@ userRef.once("value").then(userSnap => {
     .then(snapshot => {
 
         if (!snapshot.exists()) {
-            console.log("No matching referrer found");
+            console.log("Referrer not found");
             return;
         }
 
@@ -424,49 +422,58 @@ userRef.once("value").then(userSnap => {
 
             const refKey = refSnap.key;
 
-            console.log("Referrer UID:", refKey);
+            if (refKey === user.uid) {
+                console.log("Self referral blocked");
+                return;
+            }
 
-            const referrerRef = db.ref("users/" + refKey);
+            /* ADD COMMISSION */
+            db.ref("users/" + refKey)
+            .transaction(refUser => {
 
-            /* SINGLE ATOMIC UPDATE (IMPORTANT FIX) */
-            referrerRef.transaction(user => {
+                if (!refUser) return refUser;
 
-                if (!user) return user;
+                refUser.affiliateEarned =
+                    (refUser.affiliateEarned || 0) + commission;
 
-                const earned = user.affiliateEarned || 0;
-                const balance = user.affiliateBalance || 0;
+                refUser.affiliateBalance =
+                    (refUser.affiliateBalance || 0) + commission;
 
-                user.affiliateEarned = earned + commission;
-                user.affiliateBalance = balance + commission;
-
-                return user;
+                return refUser;
             });
 
-            /* TRANSACTION HISTORY */
-            db.ref("users/" + refKey + "/transactions").push({
+            /* SAVE AFFILIATE TRANSACTION */
+            db.ref("users/" + refKey + "/transactions")
+            .push({
                 type: "affiliate",
                 amount: commission,
                 fromUser: user.uid,
+                depositAmount: amountRaw,
                 time: Date.now()
             });
 
-            /* REFERRAL RECORD (FIXED - MULTIPLE DEPOSITS SUPPORT) */
-db.ref("referrals/" + refKey + "/" + user.uid).transaction(data => {
+            /* UPDATE REFERRAL RECORD */
+            db.ref("referrals/" + refKey + "/" + user.uid)
+            .transaction(data => {
 
-    if (!data) {
-        data = {
-            depositCount: 0,
-            totalDeposited: 0,
-            firstDeposit: Date.now()
-        };
-    }
+                if (!data) {
+                    data = {
+                        depositCount: 0,
+                        totalDeposited: 0,
+                        firstDeposit: Date.now()
+                    };
+                }
 
-    data.depositCount = (data.depositCount || 0) + 1;
-    data.totalDeposited = (data.totalDeposited || 0) + amountRaw;
-    data.lastDeposit = Date.now();
+                data.depositCount =
+                    (data.depositCount || 0) + 1;
 
-    return data;
-});
+                data.totalDeposited =
+                    (data.totalDeposited || 0) + amountRaw;
+
+                data.lastDeposit = Date.now();
+
+                return data;
+            });
 
         });
 
