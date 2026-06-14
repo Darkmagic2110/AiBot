@@ -389,16 +389,15 @@ function startPayment(user, amountRaw, coins) {
                     });
 
                  /* =========================
-   AFFILIATE SYSTEM (CLEAN)
+   AFFILIATE SYSTEM (FINAL CLEAN VERSION)
 ========================= */
 
-const userRefPath = db.ref("users/" + user.uid);
+const userRef = db.ref("users/" + user.uid);
 
-userRefPath.once("value").then(snap => {
+userRef.once("value").then(snap => {
 
     const userData = snap.val();
 
-    // must be referrer UID
     const referrerUid = userData?.referredBy;
 
     console.log("Referral UID:", referrerUid);
@@ -409,25 +408,56 @@ userRefPath.once("value").then(snap => {
     // prevent self referral
     if (referrerUid === user.uid) return;
 
-    // 30% commission
     const commission = Math.floor(amountRaw * 0.30);
 
     console.log("Commission:", commission);
 
-    /* CREDIT REFERRER BALANCE */
+    /* =========================
+       CREDIT REFERRER
+    ========================= */
+
     db.ref("users/" + referrerUid + "/affiliateBalance")
     .transaction(v => (v || 0) + commission);
 
-    /* TOTAL EARNED */
     db.ref("users/" + referrerUid + "/affiliateEarned")
     .transaction(v => (v || 0) + commission);
 
-    /* LOG TRANSACTION */
+    /* =========================
+       LOG TRANSACTION
+    ========================= */
+
     db.ref("users/" + referrerUid + "/transactions").push({
         type: "affiliate",
         amount: commission,
         fromUser: user.uid,
+        depositAmount: amountRaw,
         time: Date.now()
+    });
+
+    /* =========================
+       OPTIONAL: FIRST DEPOSIT TRACKING
+    ========================= */
+
+    db.ref("referrals/" + referrerUid + "/" + user.uid)
+    .once("value")
+    .then(refSnap => {
+
+        const data = refSnap.val();
+
+        // first time only counter
+        if (!data || !data.deposited) {
+
+            db.ref("users/" + referrerUid + "/activeReferralCount")
+            .transaction(v => (v || 0) + 1);
+        }
+
+        // update referral record
+        db.ref("referrals/" + referrerUid + "/" + user.uid).update({
+            deposited: true,
+            lastDeposit: Date.now(),
+            totalDeposited: (data?.totalDeposited || 0) + amountRaw
+        });
+
     });
 
 });
