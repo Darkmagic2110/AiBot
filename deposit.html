@@ -389,105 +389,72 @@ function startPayment(user, amountRaw, coins) {
                     });
 
                    /* =========================
-   AFFILIATE SYSTEM (FIXED + SAFE)
+   AFFILIATE SYSTEM
 ========================= */
-
-try {
-
 userRef.once("value").then(userSnap => {
 
     const userData = userSnap.val();
 
     console.log("Depositing user:", userData);
 
-    // SAFE CHECK
-    const referralCode = (userData?.referredBy || "").trim().toUpperCase();
-
-    if (!referralCode) {
+    if (!userData || !userData.referredBy) {
         console.log("No referral code found");
         return;
     }
 
+    const referralCode = userData.referredBy.trim().toUpperCase();
     const commission = Math.floor(amountRaw * 0.30);
 
     console.log("Referral Code:", referralCode);
     console.log("Commission:", commission);
 
     db.ref("users")
+    .orderByChild("referralCode")
+    .equalTo(referralCode)
     .once("value")
     .then(snapshot => {
 
+        console.log("Matches found:", snapshot.numChildren());
+
         if (!snapshot.exists()) {
-            console.log("No users found");
+            console.log("No matching referrer found");
             return;
         }
 
-        let found = false;
-
         snapshot.forEach(refSnap => {
 
-            const refData = refSnap.val() || {};
+            const refKey = refSnap.key;
 
-            const refCode = (refData.referralCode || "")
-                .trim()
-                .toUpperCase();
+            console.log("Referrer UID:", refKey);
 
-            if (refCode === referralCode) {
+            /* TOTAL EARNED */
+            db.ref("users/" + refKey + "/affiliateEarned")
+            .transaction(v => (v || 0) + commission);
 
-                found = true;
+            /* WITHDRAWABLE BALANCE */
+            db.ref("users/" + refKey + "/affiliateBalance")
+            .transaction(v => (v || 0) + commission);
 
-                const refKey = refSnap.key;
+            /* TRANSACTION */
+            db.ref("users/" + refKey + "/transactions").push({
+                type: "affiliate",
+                amount: commission,
+                fromUser: user.uid,
+                time: Date.now()
+            });
 
-                console.log("Referrer UID:", refKey);
+            /* REFERRAL RECORD */
+            db.ref("referrals/" + refKey + "/" + user.uid).update({
+                deposited: true,
+                totalDeposited: amountRaw,
+                lastDeposit: Date.now()
+            });
 
-                /* TOTAL EARNED */
-                db.ref("users/" + refKey + "/affiliateEarned")
-                .transaction(v => (v || 0) + commission);
-
-                /* WITHDRAWABLE BALANCE */
-                db.ref("users/" + refKey + "/affiliateBalance")
-                .transaction(v => (v || 0) + commission);
-
-                /* TRANSACTION */
-                db.ref("users/" + refKey + "/transactions").push({
-                    type: "affiliate",
-                    amount: commission,
-                    fromUser: user.uid,
-                    time: Date.now()
-                });
-
-                /* REFERRAL RECORD */
-                db.ref("referrals/" + refKey + "/" + user.uid)
-                .transaction(data => {
-
-                    if (!data) {
-                        data = {
-                            depositCount: 0,
-                            totalDeposited: 0,
-                            firstDeposit: Date.now()
-                        };
-                    }
-
-                    data.depositCount = (data.depositCount || 0) + 1;
-                    data.totalDeposited = (data.totalDeposited || 0) + amountRaw;
-                    data.lastDeposit = Date.now();
-
-                    return data;
-                });
-            }
         });
-
-        if (!found) {
-            console.log("No matching referrer found for code:", referralCode);
-        }
 
     });
 
 });
-
-} catch (e) {
-    console.log("Affiliate system error:", e);
-}
 
                     toast("Payment successful! Ref: " + txId);
 
