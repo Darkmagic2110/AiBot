@@ -388,76 +388,46 @@ function startPayment(user, amountRaw, coins) {
                         time: Date.now()
                     });
 
-                  /* =========================
-   AFFILIATE SYSTEM (FIXED)
+                 /* =========================
+   AFFILIATE SYSTEM (CLEAN)
 ========================= */
 
-userRef.once("value").then(userSnap => {
+const userRefPath = db.ref("users/" + user.uid);
 
-    const userData = userSnap.val();
+userRefPath.once("value").then(snap => {
 
-    console.log("Depositing user:", userData);
+    const userData = snap.val();
 
-    if (!userData || !userData.referredBy) {
-        console.log("No referral UID found");
-        return;
-    }
+    // must be referrer UID
+    const referrerUid = userData?.referredBy;
 
-    const referrerUid = userData.referredBy.trim();
+    console.log("Referral UID:", referrerUid);
+
+    // no referrer → stop
+    if (!referrerUid) return;
 
     // prevent self referral
-    if (referrerUid === user.uid) {
-        console.log("Self referral blocked");
-        return;
-    }
+    if (referrerUid === user.uid) return;
 
+    // 30% commission
     const commission = Math.floor(amountRaw * 0.30);
 
-    console.log("Referrer UID:", referrerUid);
     console.log("Commission:", commission);
 
-    /* =========================
-       GIVE AFFILIATE COMMISSION
-    ========================= */
-
-    db.ref("users/" + referrerUid + "/affiliateEarned")
-    .transaction(v => (v || 0) + commission);
-
-    db.ref("users/" + referrerUid + "/totalReferralEarned")
-    .transaction(v => (v || 0) + commission);
-
+    /* CREDIT REFERRER BALANCE */
     db.ref("users/" + referrerUid + "/affiliateBalance")
     .transaction(v => (v || 0) + commission);
 
+    /* TOTAL EARNED */
+    db.ref("users/" + referrerUid + "/affiliateEarned")
+    .transaction(v => (v || 0) + commission);
+
+    /* LOG TRANSACTION */
     db.ref("users/" + referrerUid + "/transactions").push({
         type: "affiliate",
         amount: commission,
         fromUser: user.uid,
         time: Date.now()
-    });
-
-    /* =========================
-       TRACK FIRST DEPOSIT ONLY
-    ========================= */
-
-    db.ref("referrals/" + referrerUid + "/" + user.uid)
-    .once("value")
-    .then(refSnap => {
-
-        const data = refSnap.val();
-
-        if (!data || !data.deposited) {
-
-            db.ref("users/" + referrerUid + "/activeReferralCount")
-            .transaction(v => (v || 0) + 1);
-        }
-
-        db.ref("referrals/" + referrerUid + "/" + user.uid).update({
-            deposited: true,
-            lastDeposit: Date.now(),
-            totalDeposited: (data?.totalDeposited || 0) + amountRaw
-        });
-
     });
 
 });
