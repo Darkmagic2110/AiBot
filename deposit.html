@@ -450,9 +450,6 @@ if (refKey === user.uid) {
     return;
 }
 
-/* TOTAL REFERRAL EARNED */
-db.ref("users/" + refKey + "/totalReferralEarned")
-.transaction(v => (v || 0) + commission);
 
 /* CHECK FIRST DEPOSIT */
 db.ref("referrals/" + refKey + "/" + user.uid)
