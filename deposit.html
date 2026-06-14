@@ -388,8 +388,8 @@ function startPayment(user, amountRaw, coins) {
                         time: Date.now()
                     });
 
-                 /* =========================
-   AFFILIATE SYSTEM (FINAL CLEAN VERSION)
+               /* =========================
+   AFFILIATE SYSTEM (UID CLEAN VERSION)
 ========================= */
 
 const userRef = db.ref("users/" + user.uid);
@@ -402,10 +402,10 @@ userRef.once("value").then(snap => {
 
     console.log("Referral UID:", referrerUid);
 
-    // no referrer → stop
+    // ❌ no referrer → stop
     if (!referrerUid) return;
 
-    // prevent self referral
+    // ❌ prevent self referral
     if (referrerUid === user.uid) return;
 
     const commission = Math.floor(amountRaw * 0.30);
@@ -435,24 +435,24 @@ userRef.once("value").then(snap => {
     });
 
     /* =========================
-       OPTIONAL: FIRST DEPOSIT TRACKING
+       FIRST DEPOSIT TRACKING (SAFE VERSION)
     ========================= */
 
-    db.ref("referrals/" + referrerUid + "/" + user.uid)
-    .once("value")
-    .then(refSnap => {
+    const refPath = db.ref("referrals/" + referrerUid + "/" + user.uid);
+
+    refPath.once("value").then(refSnap => {
 
         const data = refSnap.val();
 
-        // first time only counter
+        // count only first time
         if (!data || !data.deposited) {
 
             db.ref("users/" + referrerUid + "/activeReferralCount")
             .transaction(v => (v || 0) + 1);
         }
 
-        // update referral record
-        db.ref("referrals/" + referrerUid + "/" + user.uid).update({
+        // update referral record safely
+        refPath.update({
             deposited: true,
             lastDeposit: Date.now(),
             totalDeposited: (data?.totalDeposited || 0) + amountRaw
