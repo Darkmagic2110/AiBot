@@ -181,9 +181,9 @@ let userData = null;
 let currentUser = null;
 let referralsVisible = false;
 
-firebase.auth().onAuthStateChanged(user=>{
+firebase.auth().onAuthStateChanged(user => {
 
-if(!user) return location.href="loging.html";
+if (!user) return location.href = "loging.html";
 
 currentUser = user;
 load(user.uid);
@@ -192,61 +192,67 @@ load(user.uid);
 
 function load(uid){
 
-db.ref("users/"+uid).once("value").then(snap=>{
+db.ref("users/" + uid).on("value", snap => {
 
 userData = snap.val() || {};
 
-const code = userData.referralCode || "";
-
+// 🔥 FIXED: use UID referral link (NOT referralCode)
 document.getElementById("refLink").value =
-window.location.origin + "/index.html?ref=" + code;
+window.location.origin + "/index.html?ref=" + uid;
 
-/* Withdrawable affiliate balance */
+/* affiliate stats */
 document.getElementById("balance").innerText =
 "₦" + (userData.affiliateBalance || 0);
 
-/* Total lifetime affiliate earnings */
 document.getElementById("earnings").innerText =
 "₦" + (userData.affiliateEarned || 0);
 
-/* Total referrals */
-document.getElementById("totalRefs").innerText =
-userData.totalReferralUsers || 0;
+/* optional active referrals */
+document.getElementById("activeRefs").innerText =
+userData.activeReferralCount || 0;
 
-loadStats(code);
+/* load referral list */
+loadStats(uid);
 
-/* Auto-fill saved bank details */
-if(userData.withdrawalDetails){
+});
 
-if(document.getElementById("accNumber"))
+/* auto fill bank details */
+db.ref("users/" + uid).once("value").then(snap => {
+
+const data = snap.val() || {};
+
+if (data.withdrawalDetails) {
+
 document.getElementById("accNumber").value =
-userData.withdrawalDetails.accountNumber || "";
+data.withdrawalDetails.accountNumber || "";
 
-if(document.getElementById("bankName"))
 document.getElementById("bankName").value =
-userData.withdrawalDetails.bankName || "";
+data.withdrawalDetails.bankName || "";
 
-if(document.getElementById("accName"))
 document.getElementById("accName").value =
-userData.withdrawalDetails.accountName || "";
-
+data.withdrawalDetails.accountName || "";
 }
 
 });
 
 }
 
-function loadStats(myCode){
+/* =========================
+   REFERRAL LIST (FIXED)
+========================= */
 
-db.ref("users").once("value").then(all=>{
+function loadStats(uid){
+
+db.ref("users").once("value").then(all => {
 
 let list = "";
 
-all.forEach(u=>{
+all.forEach(u => {
 
 const v = u.val();
 
-if(v.referredBy === myCode){
+// 🔥 CLEAN MATCH: direct UID system
+if (v.referredBy === uid) {
 
 const maskedEmail =
 (v.email || "User")
@@ -256,9 +262,7 @@ list += `
 <div class="item">
 <div>${maskedEmail}</div>
 <div class="ok">Referred</div>
-</div>
-`;
-
+</div>`;
 }
 
 });
@@ -270,30 +274,13 @@ list || "<div style='padding:10px'>No referrals yet</div>";
 
 }
 
-/* SHOW / HIDE REFERRALS */
-function toggleReferrals(){
+/* =========================
+   COPY LINK
+========================= */
 
-const list = document.getElementById("list");
-
-referralsVisible = !referralsVisible;
-
-if(referralsVisible){
-
-list.style.display = "block";
-
-}else{
-
-list.style.display = "none";
-
-}
-
-}
-
-/* COPY LINK */
 function copyLink(){
 
 let i = document.getElementById("refLink");
-
 i.select();
 i.setSelectionRange(0,99999);
 
@@ -303,108 +290,75 @@ alert("Referral link copied");
 
 }
 
-/* WITHDRAW */
+/* =========================
+   WITHDRAW SYSTEM (UNCHANGED BUT SAFE)
+========================= */
+
 function openWithdraw(){
-
 document.getElementById("withdrawModal").style.display = "block";
-
 }
 
 function closeWithdraw(){
-
 document.getElementById("withdrawModal").style.display = "none";
-
 }
 
 function submitWithdraw(){
 
-let amt = Number(
-document.getElementById("amount").value
-);
+let amt = Number(document.getElementById("amount").value);
 
-let accountNumber =
-document.getElementById("accNumber").value.trim();
+let accountNumber = document.getElementById("accNumber").value.trim();
+let bankName = document.getElementById("bankName").value.trim();
+let accountName = document.getElementById("accName").value.trim();
 
-let bankName =
-document.getElementById("bankName").value.trim();
-
-let accountName =
-document.getElementById("accName").value.trim();
-
-/* Minimum withdrawal */
-if(amt < 5000){
-
+/* minimum */
+if (amt < 5000) {
 alert("Minimum withdrawal is ₦5000");
 return;
-
 }
 
-/* Validate bank details */
-if(!accountNumber || !bankName || !accountName){
-
+/* validate */
+if (!accountNumber || !bankName || !accountName) {
 alert("Fill all bank details");
 return;
-
 }
 
-/* Check affiliate balance */
-let currentBalance =
-Number(userData.affiliateBalance || 0);
+/* check balance */
+let currentBalance = Number(userData.affiliateBalance || 0);
 
-if(amt > currentBalance){
-
+if (amt > currentBalance) {
 alert("Insufficient affiliate balance");
 return;
-
 }
 
-/* Save bank details */
-db.ref(
-"users/"+currentUser.uid+"/withdrawalDetails"
-).set({
-
-accountNumber: accountNumber,
-bankName: bankName,
-accountName: accountName
-
+/* save bank details */
+db.ref("users/" + currentUser.uid + "/withdrawalDetails").set({
+accountNumber,
+bankName,
+accountName
 });
 
-/* Deduct from affiliate balance */
-db.ref(
-"users/"+currentUser.uid+"/affiliateBalance"
-).transaction(current=>{
-
-if((current || 0) < amt){
-return;
-}
-
+/* deduct balance */
+db.ref("users/" + currentUser.uid + "/affiliateBalance")
+.transaction(current => {
+if ((current || 0) < amt) return;
 return current - amt;
-
 });
 
-/* Save withdrawal request */
+/* create request */
 db.ref("withdrawals").push({
-
 uid: currentUser.uid,
-
-accountNumber: accountNumber,
-bankName: bankName,
-accountName: accountName,
-
+accountNumber,
+bankName,
+accountName,
 amount: amt,
-
 status: "pending",
-
 time: Date.now()
-
 });
 
 alert("Withdrawal submitted successfully");
 
 closeWithdraw();
-
 load(currentUser.uid);
-
 }
 </script>
 
