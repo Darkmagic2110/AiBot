@@ -469,14 +469,32 @@ function register() {
     const refCode = urlParams.get("ref");
 
     let newUid = "";
+    let referredByUid = "";
 
     firebase.auth()
     .createUserWithEmailAndPassword(email, password)
 
-    .then((userCredential) => {
+    .then(async (userCredential) => {
 
         newUid = userCredential.user.uid;
 
+        // 🔥 CONVERT REF CODE → UID
+        if (refCode) {
+
+            await db.ref("users")
+            .orderByChild("referralCode")
+            .equalTo(refCode)
+            .once("value")
+            .then(snapshot => {
+
+                snapshot.forEach(refSnap => {
+                    referredByUid = refSnap.key;
+                });
+
+            });
+        }
+
+        // CREATE USER
         return db.ref("users/" + newUid).set({
             uid: newUid,
             name: name,
@@ -484,52 +502,18 @@ function register() {
             balance: 0,
 
             referralCode: referralCode,
-            referredBy: referredBy || "",
+            referredBy: referredByUid || "",
 
             affiliateBalance: 0,
-affiliateEarned: 0,
+            affiliateEarned: 0,
 
-totalReferralEarned: 0,
-totalReferralUsers: 0,
-activeReferralCount: 0,
-firstDepositDone: false,
+            totalReferralEarned: 0,
+            totalReferralUsers: 0,
+            activeReferralCount: 0,
+            firstDepositDone: false,
 
             createdAt: Date.now()
         });
-
-    })
-
-    .then(() => {
-
-        if (!referredBy) return;
-
-        // FAST REFERRER LOOKUP (NO LOOPING ALL USERS)
-        return db.ref("users")
-            .orderByChild("referralCode")
-            .equalTo(referredBy)
-            .once("value")
-            .then(snapshot => {
-
-                snapshot.forEach(refSnap => {
-
-                    const refUserId = refSnap.key;
-
-                    // SAVE REFERRAL RECORD
-                    db.ref("referrals/" + refUserId + "/" + newUid).set({
-                        uid: newUid,
-                        name: name,
-                        email: email,
-                        deposited: false,
-                        totalDeposited: 0,
-                        joinedAt: Date.now()
-                    });
-
-                    // COUNT ONLY REGISTRATION REFERRALS
-                    db.ref("users/" + refUserId + "/totalReferralUsers")
-                        .transaction(v => (v || 0) + 1);
-                });
-
-            });
 
     })
 
