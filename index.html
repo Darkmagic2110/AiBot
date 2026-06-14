@@ -359,35 +359,35 @@ button:hover {
         <h2>DARK MAGIC AI</h2>
 
         <p class="welcome-text">
-            Welcome 👋
+            Welcome ð
         </p>
 
         <p class="sub-text">
             Register to continue using 
-            <span>DARK MAGIC AI Bot ⚡</span>
+            <span>DARK MAGIC AI Bot â¡</span>
         </p>
 
         <div class="ai-features">
 
             <div class="feature">
-                <span>🧠</span>
+                <span>ð§ </span>
                 <p>Smart AI-powered signals</p>
             </div>
 
             <div class="feature">
-                <span>📊</span>
+                <span>ð</span>
                 <p>Real-time analysis</p>
             </div>
 
             <div class="feature">
-                <span>🎯</span>
+                <span>ð¯</span>
                 <p>85% - 90% accurate signal analysis</p>
             </div>
 
         </div>
 
         <p class="bottom-ai-text">
-            Register to start dominating the games with powerful AI predictions 🧠🔥
+            Register to start dominating the games with powerful AI predictions ð§ ð¥
         </p>
 
     </div>
@@ -414,7 +414,7 @@ button:hover {
 </div>
 
 <script>
-// FIREBASE CONFIG
+// FIREBASE CONFIG (UNCHANGED)
 var firebaseConfig = {
     apiKey: "AIzaSyDvFDByPPo9zgwKLdPaREz1OVMQCXmPfrs",
     authDomain: "bets-d795d.firebaseapp.com",
@@ -428,10 +428,8 @@ var firebaseConfig = {
 firebase.initializeApp(firebaseConfig);
 var db = firebase.database();
 
-
-// REGISTER FUNCTION (CLEAN UID SYSTEM)
+// REGISTER FUNCTION (FIXED)
 function register() {
-
     let name = document.getElementById("name").value.trim();
     let email = document.getElementById("email").value.trim().toLowerCase();
     let password = document.getElementById("password").value;
@@ -459,61 +457,35 @@ function register() {
 
     loader.style.display = "block";
 
-    const urlParams = new URLSearchParams(window.location.search);
-    const refUid = urlParams.get("ref"); // 🔥 THIS IS NOW UID ONLY
-
-    firebase.auth()
-    .createUserWithEmailAndPassword(email, password)
+    firebase.auth().createUserWithEmailAndPassword(email, password)
     .then((userCredential) => {
 
-        const uid = userCredential.user.uid;
+        let uid = userCredential.user.uid;
 
-        // CREATE USER PROFILE (CLEAN SYSTEM)
         return db.ref("users/" + uid).set({
-            uid: uid,
             name: name,
             email: email,
             balance: 0,
-
-            // 🔥 IMPORTANT: direct UID referral
-            referredBy: refUid || "",
-
-            // affiliate fields
-            affiliateBalance: 0,
-            affiliateEarned: 0,
-
             createdAt: Date.now()
         });
 
     })
     .then(() => {
-
         loader.style.display = "none";
-
-        alert(
-            "Account created successfully ✅\n\n" +
-            "Your Referral Link is ready inside Affiliate Page"
-        );
-
+        alert("Account created successfully â");
         window.location.href = "loging.html";
-
     })
     .catch((err) => {
-
         loader.style.display = "none";
 
         if (err.code === "auth/email-already-in-use") {
-            error.innerText = "Email already exists ❌";
-        }
-        else if (err.code === "auth/weak-password") {
+            error.innerText = "Email already exists â";
+        } else if (err.code === "auth/weak-password") {
             error.innerText = "Password must be at least 6 characters";
-        }
-        else {
+        } else {
             error.innerText = err.message;
         }
-
     });
-
 }
 </script>
 
