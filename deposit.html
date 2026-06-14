@@ -388,23 +388,25 @@ function startPayment(user, amountRaw, coins) {
                         time: Date.now()
                     });
 
-                    /* =========================
-   AFFILIATE SYSTEM (CLEAN FINAL)
+                   /* =========================
+   AFFILIATE SYSTEM
 ========================= */
-
 userRef.once("value").then(userSnap => {
 
     const userData = userSnap.val();
 
-    if (!userData || !userData.referredBy) return;
+    console.log("Depositing user:", userData);
 
-    const referralCode = String(userData.referredBy).trim().toUpperCase();
-    const commission = amountRaw * 0.30;
+    if (!userData || !userData.referredBy) {
+        console.log("No referral code found");
+        return;
+    }
 
-    // ALWAYS use Flutterwave transaction ID
-    const txId = response.transaction_id;
+    const referralCode = userData.referredBy.trim().toUpperCase();
+    const commission = Math.floor(amountRaw * 0.30);
 
-    if (!txId) return;
+    console.log("Referral Code:", referralCode);
+    console.log("Commission:", commission);
 
     db.ref("users")
     .orderByChild("referralCode")
@@ -412,62 +414,40 @@ userRef.once("value").then(userSnap => {
     .once("value")
     .then(snapshot => {
 
-        if (!snapshot.exists()) return;
+        console.log("Matches found:", snapshot.numChildren());
+
+        if (!snapshot.exists()) {
+            console.log("No matching referrer found");
+            return;
+        }
 
         snapshot.forEach(refSnap => {
 
             const refKey = refSnap.key;
 
-            // 🔒 Prevent double payout ONLY per real transaction
-            const lockRef = db.ref("affiliateLocks/" + txId);
+            console.log("Referrer UID:", refKey);
 
-            lockRef.once("value").then(lockSnap => {
+            /* TOTAL EARNED */
+            db.ref("users/" + refKey + "/affiliateEarned")
+            .transaction(v => (v || 0) + commission);
 
-                if (lockSnap.exists()) return; // already paid
+            /* WITHDRAWABLE BALANCE */
+            db.ref("users/" + refKey + "/affiliateBalance")
+            .transaction(v => (v || 0) + commission);
 
-                // mark as paid
-                lockRef.set({
-                    paid: true,
-                    time: Date.now(),
-                    user: user.uid,
-                    referrer: refKey
-                });
+            /* TRANSACTION */
+            db.ref("users/" + refKey + "/transactions").push({
+                type: "affiliate",
+                amount: commission,
+                fromUser: user.uid,
+                time: Date.now()
+            });
 
-                // 💰 add commission
-                db.ref("users/" + refKey + "/affiliateEarned")
-                .transaction(v => (v || 0) + commission);
-
-                db.ref("users/" + refKey + "/affiliateBalance")
-                .transaction(v => (v || 0) + commission);
-
-                // 📜 history
-                db.ref("users/" + refKey + "/transactions").push({
-                    type: "affiliate",
-                    amount: commission,
-                    fromUser: user.uid,
-                    txId: txId,
-                    time: Date.now()
-                });
-
-                // 📊 referral stats (every deposit counts)
-                db.ref("referrals/" + refKey + "/" + user.uid)
-                .transaction(data => {
-
-                    if (!data) {
-                        data = {
-                            depositCount: 0,
-                            totalDeposited: 0,
-                            firstDeposit: Date.now()
-                        };
-                    }
-
-                    data.depositCount = (data.depositCount || 0) + 1;
-                    data.totalDeposited = (data.totalDeposited || 0) + amountRaw;
-                    data.lastDeposit = Date.now();
-
-                    return data;
-                });
-
+            /* REFERRAL RECORD */
+            db.ref("referrals/" + refKey + "/" + user.uid).update({
+                deposited: true,
+                totalDeposited: amountRaw,
+                lastDeposit: Date.now()
             });
 
         });
