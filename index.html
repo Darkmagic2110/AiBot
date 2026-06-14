@@ -466,7 +466,7 @@ function register() {
     const referralCode = generateReferralCode().toUpperCase();
 
     const urlParams = new URLSearchParams(window.location.search);
-    const referredBy = urlParams.get("ref");
+    const refCode = urlParams.get("ref");
 
     let newUid = "";
 
