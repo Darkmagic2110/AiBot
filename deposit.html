@@ -428,8 +428,18 @@ userRef.once("value").then(userSnap => {
             console.log("Referrer UID:", refKey);
 
             /* TOTAL EARNED */
-            db.ref("users/" + refKey + "/affiliateEarned")
-            .transaction(v => (v || 0) + commission);
+            const referrerRef = db.ref("users/" + refKey);
+
+referrerRef.once("value").then(snap => {
+
+    const data = snap.val() || {};
+
+    referrerRef.update({
+        affiliateEarned: (data.affiliateEarned || 0) + commission,
+        affiliateBalance: (data.affiliateBalance || 0) + commission
+    });
+
+});
 
             /* WITHDRAWABLE BALANCE */
             db.ref("users/" + refKey + "/affiliateBalance")
