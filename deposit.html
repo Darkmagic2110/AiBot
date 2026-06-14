@@ -389,8 +389,9 @@ function startPayment(user, amountRaw, coins) {
                     });
 
                    /* =========================
-   AFFILIATE SYSTEM
+   AFFILIATE SYSTEM (FIXED)
 ========================= */
+
 userRef.once("value").then(userSnap => {
 
     const userData = userSnap.val();
@@ -402,7 +403,7 @@ userRef.once("value").then(userSnap => {
         return;
     }
 
-    const referralCode = userData.referredBy.trim().toUpperCase();
+    const referralCode = String(userData.referredBy).trim().toUpperCase();
     const commission = Math.floor(amountRaw * 0.30);
 
     console.log("Referral Code:", referralCode);
@@ -413,8 +414,6 @@ userRef.once("value").then(userSnap => {
     .equalTo(referralCode)
     .once("value")
     .then(snapshot => {
-
-        console.log("Matches found:", snapshot.numChildren());
 
         if (!snapshot.exists()) {
             console.log("No matching referrer found");
@@ -427,15 +426,23 @@ userRef.once("value").then(userSnap => {
 
             console.log("Referrer UID:", refKey);
 
-            /* TOTAL EARNED */
-            db.ref("users/" + refKey + "/affiliateEarned")
-            .transaction(v => (v || 0) + commission);
+            const referrerRef = db.ref("users/" + refKey);
 
-            /* WITHDRAWABLE BALANCE */
-            db.ref("users/" + refKey + "/affiliateBalance")
-            .transaction(v => (v || 0) + commission);
+            /* SINGLE ATOMIC UPDATE (IMPORTANT FIX) */
+            referrerRef.transaction(user => {
 
-            /* TRANSACTION */
+                if (!user) return user;
+
+                const earned = user.affiliateEarned || 0;
+                const balance = user.affiliateBalance || 0;
+
+                user.affiliateEarned = earned + commission;
+                user.affiliateBalance = balance + commission;
+
+                return user;
+            });
+
+            /* TRANSACTION HISTORY */
             db.ref("users/" + refKey + "/transactions").push({
                 type: "affiliate",
                 amount: commission,
@@ -444,9 +451,10 @@ userRef.once("value").then(userSnap => {
             });
 
             /* REFERRAL RECORD */
-            db.ref("referrals/" + refKey + "/" + user.uid).update({
+            db.ref("referrals/" + refKey + "/" + user.uid).set({
                 deposited: true,
                 totalDeposited: amountRaw,
+                commission: commission,
                 lastDeposit: Date.now()
             });
 
