@@ -450,13 +450,23 @@ userRef.once("value").then(userSnap => {
                 time: Date.now()
             });
 
-            /* REFERRAL RECORD */
-            db.ref("referrals/" + refKey + "/" + user.uid).set({
-                deposited: true,
-                totalDeposited: amountRaw,
-                commission: commission,
-                lastDeposit: Date.now()
-            });
+            /* REFERRAL RECORD (FIXED - MULTIPLE DEPOSITS SUPPORT) */
+db.ref("referrals/" + refKey + "/" + user.uid).transaction(data => {
+
+    if (!data) {
+        data = {
+            depositCount: 0,
+            totalDeposited: 0,
+            firstDeposit: Date.now()
+        };
+    }
+
+    data.depositCount = (data.depositCount || 0) + 1;
+    data.totalDeposited = (data.totalDeposited || 0) + amountRaw;
+    data.lastDeposit = Date.now();
+
+    return data;
+});
 
         });
 
