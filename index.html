@@ -428,12 +428,8 @@ var firebaseConfig = {
 firebase.initializeApp(firebaseConfig);
 var db = firebase.database();
 
-// GENERATE REFERRAL CODE
-function generateReferralCode() {
-    return Math.random().toString(36).substring(2, 10).toUpperCase();
-}
 
-// REGISTER FUNCTION
+// REGISTER FUNCTION (CLEAN UID SYSTEM)
 function register() {
 
     let name = document.getElementById("name").value.trim();
@@ -463,73 +459,45 @@ function register() {
 
     loader.style.display = "block";
 
-    const referralCode = generateReferralCode().toUpperCase();
-
     const urlParams = new URLSearchParams(window.location.search);
-    const refCode = urlParams.get("ref");
-
-    let newUid = "";
-    let referredByUid = "";
+    const refUid = urlParams.get("ref"); // 🔥 THIS IS NOW UID ONLY
 
     firebase.auth()
     .createUserWithEmailAndPassword(email, password)
+    .then((userCredential) => {
 
-    .then(async (userCredential) => {
+        const uid = userCredential.user.uid;
 
-        newUid = userCredential.user.uid;
-
-        // 🔥 CONVERT REF CODE → UID
-        if (refCode) {
-
-            await db.ref("users")
-            .orderByChild("referralCode")
-            .equalTo(refCode)
-            .once("value")
-            .then(snapshot => {
-
-                snapshot.forEach(refSnap => {
-                    referredByUid = refSnap.key;
-                });
-
-            });
-        }
-
-        // CREATE USER
-        return db.ref("users/" + newUid).set({
-            uid: newUid,
+        // CREATE USER PROFILE (CLEAN SYSTEM)
+        return db.ref("users/" + uid).set({
+            uid: uid,
             name: name,
             email: email,
             balance: 0,
 
-            referralCode: referralCode,
-            referredBy: referredByUid || "",
+            // 🔥 IMPORTANT: direct UID referral
+            referredBy: refUid || "",
 
+            // affiliate fields
             affiliateBalance: 0,
             affiliateEarned: 0,
-
-            totalReferralEarned: 0,
-            totalReferralUsers: 0,
-            activeReferralCount: 0,
-            firstDepositDone: false,
 
             createdAt: Date.now()
         });
 
     })
-
     .then(() => {
 
         loader.style.display = "none";
 
         alert(
             "Account created successfully ✅\n\n" +
-            "Your Referral Code: " + referralCode
+            "Your Referral Link is ready inside Affiliate Page"
         );
 
         window.location.href = "loging.html";
 
     })
-
     .catch((err) => {
 
         loader.style.display = "none";
