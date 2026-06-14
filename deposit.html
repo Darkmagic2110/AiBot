@@ -388,11 +388,9 @@ function startPayment(user, amountRaw, coins) {
                         time: Date.now()
                     });
 
-                   /* =========================
-   AFFILIATE SYSTEM (FINAL FIXED)
+                    /* =========================
+   AFFILIATE SYSTEM (CLEAN FINAL)
 ========================= */
-
-const txRef = "TX-" + Date.now(); // use this consistently
 
 userRef.once("value").then(userSnap => {
 
@@ -402,6 +400,11 @@ userRef.once("value").then(userSnap => {
 
     const referralCode = String(userData.referredBy).trim().toUpperCase();
     const commission = amountRaw * 0.30;
+
+    // ALWAYS use Flutterwave transaction ID
+    const txId = response.transaction_id;
+
+    if (!txId) return;
 
     db.ref("users")
     .orderByChild("referralCode")
@@ -415,34 +418,38 @@ userRef.once("value").then(userSnap => {
 
             const refKey = refSnap.key;
 
-            /* 🔥 USE TX_REF (NOT transaction_id) */
-            const processKey = "affiliate_" + txRef + "_" + refKey;
+            // 🔒 Prevent double payout ONLY per real transaction
+            const lockRef = db.ref("affiliateLocks/" + txId);
 
-            const checkRef = db.ref("processedAffiliates/" + processKey);
+            lockRef.once("value").then(lockSnap => {
 
-            checkRef.once("value").then(exists => {
+                if (lockSnap.exists()) return; // already paid
 
-                if (exists.exists()) return;
+                // mark as paid
+                lockRef.set({
+                    paid: true,
+                    time: Date.now(),
+                    user: user.uid,
+                    referrer: refKey
+                });
 
-                checkRef.set(true);
-
-                /* ADD COMMISSION */
+                // 💰 add commission
                 db.ref("users/" + refKey + "/affiliateEarned")
                 .transaction(v => (v || 0) + commission);
 
                 db.ref("users/" + refKey + "/affiliateBalance")
                 .transaction(v => (v || 0) + commission);
 
-                /* HISTORY */
+                // 📜 history
                 db.ref("users/" + refKey + "/transactions").push({
                     type: "affiliate",
                     amount: commission,
                     fromUser: user.uid,
-                    txRef: txRef,
+                    txId: txId,
                     time: Date.now()
                 });
 
-                /* REFERRAL STATS */
+                // 📊 referral stats (every deposit counts)
                 db.ref("referrals/" + refKey + "/" + user.uid)
                 .transaction(data => {
 
@@ -454,8 +461,8 @@ userRef.once("value").then(userSnap => {
                         };
                     }
 
-                    data.depositCount += 1;
-                    data.totalDeposited += amountRaw;
+                    data.depositCount = (data.depositCount || 0) + 1;
+                    data.totalDeposited = (data.totalDeposited || 0) + amountRaw;
                     data.lastDeposit = Date.now();
 
                     return data;
