@@ -179,44 +179,51 @@ const db = firebase.database();
 
 let userData = null;
 let currentUser = null;
-let referralsVisible = false;
 
+/* =========================
+   AUTH CHECK
+========================= */
 firebase.auth().onAuthStateChanged(user => {
 
-if (!user) return location.href = "loging.html";
+if (!user) {
+location.href = "loging.html";
+return;
+}
 
 currentUser = user;
 load(user.uid);
 
 });
 
+/* =========================
+   LOAD USER DATA
+========================= */
 function load(uid){
 
 db.ref("users/" + uid).on("value", snap => {
 
 userData = snap.val() || {};
 
-// 🔥 FIXED: use UID referral link (NOT referralCode)
+/* referral link (UID SYSTEM) */
 document.getElementById("refLink").value =
 window.location.origin + "/index.html?ref=" + uid;
 
-/* affiliate stats */
+/* stats */
 document.getElementById("balance").innerText =
 "₦" + (userData.affiliateBalance || 0);
 
 document.getElementById("earnings").innerText =
 "₦" + (userData.affiliateEarned || 0);
 
-/* optional active referrals */
 document.getElementById("activeRefs").innerText =
 userData.activeReferralCount || 0;
 
-/* load referral list */
+/* referral list */
 loadStats(uid);
 
 });
 
-/* auto fill bank details */
+/* autofill withdrawal details */
 db.ref("users/" + uid).once("value").then(snap => {
 
 const data = snap.val() || {};
@@ -238,9 +245,8 @@ data.withdrawalDetails.accountName || "";
 }
 
 /* =========================
-   REFERRAL LIST (FIXED)
+   REFERRAL LIST
 ========================= */
-
 function loadStats(uid){
 
 db.ref("users").once("value").then(all => {
@@ -251,12 +257,11 @@ all.forEach(u => {
 
 const v = u.val();
 
-// 🔥 CLEAN MATCH: direct UID system
+// UID referral match
 if (v.referredBy === uid) {
 
 const maskedEmail =
-(v.email || "User")
-.replace(/(.{2}).+(@.+)/, "$1****$2");
+(v.email || "User").replace(/(.{2}).+(@.+)/, "$1****$2");
 
 list += `
 <div class="item">
@@ -277,23 +282,20 @@ list || "<div style='padding:10px'>No referrals yet</div>";
 /* =========================
    COPY LINK
 ========================= */
-
 function copyLink(){
 
-let i = document.getElementById("refLink");
+const i = document.getElementById("refLink");
 i.select();
-i.setSelectionRange(0,99999);
+i.setSelectionRange(0, 99999);
 
 document.execCommand("copy");
 
 alert("Referral link copied");
-
 }
 
 /* =========================
-   WITHDRAW SYSTEM (UNCHANGED BUT SAFE)
+   WITHDRAW SYSTEM
 ========================= */
-
 function openWithdraw(){
 document.getElementById("withdrawModal").style.display = "block";
 }
@@ -304,47 +306,46 @@ document.getElementById("withdrawModal").style.display = "none";
 
 function submitWithdraw(){
 
-let amt = Number(document.getElementById("amount").value);
+const amt = Number(document.getElementById("amount").value);
 
-let accountNumber = document.getElementById("accNumber").value.trim();
-let bankName = document.getElementById("bankName").value.trim();
-let accountName = document.getElementById("accName").value.trim();
+const accountNumber = document.getElementById("accNumber").value.trim();
+const bankName = document.getElementById("bankName").value.trim();
+const accountName = document.getElementById("accName").value.trim();
 
-/* minimum */
+/* validation */
 if (amt < 5000) {
 alert("Minimum withdrawal is ₦5000");
 return;
 }
 
-/* validate */
 if (!accountNumber || !bankName || !accountName) {
 alert("Fill all bank details");
 return;
 }
 
-/* check balance */
-let currentBalance = Number(userData.affiliateBalance || 0);
+/* balance check */
+const currentBalance = Number(userData.affiliateBalance || 0);
 
 if (amt > currentBalance) {
 alert("Insufficient affiliate balance");
 return;
 }
 
-/* save bank details */
+/* save withdrawal details */
 db.ref("users/" + currentUser.uid + "/withdrawalDetails").set({
 accountNumber,
 bankName,
 accountName
 });
 
-/* deduct balance */
+/* deduct balance safely */
 db.ref("users/" + currentUser.uid + "/affiliateBalance")
 .transaction(current => {
 if ((current || 0) < amt) return;
 return current - amt;
 });
 
-/* create request */
+/* create withdrawal request */
 db.ref("withdrawals").push({
 uid: currentUser.uid,
 accountNumber,
