@@ -389,8 +389,10 @@ function startPayment(user, amountRaw, coins) {
                     });
 
                  /* =========================
-   AFFILIATE SYSTEM (FIXED)
+   AFFILIATE SYSTEM (NON-BLOCKING FIX)
 ========================= */
+
+try {
 
 const userRef = db.ref("users/" + user.uid);
 
@@ -398,38 +400,28 @@ userRef.once("value").then(userSnap => {
 
     const userData = userSnap.val();
 
-    console.log("User referral data:", userData);
-
     if (!userData || !userData.referredBy) {
-        console.log("❌ No referral found for this user");
+        console.log("No referrer found");
         return;
     }
 
     const referrerUid = userData.referredBy;
     const commission = Math.floor(amountRaw * 0.30);
 
-    console.log("✅ Referrer UID:", referrerUid);
-    console.log("💰 Commission:", commission);
-
-    // prevent duplicate payout per transaction
     db.ref("affiliateProcessed/" + txId).once("value").then(check => {
 
-        if (check.exists()) {
-            console.log("⚠️ Already processed affiliate for this tx");
-            return;
-        }
+        if (check.exists()) return;
 
         db.ref("affiliateProcessed/" + txId).set(true);
 
         const refUserRef = db.ref("users/" + referrerUid);
 
-        // add earned
-        refUserRef.child("affiliateEarned").transaction(v => (v || 0) + commission);
+        refUserRef.child("affiliateEarned")
+            .transaction(v => (v || 0) + commission);
 
-        // add balance
-        refUserRef.child("affiliateBalance").transaction(v => (v || 0) + commission);
+        refUserRef.child("affiliateBalance")
+            .transaction(v => (v || 0) + commission);
 
-        // log transaction
         refUserRef.child("transactions").push({
             type: "affiliate",
             amount: commission,
@@ -438,9 +430,13 @@ userRef.once("value").then(userSnap => {
             time: Date.now()
         });
 
-        console.log("✅ Affiliate paid successfully");
-
     });
+
+});
+
+} catch (e) {
+    console.log("Affiliate error:", e);
+}
 
 });
 
