@@ -211,7 +211,6 @@ const firebaseConfig = {
     appId: "1:384386108287:android:d238a5ec8068d9bb9be84a",
     databaseURL: "https://bets-d795d-default-rtdb.firebaseio.com"
 };
-
 firebase.initializeApp(firebaseConfig);
 const db = firebase.database();
 
@@ -224,27 +223,17 @@ function toast(msg) {
     const t = document.getElementById("toast");
     t.innerHTML = msg;
     t.className = "show";
-    setTimeout(() => {
-        t.className = t.className.replace("show", "");
-    }, 3000);
+    setTimeout(() => { t.className = t.className.replace("show", ""); }, 3000);
 }
 
-/* =========================
-   LOAD TRANSACTIONS
-========================= */
 firebase.auth().onAuthStateChanged(user => {
-
     if (!user) {
         window.location.href = "login.html";
         return;
     }
 
-    db.ref("users/" + user.uid + "/transactions")
-    .once("value")
-    .then(snap => {
-
+    db.ref("users/" + user.uid + "/transactions").once("value").then(snap => {
         historyList.innerHTML = "";
-
         let arr = [];
 
         snap.forEach(child => {
@@ -256,10 +245,9 @@ firebase.auth().onAuthStateChanged(user => {
         arr.sort((a,b)=> b.time - a.time);
 
         arr.forEach(tx => {
+            if(tx.type === "deposit"){
+                const d = new Date(tx.time).toLocaleString();
 
-            const d = new Date(tx.time).toLocaleString();
-
-            if(tx.type === "deposit") {
                 historyList.innerHTML += `
                 <div class="history-item">
                     <div class="history-left">
@@ -273,86 +261,40 @@ firebase.auth().onAuthStateChanged(user => {
                     </div>
                 </div>`;
             }
-
-            if(tx.type === "affiliate") {
-                historyList.innerHTML += `
-                <div class="history-item">
-                    <div class="history-left">
-                        <div class="history-title">🎁 Affiliate Reward</div>
-                        <div class="history-sub">${d}</div>
-                    </div>
-                    <div class="history-right">
-                        <div>+₦${tx.amount}</div>
-                    </div>
-                </div>`;
-            }
-
         });
 
     });
-
 });
 
-/* =========================
-   FLUTTERWAVE KEY
-========================= */
 let flutterwaveKey = null;
-
-db.ref("settings/flutterwaveKeys/public")
-.once("value")
-.then(snap => {
+db.ref("settings/flutterwaveKeys/public").once("value").then(snap => {
     flutterwaveKey = snap.val() || "";
 });
 
-/* =========================
-   VALIDATION
-========================= */
 function validateAmount(amount) {
-
     const min = 1000;
     const rate = 200;
-
-    if (amount < min) {
-        return {
-            valid: false,
-            msg: `Minimum deposit is ₦${min}`
-        };
-    }
-
+    if (amount < min) return { valid: false, msg: `Minimum deposit is ₦${min}` };
     if (amount % rate !== 0) {
         const lower = amount - (amount % rate);
         const upper = amount + (rate - (amount % rate));
-
-        return {
-            valid: false,
-            msg: `Enter a multiple of ₦${rate}. Try ₦${lower} or ₦${upper}`
-        };
+        return { valid: false, msg: `Enter a multiple of ₦${rate}. Try ₦${lower} or ₦${upper}` };
     }
-
-    return {
-        valid: true,
-        coins: amount / rate
-    };
+    return { valid: true, coins: amount / rate };
 }
 
-/* =========================
-   PAYMENT SYSTEM
-========================= */
 function startPayment(user, amountRaw, coins) {
-
     FlutterwaveCheckout({
-
         public_key: flutterwaveKey,
         tx_ref: "TX-" + Date.now(),
         amount: amountRaw,
         currency: "NGN",
         payment_options: "card, banktransfer, ussd",
-
         customer: {
             email: user.email
         },
 
-        callback: function(response) {
+        callback: function (response) {
 
             const txId = response.transaction_id;
 
@@ -362,141 +304,67 @@ function startPayment(user, amountRaw, coins) {
 
             const userRef = db.ref("users/" + user.uid);
 
-            db.ref("processedPayments/" + txId)
-            .once("value")
-            .then(snap => {
+            db.ref("processedPayments/" + txId).once("value").then(snap => {
 
-                if (snap.exists()) return;
+                if (!snap.exists()) {
 
-                if (
-                    response.status === "successful" ||
-                    response.status === "completed"
-                ) {
+                    if (response.status === "successful" || response.status === "completed") {
 
-                    db.ref("processedPayments/" + txId).set(true);
+                        db.ref("processedPayments/" + txId).set(true);
 
-                    /* ADD COINS */
-                    userRef.child("balance")
-                        .transaction(c => (c || 0) + coins);
+                        userRef.child("balance").transaction(current => {
+                            return (current || 0) + coins;
+                        });
 
-                    /* SAVE TRANSACTION */
-                    userRef.child("transactions").push({
-                        type: "deposit",
-                        coins: coins,
-                        amount: amountRaw,
-                        ref: txId,
-                        time: Date.now()
-                    });
+                        userRef.child("transactions").push({
+                            type: "deposit",
+                            coins: coins,
+                            amount: amountRaw,
+                            ref: txId,
+                            time: Date.now()
+                        });
 
-                 /* =========================
-   AFFILIATE SYSTEM (NON-BLOCKING FIX)
-========================= */
+                        toast("Payment successful! Ref: " + txId);
+                        depositStatus.innerHTML = `Payment complete! Coins added: ${coins}`;
 
-try {
-
-const userRef = db.ref("users/" + user.uid);
-
-userRef.once("value").then(userSnap => {
-
-    const userData = userSnap.val();
-
-    if (!userData || !userData.referredBy) {
-        console.log("No referrer found");
-        return;
-    }
-
-    const referrerUid = userData.referredBy;
-    const commission = Math.floor(amountRaw * 0.30);
-
-    db.ref("affiliateProcessed/" + txId).once("value").then(check => {
-
-        if (check.exists()) return;
-
-        db.ref("affiliateProcessed/" + txId).set(true);
-
-        const refUserRef = db.ref("users/" + referrerUid);
-
-        refUserRef.child("affiliateEarned")
-            .transaction(v => (v || 0) + commission);
-
-        refUserRef.child("affiliateBalance")
-            .transaction(v => (v || 0) + commission);
-
-        refUserRef.child("transactions").push({
-            type: "affiliate",
-            amount: commission,
-            fromUser: user.uid,
-            depositAmount: amountRaw,
-            time: Date.now()
-        });
-
-    });
-
-});
-
-} catch (e) {
-    console.log("Affiliate error:", e);
-}
-
-});
-
-                    toast("Payment successful! Ref: " + txId);
-
-                    depositStatus.innerHTML =
-                        `Payment complete! Coins added: ${coins}`;
-
-                } else {
-                    return toast("Payment not verified yet");
+                    } else {
+                        return toast("Payment not verified yet");
+                    }
                 }
 
-                setTimeout(() => {
+                setTimeout(()=>{
                     window.location.href = "maining.html";
-                }, 1500);
+                },1500);
 
             });
-
         },
 
         onclose: function() {
             toast("Payment cancelled");
         }
-
     });
 }
 
-/* =========================
-   SUBMIT BUTTON
-========================= */
 submitBtn.onclick = () => {
-
     const user = firebase.auth().currentUser;
-
     if (!user) return toast("Please login again");
 
     const amountRaw = Number(depositInput.value);
-
     if (!amountRaw) return toast("Enter a valid deposit amount");
 
     const validation = validateAmount(amountRaw);
-
     if (!validation.valid) return toast(validation.msg);
 
     const coins = validation.coins;
+    depositStatus.innerHTML = `You will receive ${coins} coin(s) for ₦${amountRaw}`;
 
-    depositStatus.innerHTML =
-        `You will receive ${coins} coin(s) for ₦${amountRaw}`;
-
-    if (!flutterwaveKey)
-        return toast("Payment key not loaded — try again");
+    if (!flutterwaveKey) return toast("Payment key not loaded — try again");
 
     document.getElementById("instructionModal").style.display = "block";
 
     document.getElementById("agreeBtn").onclick = function() {
-
         document.getElementById("instructionModal").style.display = "none";
-
         startPayment(user, amountRaw, coins);
-
     };
 };
 </script>
