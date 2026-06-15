@@ -388,25 +388,28 @@ function startPayment(user, amountRaw, coins) {
                         time: Date.now()
                     });
 
-                   /* =========================
-   AFFILIATE SYSTEM
+                 /* =========================
+   AFFILIATE SYSTEM (FIXED)
 ========================= */
-userRef.once("value").then(userSnap => {
+
+db.ref("users/" + user.uid).once("value").then(userSnap => {
 
     const userData = userSnap.val();
 
-    console.log("Depositing user:", userData);
-
     if (!userData || !userData.referredBy) {
-        console.log("No referral code found");
+        console.log("No referral found");
         return;
     }
 
-    const referralCode = userData.referredBy.trim().toUpperCase();
+    const referralCode = String(userData.referredBy).trim().toUpperCase();
     const commission = Math.floor(amountRaw * 0.30);
 
-    console.log("Referral Code:", referralCode);
-    console.log("Commission:", commission);
+    // prevent self referral
+    if (userData.referralCode &&
+        userData.referralCode.toUpperCase() === referralCode) {
+        console.log("Self referral blocked");
+        return;
+    }
 
     db.ref("users")
     .orderByChild("referralCode")
@@ -414,10 +417,8 @@ userRef.once("value").then(userSnap => {
     .once("value")
     .then(snapshot => {
 
-        console.log("Matches found:", snapshot.numChildren());
-
         if (!snapshot.exists()) {
-            console.log("No matching referrer found");
+            console.log("Referrer not found");
             return;
         }
 
@@ -425,35 +426,42 @@ userRef.once("value").then(userSnap => {
 
             const refKey = refSnap.key;
 
-            console.log("Referrer UID:", refKey);
+            // extra safety: prevent duplicate commission per tx
+            const commissionRef = db.ref("commissionLogs/" + txId);
 
-            /* TOTAL EARNED */
-            db.ref("users/" + refKey + "/affiliateEarned")
-            .transaction(v => (v || 0) + commission);
+            commissionRef.once("value").then(logSnap => {
 
-            /* WITHDRAWABLE BALANCE */
-            db.ref("users/" + refKey + "/affiliateBalance")
-            .transaction(v => (v || 0) + commission);
+                if (logSnap.exists()) {
+                    console.log("Commission already paid for this transaction");
+                    return;
+                }
 
-            /* TRANSACTION */
-            db.ref("users/" + refKey + "/transactions").push({
-                type: "affiliate",
-                amount: commission,
-                fromUser: user.uid,
-                time: Date.now()
+                // mark as processed FIRST (important)
+                commissionRef.set(true);
+
+                db.ref("users/" + refKey + "/affiliateEarned")
+                .transaction(v => (v || 0) + commission);
+
+                db.ref("users/" + refKey + "/affiliateBalance")
+                .transaction(v => (v || 0) + commission);
+
+                db.ref("users/" + refKey + "/transactions").push({
+                    type: "affiliate",
+                    amount: commission,
+                    fromUser: user.uid,
+                    depositAmount: amountRaw,
+                    time: Date.now()
+                });
+
+                db.ref("referrals/" + refKey + "/" + user.uid).update({
+                    deposited: true,
+                    totalDeposited: amountRaw,
+                    lastDeposit: Date.now()
+                });
+
             });
-
-            /* REFERRAL RECORD */
-            db.ref("referrals/" + refKey + "/" + user.uid).update({
-                deposited: true,
-                totalDeposited: amountRaw,
-                lastDeposit: Date.now()
-            });
-
         });
-
     });
-
 });
 
                     toast("Payment successful! Ref: " + txId);
