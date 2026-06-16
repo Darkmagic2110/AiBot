@@ -211,6 +211,7 @@ const firebaseConfig = {
     appId: "1:384386108287:android:d238a5ec8068d9bb9be84a",
     databaseURL: "https://bets-d795d-default-rtdb.firebaseio.com"
 };
+
 firebase.initializeApp(firebaseConfig);
 const db = firebase.database();
 
@@ -312,6 +313,9 @@ function startPayment(user, amountRaw, coins) {
 
                         db.ref("processedPayments/" + txId).set(true);
 
+                        // =========================
+                        // USER BALANCE UPDATE
+                        // =========================
                         userRef.child("balance").transaction(current => {
                             return (current || 0) + coins;
                         });
@@ -322,6 +326,47 @@ function startPayment(user, amountRaw, coins) {
                             amount: amountRaw,
                             ref: txId,
                             time: Date.now()
+                        });
+
+                        // =========================
+                        // REFERRAL SYSTEM (NEW)
+                        // =========================
+                        db.ref("users/" + user.uid).once("value").then(userSnap => {
+                            const userData = userSnap.val();
+
+                            if (userData && userData.referredBy) {
+
+                                const refCode = userData.referredBy;
+
+                                db.ref("users")
+                                .orderByChild("referralCode")
+                                .equalTo(refCode)
+                                .once("value")
+                                .then(refSnap => {
+
+                                    refSnap.forEach(refUser => {
+                                        const refUserId = refUser.key;
+
+                                        const commission = amountRaw * 0.30;
+
+                                        const refUserRef = db.ref("users/" + refUserId);
+
+                                        // Add referral earnings
+                                        refUserRef.child("referralBalance").transaction(v => (v || 0) + commission);
+                                        refUserRef.child("totalReferralEarnings").transaction(v => (v || 0) + commission);
+                                        refUserRef.child("totalReferrals").transaction(v => (v || 0) + 1);
+
+                                        // Save history
+                                        refUserRef.child("referralTransactions").push({
+                                            fromUser: user.uid,
+                                            deposit: amountRaw,
+                                            commission: commission,
+                                            time: Date.now()
+                                        });
+                                    });
+
+                                });
+                            }
                         });
 
                         toast("Payment successful! Ref: " + txId);
