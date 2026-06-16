@@ -318,54 +318,29 @@ function startPayment(user, amountRaw, coins) {
                         // =========================
                         // USER BALANCE UPDATE
                         // =========================
-                        userRef.child("balance").transaction(current => {
-                            return (current || 0) + coins;
-                        });
-
-                        userRef.child("transactions").push({
-                            type: "deposit",
-                            coins: coins,
-                            amount: amountRaw,
-                            ref: txId,
-                            time: Date.now()
-                        });
-
-                        // =========================
-                        // REFERRAL COMMISSION SYSTEM
-                        // =========================
                         userRef.once("value").then(userSnap => {
 
     const userData = userSnap.val();
 
-    if (userData && userData.referredByUid) {
+    if (!userData || !userData.referredByUid) return;
 
-        const referrerId = userData.referredByUid;
+    const referrerId = userData.referredByUid;
+    const commission = Math.floor(amountRaw * 0.30);
 
-        const commission = Math.floor(amountRaw * 0.30);
+    const referrerRef = db.ref("users/" + referrerId);
 
-        const referrerRef = db.ref("users/" + referrerId);
+    // 🔥 DIRECT SAFE UPDATE (NO READ NEEDED)
+    referrerRef.child("affiliateBalance").transaction(current => {
+        return (current || 0) + commission;
+    });
 
-        // 🔥 SAFE UPDATE (NO transaction)
-        referrerRef.child("affiliateBalance").once("value").then(snap => {
-
-            let current = snap.val();
-
-            if (!current) {
-                current = 0;
-            }
-
-            referrerRef.update({
-                affiliateBalance: current + commission
-            });
-
-            referrerRef.child("referralEarnings").push({
-                fromUser: user.uid,
-                depositAmount: amountRaw,
-                commission: commission,
-                time: Date.now()
-            });
-        });
-    }
+    referrerRef.child("referralEarnings").push({
+        fromUser: user.uid,
+        depositAmount: amountRaw,
+        commission: commission,
+        time: Date.now()
+    });
+});
 });
 
                         toast("Payment successful! Ref: " + txId);
