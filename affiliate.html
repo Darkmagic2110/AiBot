@@ -191,13 +191,14 @@ firebase.auth().onAuthStateChanged(user => {
 
     myUID = user.uid;
 
+    // Get my user data
     db.ref("users/" + myUID).once("value").then(snap => {
         const data = snap.val();
 
-        const referralCode = data.referralCode;
+        // FIXED: no referralCode needed anymore
+        const refLink = window.location.origin + "/index.html?ref=" + data.name;
 
-        document.getElementById("refLink").innerText =
-            window.location.origin + "/index.html?ref=" + referralCode;
+        document.getElementById("refLink").innerText = refLink;
 
         loadStats();
     });
@@ -214,8 +215,9 @@ function loadStats() {
         snap.forEach(child => {
             const u = child.val();
 
-            // ✅ FIXED: UID-based referral check
-            if (u.referredBy === myUID) {
+            // ✅ FIXED: correct referral tracking field
+            if (u.referredByUid === myUID) {
+
                 totalRef++;
 
                 list.push({
@@ -223,12 +225,11 @@ function loadStats() {
                     uid: child.key
                 });
 
-                // ✅ BEST SOURCE OF TRUTH (use real-time balance field)
-                totalEarned += u.referralBalance || 0;
+                // SAFE fallback
+                totalEarned += u.referralBalance || u.affiliateBalance || 0;
             }
         });
 
-        // UI update (stable values)
         document.getElementById("totalRef").innerText = totalRef;
         document.getElementById("totalEarned").innerText = "₦" + totalEarned;
         document.getElementById("balance").innerText = "₦" + totalEarned;
