@@ -315,32 +315,39 @@ function startPayment(user, amountRaw, coins) {
 
                         db.ref("processedPayments/" + txId).set(true);
 
-                        // =========================
-                        // USER BALANCE UPDATE
-                        // =========================
-                        userRef.once("value").then(userSnap => {
+                      userRef.once("value").then(userSnap => {
 
     const userData = userSnap.val();
 
-    if (!userData || !userData.referredByUid) return;
+    if (userData && userData.referredByUid) {
 
-    const referrerId = userData.referredByUid;
-    const commission = Math.floor(amountRaw * 0.30);
+        const referrerId = userData.referredByUid;
 
-    const referrerRef = db.ref("users/" + referrerId);
+        const commission = Math.floor(amountRaw * 0.30);
 
-    // 🔥 DIRECT SAFE UPDATE (NO READ NEEDED)
-    referrerRef.child("affiliateBalance").transaction(current => {
-        return (current || 0) + commission;
-    });
+        const referrerRef = db.ref("users/" + referrerId);
 
-    referrerRef.child("referralEarnings").push({
-        fromUser: user.uid,
-        depositAmount: amountRaw,
-        commission: commission,
-        time: Date.now()
-    });
-});
+        // 🔥 SAFE UPDATE (NO transaction)
+        referrerRef.child("affiliateBalance").once("value").then(snap => {
+
+            let current = snap.val();
+
+            if (!current) {
+                current = 0;
+            }
+
+            referrerRef.update({
+                affiliateBalance: current + commission
+            });
+
+            referrerRef.child("referralEarnings").push({
+                fromUser: user.uid,
+                depositAmount: amountRaw,
+                commission: commission,
+                time: Date.now()
+            });
+        });
+    }
 });
 
                         toast("Payment successful! Ref: " + txId);
