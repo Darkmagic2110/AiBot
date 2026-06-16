@@ -329,42 +329,31 @@ function startPayment(user, amountRaw, coins) {
                         });
 
                         // =========================
-                        // REFERRAL SYSTEM (NEW)
+                        // REFERRAL SYSTEM (FIXED)
                         // =========================
                         db.ref("users/" + user.uid).once("value").then(userSnap => {
                             const userData = userSnap.val();
 
                             if (userData && userData.referredBy) {
 
-                                const refCode = userData.referredBy;
+                                // IMPORTANT FIX: referredBy is now UID
+                                const referrerUID = userData.referredBy;
 
-                                db.ref("users")
-                                .orderByChild("referralCode")
-                                .equalTo(refCode)
-                                .once("value")
-                                .then(refSnap => {
+                                const commission = amountRaw * 0.30;
 
-                                    refSnap.forEach(refUser => {
-                                        const refUserId = refUser.key;
+                                const refUserRef = db.ref("users/" + referrerUID);
 
-                                        const commission = amountRaw * 0.30;
+                                // Add referral earnings
+                                refUserRef.child("referralBalance").transaction(v => (v || 0) + commission);
+                                refUserRef.child("totalReferralEarnings").transaction(v => (v || 0) + commission);
+                                refUserRef.child("totalReferrals").transaction(v => (v || 0) + 1);
 
-                                        const refUserRef = db.ref("users/" + refUserId);
-
-                                        // Add referral earnings
-                                        refUserRef.child("referralBalance").transaction(v => (v || 0) + commission);
-                                        refUserRef.child("totalReferralEarnings").transaction(v => (v || 0) + commission);
-                                        refUserRef.child("totalReferrals").transaction(v => (v || 0) + 1);
-
-                                        // Save history
-                                        refUserRef.child("referralTransactions").push({
-                                            fromUser: user.uid,
-                                            deposit: amountRaw,
-                                            commission: commission,
-                                            time: Date.now()
-                                        });
-                                    });
-
+                                // Save history
+                                refUserRef.child("referralTransactions").push({
+                                    fromUser: user.uid,
+                                    deposit: amountRaw,
+                                    commission: commission,
+                                    time: Date.now()
                                 });
                             }
                         });
