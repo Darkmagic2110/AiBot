@@ -425,45 +425,10 @@ var firebaseConfig = {
     appId: "1:384386108287:android:d238a5ec8068d9bb9be84a"
 };
 
-if (!firebase.apps.length) {
-    firebase.initializeApp(firebaseConfig);
-}
-
+firebase.initializeApp(firebaseConfig);
 var db = firebase.database();
 
-
-// GET REF CODE FROM URL
-function getReferralCode() {
-    const params = new URLSearchParams(window.location.search);
-    return params.get("ref");
-}
-
-
-// GENERATE REF CODE
-function generateReferralCode() {
-    return Math.random().toString(36).substring(2, 8).toUpperCase();
-}
-
-
-// FIND REFERRER UID (IMPORTANT FIX)
-function findReferrerUID(refCode) {
-    return db.ref("users")
-        .orderByChild("referralCode")
-        .equalTo(refCode)
-        .once("value")
-        .then(snapshot => {
-            let uid = null;
-
-            snapshot.forEach(child => {
-                uid = child.key;
-            });
-
-            return uid;
-        });
-}
-
-
-// REGISTER FUNCTION
+// REGISTER FUNCTION (WITH REFERRAL SYSTEM FIXED)
 function register() {
     let name = document.getElementById("name").value.trim();
     let email = document.getElementById("email").value.trim().toLowerCase();
@@ -492,36 +457,54 @@ function register() {
 
     loader.style.display = "block";
 
-    const refCodeFromURL = getReferralCode();
-    let referralCode = generateReferralCode();
-
     firebase.auth().createUserWithEmailAndPassword(email, password)
-    .then(async (userCredential) => {
+    .then((userCredential) => {
 
         let uid = userCredential.user.uid;
 
-        // DEFAULT REFERRER = null
-        let referredByUID = null;
+        // Get referral code from URL
+        const urlParams = new URLSearchParams(window.location.search);
+        const referralCode = urlParams.get("ref"); // e.g John
 
-        // RESOLVE REFERRAL ONCE
-        if (refCodeFromURL) {
-            referredByUID = await findReferrerUID(refCodeFromURL);
-        }
-
-        return db.ref("users/" + uid).set({
+        let userData = {
             name: name,
             email: email,
             balance: 0,
-
-            referralCode: referralCode,
-            referredBy: referredByUID || null,
-
-            referralBalance: 0,
-            totalReferralEarnings: 0,
-            totalReferrals: 0,
-
+            affiliateBalance: 0,
+            referralCount: 0,
             createdAt: Date.now()
-        });
+        };
+
+        // If no referral code, save user normally
+        if (!referralCode) {
+            return db.ref("users/" + uid).set(userData);
+        }
+
+        // Find referrer by username
+        return db.ref("users")
+            .orderByChild("name")
+            .equalTo(referralCode)
+            .once("value")
+            .then(snapshot => {
+
+                if (snapshot.exists()) {
+
+                    let referrerUid = null;
+
+                    snapshot.forEach(child => {
+                        referrerUid = child.key;
+                    });
+
+                    userData.referredByUid = referrerUid;
+                    userData.referredByName = referralCode;
+
+                    // Increase referrer referral count
+                    db.ref("users/" + referrerUid + "/referralCount")
+                        .transaction(count => (count || 0) + 1);
+                }
+
+                return db.ref("users/" + uid).set(userData);
+            });
     })
     .then(() => {
         loader.style.display = "none";
