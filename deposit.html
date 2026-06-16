@@ -335,28 +335,29 @@ function startPayment(user, amountRaw, coins) {
                         // =========================
                         userRef.once("value").then(userSnap => {
 
-                            const userData = userSnap.val();
+    const userData = userSnap.val();
 
-                            if (userData && userData.referredByUid) {
+    // ✅ THIS MUST EXIST FROM NEW REGISTRATION
+    if (userData && userData.referredByUid) {
 
-                                const referrerId = userData.referredByUid;
+        const referrerId = userData.referredByUid;
 
-                                const commission = Math.floor(amountRaw * 0.30);
+        const commission = Math.floor(amountRaw * 0.30);
 
-                                const referrerRef = db.ref("users/" + referrerId);
+        const referrerRef = db.ref("users/" + referrerId);
 
-                                referrerRef.child("affiliateBalance").transaction(current => {
-                                    return (current || 0) + commission;
-                                });
+        referrerRef.child("affiliateBalance").transaction(current => {
+            return (current || 0) + commission;
+        });
 
-                                referrerRef.child("referralEarnings").push({
-                                    fromUser: user.uid,
-                                    depositAmount: amountRaw,
-                                    commission: commission,
-                                    time: Date.now()
-                                });
-                            }
-                        });
+        referrerRef.child("referralEarnings").push({
+            fromUser: user.uid,
+            depositAmount: amountRaw,
+            commission: commission,
+            time: Date.now()
+        });
+    }
+});
 
                         toast("Payment successful! Ref: " + txId);
                         depositStatus.innerHTML = `Payment complete! Coins added: ${coins}`;
