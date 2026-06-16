@@ -206,7 +206,7 @@ const firebaseConfig = {
     apiKey: "AIzaSyDvFDByPPo9zgwKLdPaREz1OVMQCXmPfrs",
     authDomain: "bets-d795d.firebaseapp.com",
     projectId: "bets-d795d",
-    storageBucket: "bets-d795d",
+    storageBucket: "bets-d795d.appspot.com",
     messagingSenderId: "384386108287",
     appId: "1:384386108287:android:d238a5ec8068d9bb9be84a",
     databaseURL: "https://bets-d795d-default-rtdb.firebaseio.com"
@@ -263,7 +263,6 @@ firebase.auth().onAuthStateChanged(user => {
                 </div>`;
             }
         });
-
     });
 });
 
@@ -275,12 +274,15 @@ db.ref("settings/flutterwaveKeys/public").once("value").then(snap => {
 function validateAmount(amount) {
     const min = 1000;
     const rate = 200;
+
     if (amount < min) return { valid: false, msg: `Minimum deposit is ₦${min}` };
+
     if (amount % rate !== 0) {
         const lower = amount - (amount % rate);
         const upper = amount + (rate - (amount % rate));
         return { valid: false, msg: `Enter a multiple of ₦${rate}. Try ₦${lower} or ₦${upper}` };
     }
+
     return { valid: true, coins: amount / rate };
 }
 
@@ -328,91 +330,33 @@ function startPayment(user, amountRaw, coins) {
                             time: Date.now()
                         });
 
-                       // =========================
-// REFERRAL DEBUG + FIX (FINAL STABLE VERSION)
-// =========================
+                        // =========================
+                        // REFERRAL COMMISSION SYSTEM
+                        // =========================
+                        userRef.once("value").then(userSnap => {
 
-db.ref("users/" + user.uid).once("value")
-.then(userSnap => {
+                            const userData = userSnap.val();
 
-    const userData = userSnap.val();
+                            if (userData && userData.referredByUid) {
 
-    console.log("USER DATA:", userData);
+                                const referrerId = userData.referredByUid;
 
-    if (!userData) {
-        console.log("❌ NO USER DATA FOUND");
-        return;
-    }
+                                const commission = Math.floor(amountRaw * 0.30);
 
-    if (!userData.referredBy) {
-        console.log("❌ NO REFERRER FOUND FOR THIS USER");
-        return;
-    }
+                                const referrerRef = db.ref("users/" + referrerId);
 
-    const referrerUID = userData.referredBy;
-    const commission = Number(amountRaw) * 0.30;
+                                referrerRef.child("affiliateBalance").transaction(current => {
+                                    return (current || 0) + commission;
+                                });
 
-    console.log("✔ REFERRER UID:", referrerUID);
-    console.log("✔ COMMISSION:", commission);
-
-    const txId = response.transaction_id;
-
-    if (!txId) {
-        console.log("❌ NO TRANSACTION ID");
-        return;
-    }
-
-    // 🔒 Prevent double payout
-    const lockRef = db.ref("commissionLocks/" + txId);
-
-    return lockRef.once("value").then(lockSnap => {
-
-        if (lockSnap.exists()) {
-            console.log("⚠ COMMISSION ALREADY PAID FOR THIS TX");
-            return;
-        }
-
-        return lockRef.set(true).then(() => {
-
-            const refUserRef = db.ref("users/" + referrerUID);
-
-            return refUserRef.once("value").then(refSnap => {
-
-                if (!refSnap.exists()) {
-                    console.log("❌ REFERRER DOES NOT EXIST");
-                    return;
-                }
-
-                console.log("✔ REFERRER FOUND — UPDATING BALANCE");
-
-                // SAFE ATOMIC UPDATES (NO Promise.all)
-                refUserRef.child("referralBalance")
-                    .transaction(v => (v || 0) + commission);
-
-                refUserRef.child("totalReferralEarnings")
-                    .transaction(v => (v || 0) + commission);
-
-                refUserRef.child("totalReferrals")
-                    .transaction(v => (v || 0) + 1);
-
-                refUserRef.child("referralTransactions").push({
-                    fromUser: user.uid,
-                    deposit: amountRaw,
-                    commission: commission,
-                    transactionId: txId,
-                    time: Date.now()
-                });
-
-                console.log("✔ REFERRAL COMMISSION PAID SUCCESSFULLY");
-            });
-
-        });
-    });
-
-})
-.catch(err => {
-    console.log("❌ REFERRAL SYSTEM ERROR:", err);
-});
+                                referrerRef.child("referralEarnings").push({
+                                    fromUser: user.uid,
+                                    depositAmount: amountRaw,
+                                    commission: commission,
+                                    time: Date.now()
+                                });
+                            }
+                        });
 
                         toast("Payment successful! Ref: " + txId);
                         depositStatus.innerHTML = `Payment complete! Coins added: ${coins}`;
@@ -422,10 +366,9 @@ db.ref("users/" + user.uid).once("value")
                     }
                 }
 
-                setTimeout(()=>{
+                setTimeout(() => {
                     window.location.href = "maining.html";
-                },1500);
-
+                }, 1500);
             });
         },
 
