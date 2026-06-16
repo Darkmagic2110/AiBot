@@ -199,41 +199,55 @@ function toast(msg) {
     setTimeout(() => { t.className = t.className.replace("show", ""); }, 3000);
 }
 
-// FIXED: Function to credit 30% commission to referrer
+// FIXED: Use get+set instead of transaction. transaction() fails silently
 function creditAffiliateCommission(depositorId, depositAmount, txId) {
     db.ref("users/" + depositorId + "/referredBy").once("value").then(snap => {
         let referrerCode = snap.val();
         if (referrerCode && referrerCode !== "null") {
             
-            console.log("Referrer code found:", referrerCode);
-            
-            // Search for user with this referralCode to get their UID
-            db.ref("users").orderByChild("referralCode").equalTo(referrerCode).once("value").then(refSnap => {
-                refSnap.forEach(child => {
-                    let referrerId = child.key; // This is the actual UID
-                    let commission = depositAmount * 0.30; // 30%
-                    
-                    console.log("Crediting ₦" + commission + " to UID:", referrerId);
-                    
-                    // Add to referrer's affiliate balance
-                    db.ref("users/" + referrerId + "/affiliateBalance").transaction(current => {
-                        return (current || 0) + commission;
-                    });
-                    
-                    // Update total referrals count
-                    db.ref("users/" + referrerId + "/totalReferrals").transaction(current => {
-                        return (current || 0) + 1;
-                    });
-                    
-                    // Log the referral commission for records
-                    db.ref("referrals").push({
-                        referrerId: referrerId,
-                        referredId: depositorId,
-                        depositAmount: depositAmount,
-                        commission: commission,
-                        txId: txId,
-                        time: Date.now(),
-                        status: "paid"
+            // Prevent double commission
+            db.ref("processedCommissions/" + txId).once("value").then(checkSnap => {
+                if (checkSnap.exists()) {
+                    console.log("Commission already paid for", txId);
+                    return;
+                }
+                
+                console.log("Referrer code found:", referrerCode);
+                
+                db.ref("users").orderByChild("referralCode").equalTo(referrerCode).once("value").then(refSnap => {
+                    refSnap.forEach(child => {
+                        let referrerId = child.key;
+                        let commission = depositAmount * 0.30;
+                        
+                        console.log("Crediting ₦" + commission + " to UID:", referrerId);
+                        
+                        // 1. GET current balance then SET new balance
+                        db.ref("users/" + referrerId + "/affiliateBalance").once("value").then(balSnap => {
+                            let currentBal = Number(balSnap.val()) || 0;
+                            let newBal = currentBal + commission;
+                            db.ref("users/" + referrerId + "/affiliateBalance").set(newBal);
+                            console.log("Balance updated:", currentBal, "+ ₦" + commission, "= ₦" + newBal);
+                        });
+                        
+                        // 2. GET count then SET new count
+                        db.ref("users/" + referrerId + "/totalReferrals").once("value").then(countSnap => {
+                            let count = Number(countSnap.val()) || 0;
+                            db.ref("users/" + referrerId + "/totalReferrals").set(count + 1);
+                        });
+                        
+                        // 3. Log commission
+                        db.ref("referrals").push({
+                            referrerId: referrerId,
+                            referredId: depositorId,
+                            depositAmount: depositAmount,
+                            commission: commission,
+                            txId: txId,
+                            time: Date.now(),
+                            status: "paid"
+                        });
+                        
+                        // 4. Mark TX as processed
+                        db.ref("processedCommissions/" + txId).set(true);
                     });
                 });
             });
@@ -331,7 +345,6 @@ function startPayment(user, amountRaw, coins) {
                             time: Date.now()
                         });
 
-                        // FIXED: Credit 30% to referrer if exists
                         creditAffiliateCommission(user.uid, amountRaw, txId);
 
                         toast("Payment successful! Ref: " + txId);
