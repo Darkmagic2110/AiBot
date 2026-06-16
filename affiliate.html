@@ -44,9 +44,9 @@ button {
     word-break: break-all;
     font-size: 13px;
     color: cyan;
-    padding: 8px;
     background: #0a0a0a;
-    border-radius: 6px;
+    padding: 10px;
+    border-radius: 8px;
     margin: 10px 0;
 }
 .user-list {
@@ -101,7 +101,7 @@ button {
         <span id="totalRef">0</span>
     </div>
     <div class="stat">
-        <span>Affiliate Balance</span>
+        <span>Available Balance</span>
         <span id="balance">₦0</span>
     </div>
     <div class="stat">
@@ -123,15 +123,16 @@ button {
         2. When users register with your link, they become your referrals.<br>
         3. You earn 30% commission on every deposit they make.<br>
         4. Earnings are added automatically to your affiliate wallet.<br>
-        5. You can withdraw anytime once minimum is reached.
+        5. Minimum withdrawal: ₦2000
     </p>
 </div>
 
 </div>
 
+<!-- POPUP -->
 <div id="popup">
     <div id="popupBox">
-        <h3>User Details</h3>
+        <h3>Referred User</h3>
         <p id="popupEmail"></p>
         <p id="popupDate" style="font-size:12px; color:#aaa;"></p>
         <button onclick="closePopup()">Close</button>
@@ -169,17 +170,17 @@ firebase.auth().onAuthStateChanged(user => {
 
     myUID = user.uid;
 
+    // Get user data - use referralCode for link, not UID
     db.ref("users/" + myUID).once("value").then(snap => {
         const data = snap.val() || {};
         myReferralCode = data.referralCode;
 
+        // FIXED: Link uses referralCode
         const refLink = window.location.origin + "/index.html?ref=" + myReferralCode;
         document.getElementById("refLink").innerText = refLink;
 
-        // LIVE listener for balance - updates instantly after deposit
-        db.ref("users/" + myUID + "/affiliateBalance").on("value", balSnap => {
-            document.getElementById("balance").innerText = "₦" + (balSnap.val() || 0);
-        });
+        // Show current affiliate balance
+        document.getElementById("balance").innerText = "₦" + (data.affiliateBalance || 0).toFixed(2);
 
         loadStats();
     });
@@ -187,14 +188,12 @@ firebase.auth().onAuthStateChanged(user => {
 
 function loadStats() {
     let totalRef = 0;
-    let totalEarned = 0;
     let list = [];
 
-    // Find all users referred by me using referralCode
+    // 1. Find all users where referredBy = myReferralCode
     db.ref("users").once("value").then(snap => {
         snap.forEach(child => {
             const u = child.val();
-            
             if (u.referredBy === myReferralCode) {
                 totalRef++;
                 list.push({
@@ -207,16 +206,16 @@ function loadStats() {
         });
 
         document.getElementById("totalRef").innerText = totalRef;
+        renderUsers(list);
+    });
 
-        // Total earned = sum of all commissions from referrals node
-        db.ref("referrals").orderByChild("referrerId").equalTo(myUID).once("value").then(refSnap => {
-            refSnap.forEach(child => {
-                totalEarned += child.val().commission || 0;
-            });
-            
-            document.getElementById("totalEarned").innerText = "₦" + totalEarned.toFixed(2);
-            renderUsers(list);
+    // 2. Total earned = sum of all commissions from referrals node
+    db.ref("referrals").orderByChild("referrerId").equalTo(myUID).once("value").then(refSnap => {
+        let totalEarned = 0;
+        refSnap.forEach(child => {
+            totalEarned += child.val().commission || 0;
         });
+        document.getElementById("totalEarned").innerText = "₦" + totalEarned.toFixed(2);
     });
 }
 
@@ -225,7 +224,7 @@ function renderUsers(list) {
     box.innerHTML = "";
 
     if (list.length === 0) {
-        box.innerHTML = "<div style='color:#666; text-align:center; padding:20px;'>No referrals yet</div>";
+        box.innerHTML = "<div style='color:#666; text-align:center; padding:20px;'>No referrals yet. Share your link!</div>";
         return;
     }
 
@@ -256,11 +255,25 @@ function withdraw() {
         let minWithdraw = 2000;
         
         if (bal < minWithdraw) {
-            alert("Minimum withdrawal is ₦" + minWithdraw);
+            alert("Minimum withdrawal is ₦" + minWithdraw + "\nCurrent balance: ₦" + bal.toFixed(2));
             return;
         }
         
-        alert("Withdrawal request for ₦" + bal + " submitted!\nAdmin will approve soon.");
+        // TODO: Add your Paystack/Flutterwave payout here
+        if (confirm("Request withdrawal of ₦" + bal.toFixed(2) + "?")) {
+            // Log withdrawal request
+            db.ref("withdrawals").push({
+                userId: myUID,
+                amount: bal,
+                status: "pending",
+                time: Date.now()
+            });
+            
+            // Reset balance
+            db.ref("users/" + myUID + "/affiliateBalance").set(0);
+            document.getElementById("balance").innerText = "₦0.00";
+            alert("Withdrawal request sent! Admin will pay you soon.");
+        }
     });
 }
 
