@@ -206,7 +206,7 @@ const firebaseConfig = {
     apiKey: "AIzaSyDvFDByPPo9zgwKLdPaREz1OVMQCXmPfrs",
     authDomain: "bets-d795d.firebaseapp.com",
     projectId: "bets-d795d",
-    storageBucket: "bets-d795d.appspot.com",
+    storageBucket: "bets-d795d",
     messagingSenderId: "384386108287",
     appId: "1:384386108287:android:d238a5ec8068d9bb9be84a",
     databaseURL: "https://bets-d795d-default-rtdb.firebaseio.com"
@@ -329,14 +329,13 @@ function startPayment(user, amountRaw, coins) {
                         });
 
                         // =========================
-                        // REFERRAL SYSTEM (FIXED)
+                        // REFERRAL SYSTEM (FIXED + STABLE)
                         // =========================
                         db.ref("users/" + user.uid).once("value").then(userSnap => {
                             const userData = userSnap.val();
 
                             if (userData && userData.referredBy) {
 
-                                // IMPORTANT FIX: referredBy is now UID
                                 const referrerUID = userData.referredBy;
 
                                 const commission = amountRaw * 0.30;
@@ -348,7 +347,7 @@ function startPayment(user, amountRaw, coins) {
                                 refUserRef.child("totalReferralEarnings").transaction(v => (v || 0) + commission);
                                 refUserRef.child("totalReferrals").transaction(v => (v || 0) + 1);
 
-                                // Save history
+                                // Save referral history
                                 refUserRef.child("referralTransactions").push({
                                     fromUser: user.uid,
                                     deposit: amountRaw,
