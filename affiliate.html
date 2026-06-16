@@ -170,19 +170,17 @@ firebase.auth().onAuthStateChanged(user => {
 
     myUID = user.uid;
 
+    // Get user data
     db.ref("users/" + myUID).once("value").then(snap => {
         const data = snap.val() || {};
         myReferralCode = data.referralCode;
 
-        // Referral link
+        // FIXED: Use referralCode, not UID
         const refLink = window.location.origin + "/index.html?ref=" + myReferralCode;
         document.getElementById("refLink").innerText = refLink;
 
-        // ✅ FIX: REAL-TIME BALANCE LISTENER
-        db.ref("users/" + myUID + "/affiliateBalance").on("value", balanceSnap => {
-            document.getElementById("balance").innerText =
-                "₦" + (balanceSnap.val() || 0);
-        });
+        // Show current affiliate balance
+        document.getElementById("balance").innerText = "₦" + (data.affiliateBalance || 0);
 
         loadStats();
     });
@@ -193,10 +191,12 @@ function loadStats() {
     let totalEarned = 0;
     let list = [];
 
+    // Find all users referred by me using referralCode
     db.ref("users").once("value").then(snap => {
         snap.forEach(child => {
             const u = child.val();
-
+            
+            // FIXED: Match using referralCode stored in referredBy field
             if (u.referredBy === myReferralCode) {
                 totalRef++;
                 list.push({
@@ -210,21 +210,15 @@ function loadStats() {
 
         document.getElementById("totalRef").innerText = totalRef;
 
-        db.ref("referrals")
-            .orderByChild("referrerId")
-            .equalTo(myUID)
-            .once("value")
-            .then(refSnap => {
-
-                refSnap.forEach(child => {
-                    totalEarned += child.val().commission || 0;
-                });
-
-                document.getElementById("totalEarned").innerText =
-                    "₦" + totalEarned.toFixed(2);
-
-                renderUsers(list);
+        // Total earned = sum of all commissions from referrals node
+        db.ref("referrals").orderByChild("referrerId").equalTo(myUID).once("value").then(refSnap => {
+            refSnap.forEach(child => {
+                totalEarned += child.val().commission || 0;
             });
+            
+            document.getElementById("totalEarned").innerText = "₦" + totalEarned.toFixed(2);
+            renderUsers(list);
+        });
     });
 }
 
@@ -240,11 +234,7 @@ function renderUsers(list) {
     list.forEach(u => {
         let div = document.createElement("div");
         div.className = "user-item";
-
-        let date = u.createdAt
-            ? new Date(u.createdAt).toLocaleDateString()
-            : "N/A";
-
+        let date = u.createdAt ? new Date(u.createdAt).toLocaleDateString() : "N/A";
         div.innerText = u.name + " - " + u.email;
 
         div.onclick = () => {
@@ -265,16 +255,17 @@ function copyLink() {
 function withdraw() {
     db.ref("users/" + myUID + "/affiliateBalance").once("value").then(snap => {
         let bal = snap.val() || 0;
-        let minWithdraw = 2000;
-
+        let minWithdraw = 2000; // Set your minimum
+        
         if (bal < minWithdraw) {
             alert("Minimum withdrawal is ₦" + minWithdraw);
             return;
         }
-
+        
+        // TODO: Connect to your withdrawal system/Paystack
         alert("Withdrawal request for ₦" + bal + " submitted!\nAdmin will approve soon.");
-
-        // Optional reset:
+        
+        // Optional: Reset balance after request
         // db.ref("users/" + myUID + "/affiliateBalance").set(0);
     });
 }
