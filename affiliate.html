@@ -191,12 +191,12 @@ firebase.auth().onAuthStateChanged(user => {
 
     myUID = user.uid;
 
-    // Get my user data
+    // Get user data
     db.ref("users/" + myUID).once("value").then(snap => {
-        const data = snap.val();
+        const data = snap.val() || {};
 
-        // FIXED: no referralCode needed anymore
-        const refLink = window.location.origin + "/index.html?ref=" + data.name;
+        // ✅ FIXED: UID-based referral link
+        const refLink = window.location.origin + "/index.html?ref=" + myUID;
 
         document.getElementById("refLink").innerText = refLink;
 
@@ -215,7 +215,7 @@ function loadStats() {
         snap.forEach(child => {
             const u = child.val();
 
-            // ✅ FIXED: correct referral tracking field
+            // ✅ FIXED: correct referral match
             if (u.referredByUid === myUID) {
 
                 totalRef++;
@@ -225,8 +225,8 @@ function loadStats() {
                     uid: child.key
                 });
 
-                // SAFE fallback
-                totalEarned += u.referralBalance || u.affiliateBalance || 0;
+                // ✅ ONLY USE affiliateBalance
+                totalEarned += u.affiliateBalance || 0;
             }
         });
 
@@ -262,7 +262,7 @@ function copyLink() {
 }
 
 function withdraw() {
-    alert("Withdrawal feature will be added next.");
+    alert("Withdrawal feature will be added soon.");
 }
 
 function closePopup() {
