@@ -81,6 +81,28 @@ button {
     border-radius: 12px;
     text-align: center;
 }
+#toast {
+    visibility: hidden;
+    min-width: 240px;
+    background-color: lime;
+    color: black;
+    text-align: center;
+    border-radius: 10px;
+    padding: 12px;
+    position: fixed;
+    bottom: 30px;
+    left: 50%;
+    transform: translateX(-50%);
+    font-size: 16px;
+    z-index: 99999;
+    opacity: 0;
+    transition: opacity 0.3s;
+}
+#toast.show {
+    visibility: visible;
+    opacity: 1;
+    bottom: 50px;
+}
 </style>
 </head>
 <body>
@@ -129,7 +151,6 @@ button {
 
 </div>
 
-<!-- POPUP -->
 <div id="popup">
     <div id="popupBox">
         <h3>Referred User</h3>
@@ -138,6 +159,8 @@ button {
         <button onclick="closePopup()">Close</button>
     </div>
 </div>
+
+<div id="toast"></div>
 
 <script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-app.js"></script>
 <script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-auth.js"></script>
@@ -162,6 +185,13 @@ const db = firebase.database();
 let myUID = null;
 let myReferralCode = null;
 
+function toast(msg) {
+    const t = document.getElementById("toast");
+    t.innerHTML = msg;
+    t.className = "show";
+    setTimeout(() => { t.className = t.className.replace("show", ""); }, 3000);
+}
+
 firebase.auth().onAuthStateChanged(user => {
     if (!user) {
         window.location.href = "login.html";
@@ -170,17 +200,25 @@ firebase.auth().onAuthStateChanged(user => {
 
     myUID = user.uid;
 
-    // Get user data - use referralCode for link, not UID
     db.ref("users/" + myUID).once("value").then(snap => {
         const data = snap.val() || {};
         myReferralCode = data.referralCode;
 
-        // FIXED: Link uses referralCode
+        // AUTO-GENERATE referral code if missing - no Firebase manual edit needed
+        if (!myReferralCode) {
+            myReferralCode = "DM" + Math.random().toString(36).substr(2, 6).toUpperCase();
+            db.ref("users/" + myUID + "/referralCode").set(myReferralCode);
+            toast("Referral code created: " + myReferralCode);
+        }
+
         const refLink = window.location.origin + "/index.html?ref=" + myReferralCode;
         document.getElementById("refLink").innerText = refLink;
 
-        // Show current affiliate balance
-        document.getElementById("balance").innerText = "₦" + (data.affiliateBalance || 0).toFixed(2);
+        // LIVE listener - balance updates instantly after deposit
+        db.ref("users/" + myUID + "/affiliateBalance").on("value", balSnap => {
+            let bal = Number(balSnap.val()) || 0;
+            document.getElementById("balance").innerText = "₦" + bal.toFixed(2);
+        });
 
         loadStats();
     });
@@ -190,7 +228,6 @@ function loadStats() {
     let totalRef = 0;
     let list = [];
 
-    // 1. Find all users where referredBy = myReferralCode
     db.ref("users").once("value").then(snap => {
         snap.forEach(child => {
             const u = child.val();
@@ -209,7 +246,6 @@ function loadStats() {
         renderUsers(list);
     });
 
-    // 2. Total earned = sum of all commissions from referrals node
     db.ref("referrals").orderByChild("referrerId").equalTo(myUID).once("value").then(refSnap => {
         let totalEarned = 0;
         refSnap.forEach(child => {
@@ -246,12 +282,12 @@ function renderUsers(list) {
 
 function copyLink() {
     navigator.clipboard.writeText(document.getElementById("refLink").innerText);
-    alert("Referral link copied! 📋");
+    toast("Referral link copied! 📋");
 }
 
 function withdraw() {
     db.ref("users/" + myUID + "/affiliateBalance").once("value").then(snap => {
-        let bal = snap.val() || 0;
+        let bal = Number(snap.val()) || 0;
         let minWithdraw = 2000;
         
         if (bal < minWithdraw) {
@@ -259,9 +295,7 @@ function withdraw() {
             return;
         }
         
-        // TODO: Add your Paystack/Flutterwave payout here
         if (confirm("Request withdrawal of ₦" + bal.toFixed(2) + "?")) {
-            // Log withdrawal request
             db.ref("withdrawals").push({
                 userId: myUID,
                 amount: bal,
@@ -269,9 +303,7 @@ function withdraw() {
                 time: Date.now()
             });
             
-            // Reset balance
             db.ref("users/" + myUID + "/affiliateBalance").set(0);
-            document.getElementById("balance").innerText = "₦0.00";
             alert("Withdrawal request sent! Admin will pay you soon.");
         }
     });
