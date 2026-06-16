@@ -425,7 +425,10 @@ var firebaseConfig = {
     appId: "1:384386108287:android:d238a5ec8068d9bb9be84a"
 };
 
-firebase.initializeApp(firebaseConfig);
+if (!firebase.apps.length) {
+    firebase.initializeApp(firebaseConfig);
+}
+
 var db = firebase.database();
 
 
@@ -436,15 +439,32 @@ function getReferralCode() {
 }
 
 
-// GENERATE REFERRAL CODE
+// GENERATE REF CODE
 function generateReferralCode() {
     return Math.random().toString(36).substring(2, 8).toUpperCase();
 }
 
 
-// REGISTER FUNCTION
-async function register() {
+// FIND REFERRER UID (IMPORTANT FIX)
+function findReferrerUID(refCode) {
+    return db.ref("users")
+        .orderByChild("referralCode")
+        .equalTo(refCode)
+        .once("value")
+        .then(snapshot => {
+            let uid = null;
 
+            snapshot.forEach(child => {
+                uid = child.key;
+            });
+
+            return uid;
+        });
+}
+
+
+// REGISTER FUNCTION
+function register() {
     let name = document.getElementById("name").value.trim();
     let email = document.getElementById("email").value.trim().toLowerCase();
     let password = document.getElementById("password").value;
@@ -472,39 +492,29 @@ async function register() {
 
     loader.style.display = "block";
 
-    try {
+    const refCodeFromURL = getReferralCode();
+    let referralCode = generateReferralCode();
 
-        let refCodeFromUrl = getReferralCode();
-
-        const userCredential = await firebase.auth()
-            .createUserWithEmailAndPassword(email, password);
+    firebase.auth().createUserWithEmailAndPassword(email, password)
+    .then(async (userCredential) => {
 
         let uid = userCredential.user.uid;
-        let referralCode = generateReferralCode();
 
+        // DEFAULT REFERRER = null
         let referredByUID = null;
 
-        // STEP 1: FIND REFERRER (IF ANY)
-        if (refCodeFromUrl) {
-
-            const snapshot = await db.ref("users")
-                .orderByChild("referralCode")
-                .equalTo(refCodeFromUrl)
-                .once("value");
-
-            snapshot.forEach(child => {
-                referredByUID = child.key;
-            });
+        // RESOLVE REFERRAL ONCE
+        if (refCodeFromURL) {
+            referredByUID = await findReferrerUID(refCodeFromURL);
         }
 
-        // STEP 2: SAVE USER
-        await db.ref("users/" + uid).set({
+        return db.ref("users/" + uid).set({
             name: name,
             email: email,
             balance: 0,
 
             referralCode: referralCode,
-            referredBy: referredByUID,
+            referredBy: referredByUID || null,
 
             referralBalance: 0,
             totalReferralEarnings: 0,
@@ -512,13 +522,13 @@ async function register() {
 
             createdAt: Date.now()
         });
-
+    })
+    .then(() => {
         loader.style.display = "none";
         alert("Account created successfully ✅");
         window.location.href = "loging.html";
-
-    } catch (err) {
-
+    })
+    .catch((err) => {
         loader.style.display = "none";
 
         if (err.code === "auth/email-already-in-use") {
@@ -528,7 +538,7 @@ async function register() {
         } else {
             error.innerText = err.message;
         }
-    }
+    });
 }
 </script>
 
