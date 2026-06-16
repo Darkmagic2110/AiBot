@@ -329,62 +329,89 @@ function startPayment(user, amountRaw, coins) {
                         });
 
                        // =========================
-// REFERRAL DEBUG + FIX (FOR REAL ISSUE FINDING)
+// REFERRAL DEBUG + FIX (FINAL STABLE VERSION)
 // =========================
 
-db.ref("users/" + user.uid).once("value").then(userSnap => {
+db.ref("users/" + user.uid).once("value")
+.then(userSnap => {
+
     const userData = userSnap.val();
 
     console.log("USER DATA:", userData);
 
     if (!userData) {
-        console.log("NO USER DATA FOUND");
+        console.log("❌ NO USER DATA FOUND");
         return;
     }
 
     if (!userData.referredBy) {
-        console.log("NO REFERRER FOUND FOR THIS USER");
+        console.log("❌ NO REFERRER FOUND FOR THIS USER");
         return;
     }
 
     const referrerUID = userData.referredBy;
-    const commission = amountRaw * 0.30;
+    const commission = Number(amountRaw) * 0.30;
 
-    console.log("REFERRER UID:", referrerUID);
-    console.log("COMMISSION:", commission);
+    console.log("✔ REFERRER UID:", referrerUID);
+    console.log("✔ COMMISSION:", commission);
 
-    const refUserRef = db.ref("users/" + referrerUID);
+    const txId = response.transaction_id;
 
-    refUserRef.once("value")
-    .then(refSnap => {
+    if (!txId) {
+        console.log("❌ NO TRANSACTION ID");
+        return;
+    }
 
-        if (!refSnap.exists()) {
-            console.log("REFERRER DOES NOT EXIST IN DB");
+    // 🔒 Prevent double payout
+    const lockRef = db.ref("commissionLocks/" + txId);
+
+    return lockRef.once("value").then(lockSnap => {
+
+        if (lockSnap.exists()) {
+            console.log("⚠ COMMISSION ALREADY PAID FOR THIS TX");
             return;
         }
 
-        console.log("REFERRER FOUND - UPDATING BALANCE");
+        return lockRef.set(true).then(() => {
 
-        return Promise.all([
-            refUserRef.child("referralBalance").transaction(v => (v || 0) + commission),
-            refUserRef.child("totalReferralEarnings").transaction(v => (v || 0) + commission),
-            refUserRef.child("totalReferrals").transaction(v => (v || 0) + 1),
+            const refUserRef = db.ref("users/" + referrerUID);
 
-            refUserRef.child("referralTransactions").push({
-                fromUser: user.uid,
-                deposit: amountRaw,
-                commission: commission,
-                time: Date.now()
-            })
-        ]);
+            return refUserRef.once("value").then(refSnap => {
 
-    })
-    .then(() => {
-        console.log("REFERRAL PAYMENT SUCCESSFUL");
-    })
-    .catch(err => {
-        console.log("REFERRAL ERROR:", err);
+                if (!refSnap.exists()) {
+                    console.log("❌ REFERRER DOES NOT EXIST");
+                    return;
+                }
+
+                console.log("✔ REFERRER FOUND — UPDATING BALANCE");
+
+                // SAFE ATOMIC UPDATES (NO Promise.all)
+                refUserRef.child("referralBalance")
+                    .transaction(v => (v || 0) + commission);
+
+                refUserRef.child("totalReferralEarnings")
+                    .transaction(v => (v || 0) + commission);
+
+                refUserRef.child("totalReferrals")
+                    .transaction(v => (v || 0) + 1);
+
+                refUserRef.child("referralTransactions").push({
+                    fromUser: user.uid,
+                    deposit: amountRaw,
+                    commission: commission,
+                    transactionId: txId,
+                    time: Date.now()
+                });
+
+                console.log("✔ REFERRAL COMMISSION PAID SUCCESSFULLY");
+            });
+
+        });
     });
+
+})
+.catch(err => {
+    console.log("❌ REFERRAL SYSTEM ERROR:", err);
 });
 
                         toast("Payment successful! Ref: " + txId);
