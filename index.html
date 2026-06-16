@@ -443,7 +443,8 @@ function generateReferralCode() {
 
 
 // REGISTER FUNCTION
-function register() {
+async function register() {
+
     let name = document.getElementById("name").value.trim();
     let email = document.getElementById("email").value.trim().toLowerCase();
     let password = document.getElementById("password").value;
@@ -471,55 +472,39 @@ function register() {
 
     loader.style.display = "block";
 
-    let refCodeFromUrl = getReferralCode();
+    try {
 
-    firebase.auth().createUserWithEmailAndPassword(email, password)
-    .then((userCredential) => {
+        let refCodeFromUrl = getReferralCode();
+
+        const userCredential = await firebase.auth()
+            .createUserWithEmailAndPassword(email, password);
 
         let uid = userCredential.user.uid;
         let referralCode = generateReferralCode();
 
-        // DEFAULT: no referrer UID yet
         let referredByUID = null;
 
-        // STEP 1: if referral code exists, find owner UID
+        // STEP 1: FIND REFERRER (IF ANY)
         if (refCodeFromUrl) {
-            return db.ref("users")
-            .orderByChild("referralCode")
-            .equalTo(refCodeFromUrl)
-            .once("value")
-            .then(snapshot => {
 
-                snapshot.forEach(child => {
-                    referredByUID = child.key; // THIS IS THE FIX
-                });
+            const snapshot = await db.ref("users")
+                .orderByChild("referralCode")
+                .equalTo(refCodeFromUrl)
+                .once("value");
 
-                // STEP 2: save user
-                return db.ref("users/" + uid).set({
-                    name: name,
-                    email: email,
-                    balance: 0,
-
-                    referralCode: referralCode,
-                    referredBy: referredByUID,
-
-                    referralBalance: 0,
-                    totalReferralEarnings: 0,
-                    totalReferrals: 0,
-
-                    createdAt: Date.now()
-                });
+            snapshot.forEach(child => {
+                referredByUID = child.key;
             });
         }
 
-        // NO REFERRAL CASE
-        return db.ref("users/" + uid).set({
+        // STEP 2: SAVE USER
+        await db.ref("users/" + uid).set({
             name: name,
             email: email,
             balance: 0,
 
             referralCode: referralCode,
-            referredBy: null,
+            referredBy: referredByUID,
 
             referralBalance: 0,
             totalReferralEarnings: 0,
@@ -528,13 +513,12 @@ function register() {
             createdAt: Date.now()
         });
 
-    })
-    .then(() => {
         loader.style.display = "none";
         alert("Account created successfully ✅");
         window.location.href = "loging.html";
-    })
-    .catch((err) => {
+
+    } catch (err) {
+
         loader.style.display = "none";
 
         if (err.code === "auth/email-already-in-use") {
@@ -544,7 +528,7 @@ function register() {
         } else {
             error.innerText = err.message;
         }
-    });
+    }
 }
 </script>
 
