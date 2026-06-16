@@ -471,7 +471,7 @@ function register() {
 
     loader.style.display = "block";
 
-    let referredBy = getReferralCode();
+    let refCodeFromUrl = getReferralCode();
 
     firebase.auth().createUserWithEmailAndPassword(email, password)
     .then((userCredential) => {
@@ -479,13 +479,47 @@ function register() {
         let uid = userCredential.user.uid;
         let referralCode = generateReferralCode();
 
+        // DEFAULT: no referrer UID yet
+        let referredByUID = null;
+
+        // STEP 1: if referral code exists, find owner UID
+        if (refCodeFromUrl) {
+            return db.ref("users")
+            .orderByChild("referralCode")
+            .equalTo(refCodeFromUrl)
+            .once("value")
+            .then(snapshot => {
+
+                snapshot.forEach(child => {
+                    referredByUID = child.key; // THIS IS THE FIX
+                });
+
+                // STEP 2: save user
+                return db.ref("users/" + uid).set({
+                    name: name,
+                    email: email,
+                    balance: 0,
+
+                    referralCode: referralCode,
+                    referredBy: referredByUID,
+
+                    referralBalance: 0,
+                    totalReferralEarnings: 0,
+                    totalReferrals: 0,
+
+                    createdAt: Date.now()
+                });
+            });
+        }
+
+        // NO REFERRAL CASE
         return db.ref("users/" + uid).set({
             name: name,
             email: email,
             balance: 0,
 
             referralCode: referralCode,
-            referredBy: referredBy || null,
+            referredBy: null,
 
             referralBalance: 0,
             totalReferralEarnings: 0,
