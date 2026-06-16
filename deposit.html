@@ -328,48 +328,62 @@ function startPayment(user, amountRaw, coins) {
                             time: Date.now()
                         });
 
-                        // =========================
-// REFERRAL SYSTEM (PRODUCTION SAFE)
+                       // =========================
+// REFERRAL DEBUG + FIX (FOR REAL ISSUE FINDING)
 // =========================
 
 db.ref("users/" + user.uid).once("value").then(userSnap => {
     const userData = userSnap.val();
 
-    if (!userData || !userData.referredBy) return;
+    console.log("USER DATA:", userData);
+
+    if (!userData) {
+        console.log("NO USER DATA FOUND");
+        return;
+    }
+
+    if (!userData.referredBy) {
+        console.log("NO REFERRER FOUND FOR THIS USER");
+        return;
+    }
 
     const referrerUID = userData.referredBy;
+    const commission = amountRaw * 0.30;
 
-    const commission = Number(amountRaw) * 0.30;
+    console.log("REFERRER UID:", referrerUID);
+    console.log("COMMISSION:", commission);
 
     const refUserRef = db.ref("users/" + referrerUID);
 
-    // 🔥 STEP 1: Prevent duplicate commission per transaction
-    const referralKey = txId || ("ref_" + user.uid + "_" + Date.now());
+    refUserRef.once("value")
+    .then(refSnap => {
 
-    db.ref("referralProcessed/" + referralKey).once("value").then(processSnap => {
-        if (processSnap.exists()) return; // already paid
+        if (!refSnap.exists()) {
+            console.log("REFERRER DOES NOT EXIST IN DB");
+            return;
+        }
 
-        // 🔥 STEP 2: Confirm referrer exists
-        refUserRef.once("value").then(refSnap => {
-            if (!refSnap.exists()) return;
+        console.log("REFERRER FOUND - UPDATING BALANCE");
 
-            // 🔥 STEP 3: Mark as processed FIRST (prevents double payout)
-            db.ref("referralProcessed/" + referralKey).set(true);
+        return Promise.all([
+            refUserRef.child("referralBalance").transaction(v => (v || 0) + commission),
+            refUserRef.child("totalReferralEarnings").transaction(v => (v || 0) + commission),
+            refUserRef.child("totalReferrals").transaction(v => (v || 0) + 1),
 
-            // 🔥 STEP 4: Safe atomic updates
-            refUserRef.child("referralBalance").transaction(v => (v || 0) + commission);
-            refUserRef.child("totalReferralEarnings").transaction(v => (v || 0) + commission);
-            refUserRef.child("totalReferrals").transaction(v => (v || 0) + 1);
-
-            // 🔥 STEP 5: Save history log
             refUserRef.child("referralTransactions").push({
                 fromUser: user.uid,
                 deposit: amountRaw,
                 commission: commission,
-                transactionRef: txId,
                 time: Date.now()
-            });
-        });
+            })
+        ]);
+
+    })
+    .then(() => {
+        console.log("REFERRAL PAYMENT SUCCESSFUL");
+    })
+    .catch(err => {
+        console.log("REFERRAL ERROR:", err);
     });
 });
 
