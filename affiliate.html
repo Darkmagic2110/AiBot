@@ -1,166 +1,163 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-<meta charset="UTF-8" />
-<meta name="viewport" content="width=device-width, initial-scale=1.0"/>
-<title>Affiliate Program - Dark Magic AI</title>
+<meta charset="UTF-8">
+<title>Affiliate Dashboard - Dark Magic AI</title>
 
-<link href="https://fonts.googleapis.com/css2?family=Poppins:wght@400;500;600;700&display=swap" rel="stylesheet">
+<link href="https://fonts.googleapis.com/css2?family=Poppins:wght@400;600&display=swap" rel="stylesheet">
 
 <style>
 body {
     margin: 0;
     font-family: 'Poppins', sans-serif;
-    background: radial-gradient(circle at top, #1a0000, #000);
+    background: #0a0a0a;
     color: white;
-    padding: 15px;
+    padding: 20px;
 }
 
-.container { max-width: 420px; margin: auto; }
+.container {
+    max-width: 420px;
+    margin: auto;
+}
 
-h1 { text-align: center; color: #ff1a1a; }
-
-.subtitle { text-align: center; font-size: 14px; color: #ff9999; margin-bottom: 20px; }
+h1 {
+    color: red;
+    text-align: center;
+    margin-bottom: 20px;
+}
 
 .card {
-    background: rgba(255,0,0,0.08);
-    border: 1px solid rgba(255,0,0,0.2);
+    background: #111;
     padding: 15px;
-    border-radius: 14px;
-    margin-bottom: 12px;
+    border-radius: 12px;
+    margin-bottom: 15px;
+    border: 1px solid #222;
 }
 
-input {
-    width: 100%;
-    padding: 10px;
-    margin-top: 6px;
-    border-radius: 8px;
-    border: none;
-    outline: none;
+.stat {
+    display: flex;
+    justify-content: space-between;
+    margin: 10px 0;
+}
+
+.stat span:last-child {
+    color: lime;
+    font-weight: bold;
 }
 
 button {
     width: 100%;
     padding: 12px;
     margin-top: 10px;
-    border-radius: 10px;
     border: none;
-    background: linear-gradient(45deg, #ff0000, #990000);
+    border-radius: 10px;
+    background: red;
     color: white;
     font-weight: bold;
     cursor: pointer;
 }
 
-.stats {
-    display: grid;
-    grid-template-columns: 1fr 1fr;
-    gap: 10px;
+.ref-link {
+    word-break: break-all;
+    font-size: 13px;
+    color: cyan;
 }
 
-.stat {
-    background: rgba(255,255,255,0.05);
-    padding: 10px;
-    border-radius: 10px;
-    text-align: center;
+.user-list {
+    max-height: 200px;
+    overflow-y: auto;
+    margin-top: 10px;
 }
 
-.stat h3 { margin: 0; color: #ff4d4d; }
-
-.item {
-    display: flex;
-    justify-content: space-between;
-    padding: 10px;
-    background: rgba(255,255,255,0.04);
-    border-radius: 10px;
-    margin-bottom: 8px;
+.user-item {
+    background: #1a1a1a;
+    padding: 8px;
+    margin: 5px 0;
+    border-radius: 8px;
+    font-size: 13px;
+    cursor: pointer;
 }
 
-.ok { background: green; }
-.no { background: red; }
+.user-item:hover {
+    background: #222;
+}
 
-.modal {
+#popup {
     display: none;
     position: fixed;
-    width: 100%; height: 100%;
-    top: 0; left: 0;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
     background: rgba(0,0,0,0.8);
 }
 
-.modal-content {
+#popupBox {
     background: #111;
     margin: 20% auto;
-    padding: 15px;
-    width: 90%;
+    padding: 20px;
+    width: 80%;
     border-radius: 12px;
-}
-
-.close {
-    float: right;
-    cursor: pointer;
-    color: red;
+    text-align: center;
 }
 </style>
 </head>
-
 <body>
 
 <div class="container">
 
-<h1>Affiliate Program</h1>
-<div class="subtitle">Earn 30% Commission on Every Deposit</div>
+<h1>Affiliate Dashboard</h1>
 
 <div class="card">
-    <b>Your Referral Link</b>
-    <input id="refLink" readonly />
+    <h3>Your Referral Link</h3>
+    <div class="ref-link" id="refLink">Loading...</div>
     <button onclick="copyLink()">Copy Link</button>
 </div>
 
-<div class="card stats">
+<div class="card">
     <div class="stat">
-        <h3 id="totalRefs">0</h3>
-        <small>Total Referrals</small>
+        <span>Total Referrals</span>
+        <span id="totalRef">0</span>
     </div>
 
     <div class="stat">
-        <h3 id="activeRefs">0</h3>
-        <small>Active (First Deposit)</small>
+        <span>Total Earned</span>
+        <span id="totalEarned">₦0</span>
     </div>
 
     <div class="stat">
-        <h3 id="earnings">₦0</h3>
-        <small>Total Earned</small>
+        <span>Available Balance</span>
+        <span id="balance">₦0</span>
     </div>
 
-    <div class="stat">
-        <h3 id="balance">₦0</h3>
-        <small>Withdrawable Balance</small>
-    </div>
+    <button onclick="withdraw()">Withdraw</button>
 </div>
-
-<button onclick="openWithdraw()">💸 Withdraw</button>
 
 <div class="card">
-    <b>Referral List</b>
-    <div id="list"></div>
+    <h3>Referred Users</h3>
+    <div class="user-list" id="userList"></div>
+</div>
+
+<div class="card">
+    <h3>How Affiliate Works</h3>
+    <p style="font-size:13px; color:#ccc; line-height:1.6;">
+        1. Share your referral link.<br>
+        2. When users register with your link, they become your referrals.<br>
+        3. You earn 30% commission on every deposit they make.<br>
+        4. Earnings are added automatically to your affiliate wallet.<br>
+        5. You can withdraw anytime once minimum is reached.
+    </p>
 </div>
 
 </div>
 
-<!-- WITHDRAW MODAL -->
-<div class="modal" id="withdrawModal">
-<div class="modal-content">
-<span class="close" onclick="closeWithdraw()">✖</span>
-
-<h3>Withdraw Funds</h3>
-
-<input id="accNumber" placeholder="Account Number">
-<input id="bankName" placeholder="Bank Name">
-<input id="accName" placeholder="Account Name">
-<input id="amount" placeholder="Amount">
-
-<button onclick="submitWithdraw()">Submit Withdrawal</button>
-
-</div>
+<!-- POPUP -->
+<div id="popup">
+    <div id="popupBox">
+        <h3>User Email</h3>
+        <p id="popupEmail"></p>
+        <button onclick="closePopup()">Close</button>
+    </div>
 </div>
 
 <script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-app.js"></script>
@@ -168,198 +165,106 @@ button {
 <script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-database.js"></script>
 
 <script>
-firebase.initializeApp({
-apiKey: "AIzaSyDvFDByPPo9zgwKLdPaREz1OVMQCXmPfrs",
-authDomain: "bets-d795d.firebaseapp.com",
-databaseURL: "https://bets-d795d-default-rtdb.firebaseio.com",
-projectId: "bets-d795d"
-});
+const firebaseConfig = {
+    apiKey: "AIzaSyDvFDByPPo9zgwKLdPaREz1OVMQCXmPfrs",
+    authDomain: "bets-d795d.firebaseapp.com",
+    databaseURL: "https://bets-d795d-default-rtdb.firebaseio.com",
+    projectId: "bets-d795d",
+    storageBucket: "bets-d795d.appspot.com",
+    messagingSenderId: "384386108287",
+    appId: "1:384386108287:android:d238a5ec8068d9bb9be84a"
+};
 
+firebase.initializeApp(firebaseConfig);
 const db = firebase.database();
 
-let userData = null;
-let currentUser = null;
+let currentUser;
+let referralCode;
 
-/* =========================
-   AUTH CHECK
-========================= */
 firebase.auth().onAuthStateChanged(user => {
+    if (!user) {
+        window.location.href = "login.html";
+        return;
+    }
 
-if (!user) {
-location.href = "loging.html";
-return;
-}
+    currentUser = user;
 
-currentUser = user;
-load(user.uid);
+    db.ref("users/" + user.uid).once("value").then(snap => {
+        const data = snap.val();
 
+        referralCode = data.referralCode;
+
+        document.getElementById("refLink").innerText =
+        window.location.origin + "/index.html?ref=" + referralCode;
+
+        loadStats();
+    });
 });
 
-/* =========================
-   LOAD USER DATA
-========================= */
-function load(uid){
+function loadStats() {
 
-db.ref("users/" + uid).on("value", snap => {
+    db.ref("users").once("value").then(snap => {
 
-userData = snap.val() || {};
+        let totalRef = 0;
+        let totalEarned = 0;
+        let list = [];
 
-/* referral link (UID SYSTEM) */
-document.getElementById("refLink").value =
-window.location.origin + "/index.html?ref=" + uid;
+        snap.forEach(child => {
+            const u = child.val();
 
-/* stats */
-document.getElementById("balance").innerText =
-"₦" + (userData.affiliateBalance || 0);
+            if (u.referredBy === referralCode) {
+                totalRef++;
 
-document.getElementById("earnings").innerText =
-"₦" + (userData.affiliateEarned || 0);
+                list.push({
+                    email: u.email,
+                    uid: child.key
+                });
 
-document.getElementById("activeRefs").innerText =
-userData.activeReferralCount || 0;
+                if (u.referralTransactions) {
+                    Object.values(u.referralTransactions).forEach(tx => {
+                        totalEarned += tx.commission || 0;
+                    });
+                }
+            }
+        });
 
-/* referral list */
-loadStats(uid);
+        document.getElementById("totalRef").innerText = totalRef;
+        document.getElementById("totalEarned").innerText = "₦" + totalEarned;
+        document.getElementById("balance").innerText = "₦" + totalEarned;
 
-});
-
-/* autofill withdrawal details */
-db.ref("users/" + uid).once("value").then(snap => {
-
-const data = snap.val() || {};
-
-if (data.withdrawalDetails) {
-
-document.getElementById("accNumber").value =
-data.withdrawalDetails.accountNumber || "";
-
-document.getElementById("bankName").value =
-data.withdrawalDetails.bankName || "";
-
-document.getElementById("accName").value =
-data.withdrawalDetails.accountName || "";
+        renderUsers(list);
+    });
 }
 
-});
+function renderUsers(list) {
+    const box = document.getElementById("userList");
+    box.innerHTML = "";
 
+    list.forEach(u => {
+        let div = document.createElement("div");
+        div.className = "user-item";
+        div.innerText = u.email;
+
+        div.onclick = () => {
+            document.getElementById("popupEmail").innerText = u.email;
+            document.getElementById("popup").style.display = "block";
+        };
+
+        box.appendChild(div);
+    });
 }
 
-/* =========================
-   REFERRAL LIST
-========================= */
-function loadStats(uid){
-
-db.ref("users").once("value").then(all => {
-
-let list = "";
-
-all.forEach(u => {
-
-const v = u.val();
-
-// UID referral match
-if (v.referredBy === uid) {
-
-const maskedEmail =
-(v.email || "User").replace(/(.{2}).+(@.+)/, "$1****$2");
-
-list += `
-<div class="item">
-<div>${maskedEmail}</div>
-<div class="ok">Referred</div>
-</div>`;
+function copyLink() {
+    navigator.clipboard.writeText(document.getElementById("refLink").innerText);
+    alert("Referral link copied!");
 }
 
-});
-
-document.getElementById("list").innerHTML =
-list || "<div style='padding:10px'>No referrals yet</div>";
-
-});
-
+function withdraw() {
+    alert("Withdrawal feature will be added next (admin approval or auto payout).");
 }
 
-/* =========================
-   COPY LINK
-========================= */
-function copyLink(){
-
-const i = document.getElementById("refLink");
-i.select();
-i.setSelectionRange(0, 99999);
-
-document.execCommand("copy");
-
-alert("Referral link copied");
-}
-
-/* =========================
-   WITHDRAW SYSTEM
-========================= */
-function openWithdraw(){
-document.getElementById("withdrawModal").style.display = "block";
-}
-
-function closeWithdraw(){
-document.getElementById("withdrawModal").style.display = "none";
-}
-
-function submitWithdraw(){
-
-const amt = Number(document.getElementById("amount").value);
-
-const accountNumber = document.getElementById("accNumber").value.trim();
-const bankName = document.getElementById("bankName").value.trim();
-const accountName = document.getElementById("accName").value.trim();
-
-/* validation */
-if (amt < 5000) {
-alert("Minimum withdrawal is ₦5000");
-return;
-}
-
-if (!accountNumber || !bankName || !accountName) {
-alert("Fill all bank details");
-return;
-}
-
-/* balance check */
-const currentBalance = Number(userData.affiliateBalance || 0);
-
-if (amt > currentBalance) {
-alert("Insufficient affiliate balance");
-return;
-}
-
-/* save withdrawal details */
-db.ref("users/" + currentUser.uid + "/withdrawalDetails").set({
-accountNumber,
-bankName,
-accountName
-});
-
-/* deduct balance safely */
-db.ref("users/" + currentUser.uid + "/affiliateBalance")
-.transaction(current => {
-if ((current || 0) < amt) return;
-return current - amt;
-});
-
-/* create withdrawal request */
-db.ref("withdrawals").push({
-uid: currentUser.uid,
-accountNumber,
-bankName,
-accountName,
-amount: amt,
-status: "pending",
-time: Date.now()
-});
-
-alert("Withdrawal submitted successfully");
-
-closeWithdraw();
-load(currentUser.uid);
+function closePopup() {
+    document.getElementById("popup").style.display = "none";
 }
 </script>
 
