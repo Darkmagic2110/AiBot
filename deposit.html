@@ -199,33 +199,46 @@ function toast(msg) {
     setTimeout(() => { t.className = t.className.replace("show", ""); }, 3000);
 }
 
-// NEW: Function to credit 30% commission to referrer
+// FIXED: Function to credit 30% commission to referrer
 function creditAffiliateCommission(depositorId, depositAmount, txId) {
     db.ref("users/" + depositorId + "/referredBy").once("value").then(snap => {
-        let referrerId = snap.val();
-        if (referrerId && referrerId !== "null") {
-            let commission = depositAmount * 0.30; // 30%
+        let referrerCode = snap.val();
+        if (referrerCode && referrerCode !== "null") {
             
-            // Add to referrer's affiliate balance
-            db.ref("users/" + referrerId + "/affiliateBalance").transaction(current => {
-                return (current || 0) + commission;
-            });
+            console.log("Referrer code found:", referrerCode);
             
-            // Update total referrals count
-            db.ref("users/" + referrerId + "/totalReferrals").transaction(current => {
-                return (current || 0) + 1;
+            // Search for user with this referralCode to get their UID
+            db.ref("users").orderByChild("referralCode").equalTo(referrerCode).once("value").then(refSnap => {
+                refSnap.forEach(child => {
+                    let referrerId = child.key; // This is the actual UID
+                    let commission = depositAmount * 0.30; // 30%
+                    
+                    console.log("Crediting ₦" + commission + " to UID:", referrerId);
+                    
+                    // Add to referrer's affiliate balance
+                    db.ref("users/" + referrerId + "/affiliateBalance").transaction(current => {
+                        return (current || 0) + commission;
+                    });
+                    
+                    // Update total referrals count
+                    db.ref("users/" + referrerId + "/totalReferrals").transaction(current => {
+                        return (current || 0) + 1;
+                    });
+                    
+                    // Log the referral commission for records
+                    db.ref("referrals").push({
+                        referrerId: referrerId,
+                        referredId: depositorId,
+                        depositAmount: depositAmount,
+                        commission: commission,
+                        txId: txId,
+                        time: Date.now(),
+                        status: "paid"
+                    });
+                });
             });
-            
-            // Log the referral commission for records
-            db.ref("referrals").push({
-                referrerId: referrerId,
-                referredId: depositorId,
-                depositAmount: depositAmount,
-                commission: commission,
-                txId: txId,
-                time: Date.now(),
-                status: "paid"
-            });
+        } else {
+            console.log("No referrer for this user");
         }
     });
 }
@@ -318,7 +331,7 @@ function startPayment(user, amountRaw, coins) {
                             time: Date.now()
                         });
 
-                        // NEW: Credit 30% to referrer if exists
+                        // FIXED: Credit 30% to referrer if exists
                         creditAffiliateCommission(user.uid, amountRaw, txId);
 
                         toast("Payment successful! Ref: " + txId);
