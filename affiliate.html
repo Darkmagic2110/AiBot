@@ -175,11 +175,13 @@ const firebaseConfig = {
     appId: "1:384386108287:android:d238a5ec8068d9bb9be84a"
 };
 
-firebase.initializeApp(firebaseConfig);
+if (!firebase.apps.length) {
+    firebase.initializeApp(firebaseConfig);
+}
+
 const db = firebase.database();
 
-let currentUser;
-let myUID;
+let myUID = null;
 
 firebase.auth().onAuthStateChanged(user => {
     if (!user) {
@@ -187,7 +189,6 @@ firebase.auth().onAuthStateChanged(user => {
         return;
     }
 
-    currentUser = user;
     myUID = user.uid;
 
     db.ref("users/" + myUID).once("value").then(snap => {
@@ -196,7 +197,7 @@ firebase.auth().onAuthStateChanged(user => {
         const referralCode = data.referralCode;
 
         document.getElementById("refLink").innerText =
-        window.location.origin + "/index.html?ref=" + referralCode;
+            window.location.origin + "/index.html?ref=" + referralCode;
 
         loadStats();
     });
@@ -213,7 +214,7 @@ function loadStats() {
         snap.forEach(child => {
             const u = child.val();
 
-            // ✅ FIX: referredBy is UID, not referralCode
+            // ✅ FIXED: UID-based referral check
             if (u.referredBy === myUID) {
                 totalRef++;
 
@@ -222,15 +223,12 @@ function loadStats() {
                     uid: child.key
                 });
 
-                // optional: count earnings safely
-                if (u.referralTransactions) {
-                    Object.values(u.referralTransactions).forEach(tx => {
-                        totalEarned += tx.commission || 0;
-                    });
-                }
+                // ✅ BEST SOURCE OF TRUTH (use real-time balance field)
+                totalEarned += u.referralBalance || 0;
             }
         });
 
+        // UI update (stable values)
         document.getElementById("totalRef").innerText = totalRef;
         document.getElementById("totalEarned").innerText = "₦" + totalEarned;
         document.getElementById("balance").innerText = "₦" + totalEarned;
