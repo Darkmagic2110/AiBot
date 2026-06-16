@@ -129,7 +129,6 @@ button {
 
 </div>
 
-<!-- POPUP -->
 <div id="popup">
     <div id="popupBox">
         <h3>User Details</h3>
@@ -170,17 +169,17 @@ firebase.auth().onAuthStateChanged(user => {
 
     myUID = user.uid;
 
-    // Get user data
     db.ref("users/" + myUID).once("value").then(snap => {
         const data = snap.val() || {};
         myReferralCode = data.referralCode;
 
-        // FIXED: Use referralCode, not UID
         const refLink = window.location.origin + "/index.html?ref=" + myReferralCode;
         document.getElementById("refLink").innerText = refLink;
 
-        // Show current affiliate balance
-        document.getElementById("balance").innerText = "₦" + (data.affiliateBalance || 0);
+        // LIVE listener for balance - updates instantly after deposit
+        db.ref("users/" + myUID + "/affiliateBalance").on("value", balSnap => {
+            document.getElementById("balance").innerText = "₦" + (balSnap.val() || 0);
+        });
 
         loadStats();
     });
@@ -196,7 +195,6 @@ function loadStats() {
         snap.forEach(child => {
             const u = child.val();
             
-            // FIXED: Match using referralCode stored in referredBy field
             if (u.referredBy === myReferralCode) {
                 totalRef++;
                 list.push({
@@ -235,7 +233,7 @@ function renderUsers(list) {
         let div = document.createElement("div");
         div.className = "user-item";
         let date = u.createdAt ? new Date(u.createdAt).toLocaleDateString() : "N/A";
-        div.innerText = u.name + " - " + u.email;
+        div.innerText = (u.name || "User") + " - " + u.email;
 
         div.onclick = () => {
             document.getElementById("popupEmail").innerText = u.email;
@@ -255,18 +253,14 @@ function copyLink() {
 function withdraw() {
     db.ref("users/" + myUID + "/affiliateBalance").once("value").then(snap => {
         let bal = snap.val() || 0;
-        let minWithdraw = 2000; // Set your minimum
+        let minWithdraw = 2000;
         
         if (bal < minWithdraw) {
             alert("Minimum withdrawal is ₦" + minWithdraw);
             return;
         }
         
-        // TODO: Connect to your withdrawal system/Paystack
         alert("Withdrawal request for ₦" + bal + " submitted!\nAdmin will approve soon.");
-        
-        // Optional: Reset balance after request
-        // db.ref("users/" + myUID + "/affiliateBalance").set(0);
     });
 }
 
