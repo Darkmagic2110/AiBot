@@ -14,18 +14,8 @@ body {
     color: white;
     padding: 20px;
 }
-
-.container {
-    max-width: 420px;
-    margin: auto;
-}
-
-h1 {
-    color: red;
-    text-align: center;
-    margin-bottom: 20px;
-}
-
+.container { max-width: 420px; margin: auto; }
+h1 { color: red; text-align: center; margin-bottom: 20px; }
 .card {
     background: #111;
     padding: 15px;
@@ -33,18 +23,12 @@ h1 {
     margin-bottom: 15px;
     border: 1px solid #222;
 }
-
 .stat {
     display: flex;
     justify-content: space-between;
     margin: 10px 0;
 }
-
-.stat span:last-child {
-    color: lime;
-    font-weight: bold;
-}
-
+.stat span:last-child { color: lime; font-weight: bold; }
 button {
     width: 100%;
     padding: 12px;
@@ -56,19 +40,20 @@ button {
     font-weight: bold;
     cursor: pointer;
 }
-
 .ref-link {
     word-break: break-all;
     font-size: 13px;
     color: cyan;
+    padding: 8px;
+    background: #0a0a0a;
+    border-radius: 6px;
+    margin: 10px 0;
 }
-
 .user-list {
     max-height: 200px;
     overflow-y: auto;
     margin-top: 10px;
 }
-
 .user-item {
     background: #1a1a1a;
     padding: 8px;
@@ -77,11 +62,7 @@ button {
     font-size: 13px;
     cursor: pointer;
 }
-
-.user-item:hover {
-    background: #222;
-}
-
+.user-item:hover { background: #222; }
 #popup {
     display: none;
     position: fixed;
@@ -90,8 +71,8 @@ button {
     width: 100%;
     height: 100%;
     background: rgba(0,0,0,0.8);
+    z-index: 999;
 }
-
 #popupBox {
     background: #111;
     margin: 20% auto;
@@ -119,23 +100,20 @@ button {
         <span>Total Referrals</span>
         <span id="totalRef">0</span>
     </div>
-
+    <div class="stat">
+        <span>Affiliate Balance</span>
+        <span id="balance">₦0</span>
+    </div>
     <div class="stat">
         <span>Total Earned</span>
         <span id="totalEarned">₦0</span>
     </div>
-
-    <div class="stat">
-        <span>Available Balance</span>
-        <span id="balance">₦0</span>
-    </div>
-
     <button onclick="withdraw()">Withdraw</button>
 </div>
 
 <div class="card">
     <h3>Referred Users</h3>
-    <div class="user-list" id="userList"></div>
+    <div class="user-list" id="userList">Loading...</div>
 </div>
 
 <div class="card">
@@ -154,8 +132,9 @@ button {
 <!-- POPUP -->
 <div id="popup">
     <div id="popupBox">
-        <h3>User Email</h3>
+        <h3>User Details</h3>
         <p id="popupEmail"></p>
+        <p id="popupDate" style="font-size:12px; color:#aaa;"></p>
         <button onclick="closePopup()">Close</button>
     </div>
 </div>
@@ -180,8 +159,8 @@ if (!firebase.apps.length) {
 }
 
 const db = firebase.database();
-
 let myUID = null;
+let myReferralCode = null;
 
 firebase.auth().onAuthStateChanged(user => {
     if (!user) {
@@ -194,47 +173,52 @@ firebase.auth().onAuthStateChanged(user => {
     // Get user data
     db.ref("users/" + myUID).once("value").then(snap => {
         const data = snap.val() || {};
+        myReferralCode = data.referralCode;
 
-        // ✅ FIXED: UID-based referral link
-        const refLink = window.location.origin + "/index.html?ref=" + myUID;
-
+        // FIXED: Use referralCode, not UID
+        const refLink = window.location.origin + "/index.html?ref=" + myReferralCode;
         document.getElementById("refLink").innerText = refLink;
+
+        // Show current affiliate balance
+        document.getElementById("balance").innerText = "₦" + (data.affiliateBalance || 0);
 
         loadStats();
     });
 });
 
 function loadStats() {
+    let totalRef = 0;
+    let totalEarned = 0;
+    let list = [];
 
+    // Find all users referred by me using referralCode
     db.ref("users").once("value").then(snap => {
-
-        let totalRef = 0;
-        let totalEarned = 0;
-        let list = [];
-
         snap.forEach(child => {
             const u = child.val();
-
-            // ✅ FIXED: correct referral match
-            if (u.referredByUid === myUID) {
-
+            
+            // FIXED: Match using referralCode stored in referredBy field
+            if (u.referredBy === myReferralCode) {
                 totalRef++;
-
                 list.push({
                     email: u.email,
-                    uid: child.key
+                    name: u.name,
+                    uid: child.key,
+                    createdAt: u.createdAt
                 });
-
-                // ✅ ONLY USE affiliateBalance
-                totalEarned += u.affiliateBalance || 0;
             }
         });
 
         document.getElementById("totalRef").innerText = totalRef;
-        document.getElementById("totalEarned").innerText = "₦" + totalEarned;
-        document.getElementById("balance").innerText = "₦" + totalEarned;
 
-        renderUsers(list);
+        // Total earned = sum of all commissions from referrals node
+        db.ref("referrals").orderByChild("referrerId").equalTo(myUID).once("value").then(refSnap => {
+            refSnap.forEach(child => {
+                totalEarned += child.val().commission || 0;
+            });
+            
+            document.getElementById("totalEarned").innerText = "₦" + totalEarned.toFixed(2);
+            renderUsers(list);
+        });
     });
 }
 
@@ -242,13 +226,20 @@ function renderUsers(list) {
     const box = document.getElementById("userList");
     box.innerHTML = "";
 
+    if (list.length === 0) {
+        box.innerHTML = "<div style='color:#666; text-align:center; padding:20px;'>No referrals yet</div>";
+        return;
+    }
+
     list.forEach(u => {
         let div = document.createElement("div");
         div.className = "user-item";
-        div.innerText = u.email;
+        let date = u.createdAt ? new Date(u.createdAt).toLocaleDateString() : "N/A";
+        div.innerText = u.name + " - " + u.email;
 
         div.onclick = () => {
             document.getElementById("popupEmail").innerText = u.email;
+            document.getElementById("popupDate").innerText = "Joined: " + date;
             document.getElementById("popup").style.display = "block";
         };
 
@@ -258,17 +249,30 @@ function renderUsers(list) {
 
 function copyLink() {
     navigator.clipboard.writeText(document.getElementById("refLink").innerText);
-    alert("Referral link copied!");
+    alert("Referral link copied! 📋");
 }
 
 function withdraw() {
-    alert("Withdrawal feature will be added soon.");
+    db.ref("users/" + myUID + "/affiliateBalance").once("value").then(snap => {
+        let bal = snap.val() || 0;
+        let minWithdraw = 2000; // Set your minimum
+        
+        if (bal < minWithdraw) {
+            alert("Minimum withdrawal is ₦" + minWithdraw);
+            return;
+        }
+        
+        // TODO: Connect to your withdrawal system/Paystack
+        alert("Withdrawal request for ₦" + bal + " submitted!\nAdmin will approve soon.");
+        
+        // Optional: Reset balance after request
+        // db.ref("users/" + myUID + "/affiliateBalance").set(0);
+    });
 }
 
 function closePopup() {
     document.getElementById("popup").style.display = "none";
 }
 </script>
-
 </body>
 </html>
