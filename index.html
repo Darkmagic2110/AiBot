@@ -425,16 +425,21 @@ var firebaseConfig = {
     appId: "1:384386108287:android:d238a5ec8068d9bb9be84a"
 };
 
-firebase.initializeApp(firebaseConfig);
-var db = firebase.database();
+if (!firebase.apps.length) {
+    firebase.initializeApp(firebaseConfig);
+}
 
-// REGISTER FUNCTION (WITH REFERRAL SYSTEM FIXED)
+const db = firebase.database();
+
+// REGISTER FUNCTION (FIXED REFERRAL SYSTEM)
 function register() {
+
     let name = document.getElementById("name").value.trim();
     let email = document.getElementById("email").value.trim().toLowerCase();
     let password = document.getElementById("password").value;
     let confirmPassword = document.getElementById("confirmPassword").value;
     let humanCheck = document.getElementById("humanCheck").checked;
+
     let error = document.getElementById("error");
     let loader = document.getElementById("loader");
 
@@ -462,11 +467,11 @@ function register() {
 
         let uid = userCredential.user.uid;
 
-        // Get referral code from URL
         const urlParams = new URLSearchParams(window.location.search);
-        const referralCode = urlParams.get("ref"); // e.g John
+        const referralUID = urlParams.get("ref"); // ✅ NOW USING UID
 
         let userData = {
+            uid: uid,
             name: name,
             email: email,
             balance: 0,
@@ -475,36 +480,31 @@ function register() {
             createdAt: Date.now()
         };
 
-        // If no referral code, save user normally
-        if (!referralCode) {
-            return db.ref("users/" + uid).set(userData);
-        }
+        // If referral exists
+        if (referralUID) {
 
-        // Find referrer by username
-        return db.ref("users")
-            .orderByChild("name")
-            .equalTo(referralCode)
-            .once("value")
-            .then(snapshot => {
+            return db.ref("users/" + referralUID).once("value").then(snapshot => {
 
                 if (snapshot.exists()) {
 
-                    let referrerUid = null;
+                    const referrerData = snapshot.val();
 
-                    snapshot.forEach(child => {
-                        referrerUid = child.key;
-                    });
+                    userData.referredByUid = referralUID;
+                    userData.referredByName = referrerData.name;
 
-                    userData.referredByUid = referrerUid;
-                    userData.referredByName = referralCode;
-
-                    // Increase referrer referral count
-                    db.ref("users/" + referrerUid + "/referralCount")
+                    // Increase referral count
+                    db.ref("users/" + referralUID + "/referralCount")
                         .transaction(count => (count || 0) + 1);
                 }
 
                 return db.ref("users/" + uid).set(userData);
             });
+
+        } else {
+
+            return db.ref("users/" + uid).set(userData);
+        }
+
     })
     .then(() => {
         loader.style.display = "none";
