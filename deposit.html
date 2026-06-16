@@ -199,7 +199,7 @@ function toast(msg) {
     setTimeout(() => { t.className = t.className.replace("show", ""); }, 3000);
 }
 
-// WORKING: get+set + debug logs to Firebase for mobile debugging
+// FIXED: get+set + debug logs for mobile debugging
 function creditAffiliateCommission(depositorId, depositAmount, txId) {
     let debugRef = db.ref("debug/" + txId);
     debugRef.set({step: "START", time: Date.now(), depositor: depositorId, amount: depositAmount});
@@ -227,7 +227,7 @@ function creditAffiliateCommission(depositorId, depositAmount, txId) {
                     let commission = depositAmount * 0.30;
                     debugRef.update({step: "2_foundUID", referrerId: referrerId, commission: commission});
                     
-                    // 1. GET + SET balance
+                    // 1. GET + SET balance - works on mobile
                     db.ref("users/" + referrerId + "/affiliateBalance").once("value").then(balSnap => {
                         let currentBal = Number(balSnap.val()) || 0;
                         let newBal = currentBal + commission;
@@ -256,7 +256,7 @@ function creditAffiliateCommission(depositorId, depositAmount, txId) {
                         status: "paid"
                     });
                     
-                    // 4. Mark TX processed
+                    // 4. Mark TX processed to prevent double pay
                     db.ref("processedCommissions/" + txId).set(true);
                 });
                 
@@ -344,8 +344,10 @@ function startPayment(user, amountRaw, coins) {
 
                         db.ref("processedPayments/" + txId).set(true);
 
-                        userRef.child("balance").transaction(current => {
-                            return (current || 0) + coins;
+                        // FIXED: get+set for user balance too
+                        userRef.child("balance").once("value").then(balSnap => {
+                            let current = Number(balSnap.val()) || 0;
+                            userRef.child("balance").set(current + coins);
                         });
 
                         userRef.child("transactions").push({
