@@ -428,7 +428,21 @@ var firebaseConfig = {
 firebase.initializeApp(firebaseConfig);
 var db = firebase.database();
 
-// REGISTER FUNCTION (FIXED)
+
+// GET REF CODE FROM URL
+function getReferralCode() {
+    const params = new URLSearchParams(window.location.search);
+    return params.get("ref");
+}
+
+
+// GENERATE REFERRAL CODE
+function generateReferralCode() {
+    return Math.random().toString(36).substring(2, 8).toUpperCase();
+}
+
+
+// REGISTER FUNCTION
 function register() {
     let name = document.getElementById("name").value.trim();
     let email = document.getElementById("email").value.trim().toLowerCase();
@@ -457,29 +471,40 @@ function register() {
 
     loader.style.display = "block";
 
+    let referredBy = getReferralCode();
+
     firebase.auth().createUserWithEmailAndPassword(email, password)
     .then((userCredential) => {
 
         let uid = userCredential.user.uid;
+        let referralCode = generateReferralCode();
 
         return db.ref("users/" + uid).set({
             name: name,
             email: email,
             balance: 0,
+
+            referralCode: referralCode,
+            referredBy: referredBy || null,
+
+            referralBalance: 0,
+            totalReferralEarnings: 0,
+            totalReferrals: 0,
+
             createdAt: Date.now()
         });
 
     })
     .then(() => {
         loader.style.display = "none";
-        alert("Account created successfully â");
+        alert("Account created successfully ✅");
         window.location.href = "loging.html";
     })
     .catch((err) => {
         loader.style.display = "none";
 
         if (err.code === "auth/email-already-in-use") {
-            error.innerText = "Email already exists â";
+            error.innerText = "Email already exists ❌";
         } else if (err.code === "auth/weak-password") {
             error.innerText = "Password must be at least 6 characters";
         } else {
