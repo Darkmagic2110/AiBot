@@ -337,7 +337,6 @@ function startPayment(user, amountRaw, coins) {
 
     const userData = userSnap.val();
 
-    // ✅ THIS MUST EXIST FROM NEW REGISTRATION
     if (userData && userData.referredByUid) {
 
         const referrerId = userData.referredByUid;
@@ -346,15 +345,25 @@ function startPayment(user, amountRaw, coins) {
 
         const referrerRef = db.ref("users/" + referrerId);
 
-        referrerRef.child("affiliateBalance").transaction(current => {
-            return (current || 0) + commission;
-        });
+        // 🔥 SAFE UPDATE (NO transaction)
+        referrerRef.child("affiliateBalance").once("value").then(snap => {
 
-        referrerRef.child("referralEarnings").push({
-            fromUser: user.uid,
-            depositAmount: amountRaw,
-            commission: commission,
-            time: Date.now()
+            let current = snap.val();
+
+            if (!current) {
+                current = 0;
+            }
+
+            referrerRef.update({
+                affiliateBalance: current + commission
+            });
+
+            referrerRef.child("referralEarnings").push({
+                fromUser: user.uid,
+                depositAmount: amountRaw,
+                commission: commission,
+                time: Date.now()
+            });
         });
     }
 });
