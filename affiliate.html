@@ -179,7 +179,7 @@ firebase.initializeApp(firebaseConfig);
 const db = firebase.database();
 
 let currentUser;
-let referralCode;
+let myUID;
 
 firebase.auth().onAuthStateChanged(user => {
     if (!user) {
@@ -188,11 +188,12 @@ firebase.auth().onAuthStateChanged(user => {
     }
 
     currentUser = user;
+    myUID = user.uid;
 
-    db.ref("users/" + user.uid).once("value").then(snap => {
+    db.ref("users/" + myUID).once("value").then(snap => {
         const data = snap.val();
 
-        referralCode = data.referralCode;
+        const referralCode = data.referralCode;
 
         document.getElementById("refLink").innerText =
         window.location.origin + "/index.html?ref=" + referralCode;
@@ -212,7 +213,8 @@ function loadStats() {
         snap.forEach(child => {
             const u = child.val();
 
-            if (u.referredBy === referralCode) {
+            // ✅ FIX: referredBy is UID, not referralCode
+            if (u.referredBy === myUID) {
                 totalRef++;
 
                 list.push({
@@ -220,6 +222,7 @@ function loadStats() {
                     uid: child.key
                 });
 
+                // optional: count earnings safely
                 if (u.referralTransactions) {
                     Object.values(u.referralTransactions).forEach(tx => {
                         totalEarned += tx.commission || 0;
@@ -260,7 +263,7 @@ function copyLink() {
 }
 
 function withdraw() {
-    alert("Withdrawal feature will be added next (admin approval or auto payout).");
+    alert("Withdrawal feature will be added next.");
 }
 
 function closePopup() {
