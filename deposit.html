@@ -206,7 +206,7 @@ const firebaseConfig = {
     apiKey: "AIzaSyDvFDByPPo9zgwKLdPaREz1OVMQCXmPfrs",
     authDomain: "bets-d795d.firebaseapp.com",
     projectId: "bets-d795d",
-    storageBucket: "bets-d795d.appspot.com",
+    storageBucket: "bets-d795d",
     messagingSenderId: "384386108287",
     appId: "1:384386108287:android:d238a5ec8068d9bb9be84a",
     databaseURL: "https://bets-d795d-default-rtdb.firebaseio.com"
@@ -220,6 +220,11 @@ const submitBtn = document.getElementById("submitDepositBtn");
 const depositInput = document.getElementById("depositAmount");
 const historyList = document.getElementById("historyList");
 
+// =====================
+// DEBUG REFERRAL CHECK
+// =====================
+let currentUserData = null;
+
 function toast(msg) {
     const t = document.getElementById("toast");
     t.innerHTML = msg;
@@ -232,6 +237,13 @@ firebase.auth().onAuthStateChanged(user => {
         window.location.href = "login.html";
         return;
     }
+
+    db.ref("users/" + user.uid).once("value").then(snap => {
+        currentUserData = snap.val();
+
+        // 🔥 DEBUG DISPLAY (REMOVE LATER IF YOU WANT)
+        console.log("REFERRAL UID:", currentUserData?.referredByUid || "NONE");
+    });
 
     db.ref("users/" + user.uid + "/transactions").once("value").then(snap => {
         historyList.innerHTML = "";
@@ -267,6 +279,7 @@ firebase.auth().onAuthStateChanged(user => {
 });
 
 let flutterwaveKey = null;
+
 db.ref("settings/flutterwaveKeys/public").once("value").then(snap => {
     flutterwaveKey = snap.val() || "";
 });
@@ -293,70 +306,75 @@ function startPayment(user, amountRaw, coins) {
         amount: amountRaw,
         currency: "NGN",
         payment_options: "card, banktransfer, ussd",
-        customer: {
-            email: user.email
-        },
+        customer: { email: user.email },
 
         callback: function (response) {
 
             const txId = response.transaction_id;
 
-            if (!txId) {
-                return toast("Payment not completed");
-            }
+            if (!txId) return toast("Payment not completed");
 
             const userRef = db.ref("users/" + user.uid);
 
             db.ref("processedPayments/" + txId).once("value").then(snap => {
 
-                if (!snap.exists()) {
+                if (snap.exists()) return;
 
-                    if (response.status === "successful" || response.status === "completed") {
-
-                        db.ref("processedPayments/" + txId).set(true);
-
-                      userRef.once("value").then(userSnap => {
-
-    const userData = userSnap.val();
-
-    if (userData && userData.referredByUid) {
-
-        const referrerId = userData.referredByUid;
-
-        const commission = Math.floor(amountRaw * 0.30);
-
-        const referrerRef = db.ref("users/" + referrerId);
-
-        // 🔥 SAFE UPDATE (NO transaction)
-        referrerRef.child("affiliateBalance").once("value").then(snap => {
-
-            let current = snap.val();
-
-            if (!current) {
-                current = 0;
-            }
-
-            referrerRef.update({
-                affiliateBalance: current + commission
-            });
-
-            referrerRef.child("referralEarnings").push({
-                fromUser: user.uid,
-                depositAmount: amountRaw,
-                commission: commission,
-                time: Date.now()
-            });
-        });
-    }
-});
-
-                        toast("Payment successful! Ref: " + txId);
-                        depositStatus.innerHTML = `Payment complete! Coins added: ${coins}`;
-
-                    } else {
-                        return toast("Payment not verified yet");
-                    }
+                if (response.status !== "successful" && response.status !== "completed") {
+                    return toast("Payment not verified");
                 }
+
+                // =========================
+                // SAVE PAYMENT
+                // =========================
+                db.ref("processedPayments/" + txId).set(true);
+
+                userRef.child("balance").transaction(c => (c || 0) + coins);
+
+                userRef.child("transactions").push({
+                    type: "deposit",
+                    coins,
+                    amount: amountRaw,
+                    ref: txId,
+                    time: Date.now()
+                });
+
+                // =========================
+                // REFERRAL SYSTEM (FIXED)
+                // =========================
+                userRef.once("value").then(userSnap => {
+
+                    const data = userSnap.val();
+
+                    console.log("USER DATA:", data);
+
+                    if (!data || !data.referredByUid) {
+                        console.log("NO REFERRAL FOUND");
+                        return;
+                    }
+
+                    const referrerId = data.referredByUid;
+                    const commission = Math.floor(amountRaw * 0.30);
+
+                    const refRef = db.ref("users/" + referrerId);
+
+                    // SAFE UPDATE
+                    refRef.child("affiliateBalance").transaction(current => {
+                        return (current || 0) + commission;
+                    });
+
+                    refRef.child("referralEarnings").push({
+                        fromUser: user.uid,
+                        depositAmount: amountRaw,
+                        commission,
+                        time: Date.now()
+                    });
+
+                    console.log("REFERRAL PAID:", commission);
+                });
+
+                toast("Payment successful! Ref: " + txId);
+                depositStatus.innerHTML = `Payment complete! Coins added: ${coins}`;
 
                 setTimeout(() => {
                     window.location.href = "maining.html";
@@ -364,7 +382,7 @@ function startPayment(user, amountRaw, coins) {
             });
         },
 
-        onclose: function() {
+        onclose: function () {
             toast("Payment cancelled");
         }
     });
@@ -381,13 +399,14 @@ submitBtn.onclick = () => {
     if (!validation.valid) return toast(validation.msg);
 
     const coins = validation.coins;
+
     depositStatus.innerHTML = `You will receive ${coins} coin(s) for ₦${amountRaw}`;
 
-    if (!flutterwaveKey) return toast("Payment key not loaded — try again");
+    if (!flutterwaveKey) return toast("Payment key not loaded");
 
     document.getElementById("instructionModal").style.display = "block";
 
-    document.getElementById("agreeBtn").onclick = function() {
+    document.getElementById("agreeBtn").onclick = function () {
         document.getElementById("instructionModal").style.display = "none";
         startPayment(user, amountRaw, coins);
     };
