@@ -184,6 +184,7 @@ const firebaseConfig = {
     appId: "1:384386108287:android:d238a5ec8068d9bb9be84a",
     databaseURL: "https://bets-d795d-default-rtdb.firebaseio.com"
 };
+
 firebase.initializeApp(firebaseConfig);
 const db = firebase.database();
 
@@ -199,65 +200,55 @@ function toast(msg) {
     setTimeout(() => { t.className = t.className.replace("show", ""); }, 3000);
 }
 
-// FIXED: Function to credit 30% commission to referrer - uses get+set instead of transaction
+/* =========================
+   FIXED AFFILIATE FUNCTION
+   ========================= */
 function creditAffiliateCommission(depositorId, depositAmount, txId) {
     db.ref("users/" + depositorId + "/referredBy").once("value").then(snap => {
         let referrerCode = snap.val();
-        if (referrerCode && referrerCode !== "null") {
-            
-            // Prevent double commission for same transaction
-            db.ref("processedCommissions/" + txId).once("value").then(checkSnap => {
-                if (checkSnap.exists()) {
-                    console.log("Commission already paid for", txId);
-                    return;
-                }
-                
-                console.log("Referrer code found:", referrerCode);
-                
-                // Search for user with this referralCode to get their UID
-                db.ref("users").orderByChild("referralCode").equalTo(referrerCode).once("value").then(refSnap => {
-                    refSnap.forEach(child => {
-                        let referrerId = child.key;
-                        let commission = depositAmount * 0.30;
-                        
-                        // 1. Get current balance then add commission
-                        db.ref("users/" + referrerId + "/affiliateBalance").get().then(balSnap => {
-                            let currentBal = balSnap.val() || 0;
-                            let newBal = currentBal + commission;
-                            
-                            db.ref("users/" + referrerId + "/affiliateBalance").set(newBal).then(() => {
-                                console.log("Affiliate balance updated to:", newBal);
-                            });
-                        });
-                        
-                        // 2. Update total referrals count
-                        db.ref("users/" + referrerId + "/totalReferrals").get().then(countSnap => {
-                            let count = countSnap.val() || 0;
-                            db.ref("users/" + referrerId + "/totalReferrals").set(count + 1);
-                        });
-                        
-                        // 3. Log the referral commission
-                        db.ref("referrals").push({
-                            referrerId: referrerId,
-                            referredId: depositorId,
-                            depositAmount: depositAmount,
-                            commission: commission,
-                            txId: txId,
-                            time: Date.now(),
-                            status: "paid"
-                        });
-                        
-                        // 4. Mark this tx as processed to avoid double credit
-                        db.ref("processedCommissions/" + txId).set(true);
-                    });
+
+        if (!referrerCode || referrerCode === "null") {
+            console.log("No referrer for this user");
+            return;
+        }
+
+        db.ref("users").orderByChild("referralCode").equalTo(referrerCode).once("value")
+        .then(refSnap => {
+
+            refSnap.forEach(child => {
+                let referrerId = child.key;
+                let commission = depositAmount * 0.30;
+
+                // ✅ FIX 1: SAFE numeric addition
+                db.ref("users/" + referrerId + "/affiliateBalance")
+                .transaction(current => {
+                    return (Number(current) || 0) + commission;
+                });
+
+                // total referrals (also safe)
+                db.ref("users/" + referrerId + "/totalReferrals")
+                .transaction(current => {
+                    return (Number(current) || 0) + 1;
+                });
+
+                // log referral
+                db.ref("referrals").push({
+                    referrerId,
+                    referredId: depositorId,
+                    depositAmount,
+                    commission,
+                    txId,
+                    time: Date.now(),
+                    status: "paid"
                 });
             });
-        } else {
-            console.log("No referrer for this user");
-        }
+        });
     });
 }
 
+/* =========================
+   AUTH + HISTORY
+   ========================= */
 firebase.auth().onAuthStateChanged(user => {
     if (!user) {
         window.location.href = "login.html";
@@ -267,15 +258,19 @@ firebase.auth().onAuthStateChanged(user => {
     db.ref("users/" + user.uid + "/transactions").once("value").then(snap => {
         historyList.innerHTML = "";
         let arr = [];
+
         snap.forEach(child => {
             let tx = child.val();
             tx.key = child.key;
             arr.push(tx);
         });
-        arr.sort((a,b)=> b.time - a.time);
+
+        arr.sort((a, b) => b.time - a.time);
+
         arr.forEach(tx => {
-            if(tx.type === "deposit"){
+            if (tx.type === "deposit") {
                 const d = new Date(tx.time).toLocaleString();
+
                 historyList.innerHTML += `
                 <div class="history-item">
                     <div class="history-left">
@@ -293,23 +288,37 @@ firebase.auth().onAuthStateChanged(user => {
     });
 });
 
+/* =========================
+   FLUTTERWAVE KEY
+   ========================= */
 let flutterwaveKey = null;
 db.ref("settings/flutterwaveKeys/public").once("value").then(snap => {
     flutterwaveKey = snap.val() || "";
 });
 
+/* =========================
+   VALIDATION
+   ========================= */
 function validateAmount(amount) {
     const min = 1000;
     const rate = 200;
-    if (amount < min) return { valid: false, msg: `Minimum deposit is ₦${min}` };
+
+    if (amount < min) {
+        return { valid: false, msg: `Minimum deposit is ₦${min}` };
+    }
+
     if (amount % rate !== 0) {
         const lower = amount - (amount % rate);
         const upper = amount + (rate - (amount % rate));
         return { valid: false, msg: `Enter a multiple of ₦${rate}. Try ₦${lower} or ₦${upper}` };
     }
+
     return { valid: true, coins: amount / rate };
 }
 
+/* =========================
+   PAYMENT
+   ========================= */
 function startPayment(user, amountRaw, coins) {
     FlutterwaveCheckout({
         public_key: flutterwaveKey,
@@ -330,45 +339,48 @@ function startPayment(user, amountRaw, coins) {
 
             db.ref("processedPayments/" + txId).once("value").then(snap => {
                 if (!snap.exists()) {
+
                     if (response.status === "successful" || response.status === "completed") {
 
                         db.ref("processedPayments/" + txId).set(true);
 
                         userRef.child("balance").transaction(current => {
-                            return (current || 0) + coins;
+                            return (Number(current) || 0) + coins;
                         });
 
                         userRef.child("transactions").push({
                             type: "deposit",
-                            coins: coins,
+                            coins,
                             amount: amountRaw,
                             ref: txId,
                             time: Date.now()
                         });
 
-                        // FIXED: Credit 30% to referrer if exists
+                        // ✅ FIXED AFFILIATE CALL
                         creditAffiliateCommission(user.uid, amountRaw, txId);
 
                         toast("Payment successful! Ref: " + txId);
                         depositStatus.innerHTML = `Payment complete! Coins added: ${coins}`;
-
                     } else {
                         return toast("Payment not verified yet");
                     }
                 }
 
-                setTimeout(()=>{
+                setTimeout(() => {
                     window.location.href = "maining.html";
-                },1500);
+                }, 1500);
             });
         },
 
-        onclose: function() {
+        onclose: function () {
             toast("Payment cancelled");
         }
     });
 }
 
+/* =========================
+   BUTTON CLICK
+   ========================= */
 submitBtn.onclick = () => {
     const user = firebase.auth().currentUser;
     if (!user) return toast("Please login again");
@@ -386,7 +398,7 @@ submitBtn.onclick = () => {
 
     document.getElementById("instructionModal").style.display = "block";
 
-    document.getElementById("agreeBtn").onclick = function() {
+    document.getElementById("agreeBtn").onclick = function () {
         document.getElementById("instructionModal").style.display = "none";
         startPayment(user, amountRaw, coins);
     };
