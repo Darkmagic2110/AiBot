@@ -96,7 +96,8 @@ const firebaseConfig = {
     appId: "1:384386108287:android:d238a5ec8068d9bb9be84a"
 };
 
-firebase.initializeApp(firebaseConfig);
+if (!firebase.apps.length) firebase.initializeApp(firebaseConfig);
+
 const db = firebase.database();
 
 let userUID = null;
@@ -114,7 +115,7 @@ firebase.auth().onAuthStateChanged(user => {
     db.ref("users/" + userUID).once("value").then(snap => {
         const data = snap.val() || {};
 
-        refCode = data.refCode;
+        refCode = data.refCode || "";
 
         const link = window.location.origin + "/index.html?ref=" + refCode;
         document.getElementById("refLink").innerText = link;
@@ -126,30 +127,28 @@ firebase.auth().onAuthStateChanged(user => {
 /* ================= DASHBOARD ================= */
 function loadDashboard() {
 
-    /* LIVE AVAILABLE BALANCE (FIXED PATH) */
-    db.ref("users/" + userUID + "/affiliate/availableBalance")
-    .on("value", snap => {
-        document.getElementById("balance").innerText =
-            "₦" + (snap.val() || 0).toFixed(2);
-    });
-
-    /* TOTAL EARNED (FIXED PATH) */
-    db.ref("users/" + userUID + "/affiliate/totalEarned")
-    .on("value", snap => {
+    // ✅ TOTAL EARNED (FIXED PATH)
+    db.ref("users/" + userUID + "/totalEarned").on("value", snap => {
         document.getElementById("totalEarned").innerText =
             "₦" + (snap.val() || 0).toFixed(2);
     });
 
-    /* TOTAL REFERRALS (FAST QUERY FIX) */
+    // ✅ AVAILABLE BALANCE
+    db.ref("users/" + userUID + "/affiliateBalance").on("value", snap => {
+        document.getElementById("balance").innerText =
+            "₦" + (snap.val() || 0).toFixed(2);
+    });
+
+    // ✅ TOTAL REFERRALS (SAFE + FIXED)
     db.ref("users").once("value").then(snap => {
 
         let count = 0;
         let list = [];
 
         snap.forEach(child => {
-            const u = child.val();
+            const u = child.val() || {};
 
-            if (u.referredBy === refCode) {
+            if (u.referredBy && refCode && u.referredBy === refCode) {
                 count++;
 
                 list.push({
@@ -171,7 +170,7 @@ function renderUsers(list) {
     const box = document.getElementById("userList");
     box.innerHTML = "";
 
-    if (list.length === 0) {
+    if (!list.length) {
         box.innerHTML = "<div>No referrals yet</div>";
         return;
     }
@@ -205,8 +204,7 @@ function copyLink() {
 /* ================= WITHDRAW ================= */
 function withdraw() {
 
-    db.ref("users/" + userUID + "/affiliate/availableBalance")
-    .once("value").then(snap => {
+    db.ref("users/" + userUID + "/affiliateBalance").once("value").then(snap => {
 
         const bal = snap.val() || 0;
 
@@ -224,7 +222,7 @@ function withdraw() {
                 time: Date.now()
             });
 
-            db.ref("users/" + userUID + "/affiliate/availableBalance").set(0);
+            db.ref("users/" + userUID + "/affiliateBalance").set(0);
 
             alert("Withdrawal request sent!");
         }
