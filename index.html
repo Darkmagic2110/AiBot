@@ -7,7 +7,6 @@
 
 <link href="https://fonts.googleapis.com/css2?family=Orbitron:wght@600&family=Poppins:wght@400;500;600&display=swap" rel="stylesheet">
 
-<!-- Firebase -->
 <script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-app.js"></script>
 <script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-auth.js"></script>
 <script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-database.js"></script>
@@ -57,142 +56,31 @@ h1 {
     font-size: 30px;
     text-shadow: 0 0 15px rgba(255,0,0,0.5);
 }
-.ai-welcome-box{
-    position: relative;
-    z-index: 2;
-    margin-bottom: 22px;
-    padding: 20px;
-    border-radius: 18px;
-    background: linear-gradient(145deg, rgba(255,0,0,0.08), rgba(0,0,0,0.45));
-    border: 1px solid rgba(255,0,0,0.18);
-    box-shadow: 0 0 25px rgba(255,0,0,0.18), inset 0 0 20px rgba(255,255,255,0.02);
-    overflow: hidden;
-}
-.ai-badge{
-    display: inline-block;
-    padding: 6px 14px;
-    border-radius: 30px;
-    background: rgba(255,0,0,0.12);
-    border: 1px solid rgba(255,0,0,0.25);
-    color: #ff6666;
-    font-size: 11px;
-    font-weight: 600;
-    letter-spacing: 2px;
-    margin-bottom: 14px;
-}
-.ai-welcome-box h2{
-    font-family: 'Orbitron', sans-serif;
-    font-size: 26px;
-    margin: 0;
-    margin-bottom: 10px;
-    background: linear-gradient(to right, #ffffff, #ff6666, #ff0000);
-    -webkit-background-clip: text;
-    -webkit-text-fill-color: transparent;
-}
+.ai-welcome-box{ position: relative; z-index: 2; margin-bottom: 22px; padding: 20px; border-radius: 18px; background: linear-gradient(145deg, rgba(255,0,0,0.08), rgba(0,0,0,0.45)); border: 1px solid rgba(255,0,0,0.18); box-shadow: 0 0 25px rgba(255,0,0,0.18), inset 0 0 20px rgba(255,255,255,0.02); overflow: hidden; }
+.ai-badge{ display: inline-block; padding: 6px 14px; border-radius: 30px; background: rgba(255,0,0,0.12); border: 1px solid rgba(255,0,0,0.25); color: #ff6666; font-size: 11px; font-weight: 600; letter-spacing: 2px; margin-bottom: 14px; }
+.ai-welcome-box h2{ font-family: 'Orbitron', sans-serif; font-size: 26px; margin: 0; margin-bottom: 10px; background: linear-gradient(to right, #ffffff, #ff6666, #ff0000); -webkit-background-clip: text; -webkit-text-fill-color: transparent; }
 .welcome-text{ font-size: 18px; font-weight: 600; color: #ffffff; margin-bottom: 8px; }
 .sub-text{ color: #ffb3b3; font-size: 14px; line-height: 1.7; margin-bottom: 18px; }
 .sub-text span{ color: #ff4d4d; font-weight: 600; }
 .ai-features{ display: flex; flex-direction: column; gap: 12px; margin-bottom: 18px; }
-.feature{
-    display: flex;
-    align-items: center;
-    gap: 12px;
-    padding: 14px;
-    border-radius: 14px;
-    background: rgba(255,255,255,0.03);
-    border: 1px solid rgba(255,255,255,0.05);
-    transition: 0.3s;
-}
+.feature{ display: flex; align-items: center; gap: 12px; padding: 14px; border-radius: 14px; background: rgba(255,255,255,0.03); border: 1px solid rgba(255,255,255,0.05); transition: 0.3s; }
 .feature:hover{ transform: translateY(-2px); border-color: rgba(255,0,0,0.25); box-shadow: 0 0 20px rgba(255,0,0,0.12); }
 .feature span{ font-size: 22px; }
 .feature p{ margin: 0; color: #ffffff; font-size: 13px; font-weight: 500; }
-.bottom-ai-text{
-    color: #ffe5e5;
-    font-size: 13px;
-    line-height: 1.7;
-    padding: 14px;
-    border-radius: 14px;
-    background: linear-gradient(145deg, rgba(255,0,0,0.08), rgba(255,255,255,0.02));
-    border: 1px solid rgba(255,255,255,0.04);
-}
-input {
-    position: relative;
-    z-index: 2;
-    width: 100%;
-    padding: 14px;
-    margin: 8px 0;
-    border-radius: 12px;
-    border: 1px solid rgba(255,0,0,0.12);
-    background: rgba(255,0,0,0.06);
-    color: white;
-    outline: none;
-    font-size: 14px;
-    transition: 0.3s;
-    box-sizing: border-box;
-}
+.bottom-ai-text{ color: #ffe5e5; font-size: 13px; line-height: 1.7; padding: 14px; border-radius: 14px; background: linear-gradient(145deg, rgba(255,0,0,0.08), rgba(255,255,255,0.02)); border: 1px solid rgba(255,255,255,0.04); }
+input { position: relative; z-index: 2; width: 100%; padding: 14px; margin: 8px 0; border-radius: 12px; border: 1px solid rgba(255,0,0,0.12); background: rgba(255,0,0,0.06); color: white; outline: none; font-size: 14px; transition: 0.3s; box-sizing: border-box; }
 input:focus{ border-color: #ff1a1a; box-shadow: 0 0 15px rgba(255,0,0,0.18); }
 input::placeholder { color: #ff9999; }
-.checkbox {
-    position: relative;
-    z-index: 2;
-    display: flex;
-    align-items: center;
-    font-size: 13px;
-    margin-top: 8px;
-    color: #ffcccc;
-}
+.checkbox { position: relative; z-index: 2; display: flex; align-items: center; font-size: 13px; margin-top: 8px; color: #ffcccc; }
 .checkbox input { width: auto; margin-right: 8px; }
-button {
-    position: relative;
-    z-index: 2;
-    width: 100%;
-    padding: 14px;
-    margin-top: 18px;
-    border-radius: 12px;
-    border: none;
-    background: linear-gradient(45deg, #ff0000, #990000);
-    color: white;
-    font-weight: bold;
-    font-size: 15px;
-    cursor: pointer;
-    transition: 0.3s;
-    box-shadow: 0 0 20px rgba(255,0,0,0.25);
-}
+button { position: relative; z-index: 2; width: 100%; padding: 14px; margin-top: 18px; border-radius: 12px; border: none; background: linear-gradient(45deg, #ff0000, #990000); color: white; font-weight: bold; font-size: 15px; cursor: pointer; transition: 0.3s; box-shadow: 0 0 20px rgba(255,0,0,0.25); }
 button:hover { transform: scale(1.03); box-shadow: 0 0 30px rgba(255,0,0,0.4); }
-.error {
-    position: relative;
-    z-index: 2;
-    color: #ff4d4d;
-    font-size: 13px;
-    text-align: center;
-    margin-top: 10px;
-}
-.loader {
-    position: relative;
-    z-index: 2;
-    display: none;
-    text-align: center;
-    margin-top: 10px;
-    color: #ff6666;
-}
-.bottom-text {
-    position: relative;
-    z-index: 2;
-    text-align: center;
-    margin-top: 15px;
-    font-size: 13px;
-    color: #ffcccc;
-}
-.bottom-text a {
-    color: #ff6666;
-    text-decoration: none;
-    font-weight: 600;
-}
+.error { position: relative; z-index: 2; color: #ff4d4d; font-size: 13px; text-align: center; margin-top: 10px; }
+.loader { position: relative; z-index: 2; display: none; text-align: center; margin-top: 10px; color: #ff6666; }
+.bottom-text { position: relative; z-index: 2; text-align: center; margin-top: 15px; font-size: 13px; color: #ffcccc; }
+.bottom-text a { color: #ff6666; text-decoration: none; font-weight: 600; }
 .bottom-text a:hover { text-decoration: underline; }
-@keyframes fadeIn {
-    from { opacity: 0; transform: translateY(20px); }
-    to { opacity: 1; transform: translateY(0); }
-}
+@keyframes fadeIn { from { opacity: 0; transform: translateY(20px); } to { opacity: 1; transform: translateY(0); } }
 </style>
 </head>
 
@@ -239,7 +127,6 @@ button:hover { transform: scale(1.03); box-shadow: 0 0 30px rgba(255,0,0,0.4); }
 </div>
 
 <script>
-// FIREBASE CONFIG
 var firebaseConfig = {
     apiKey: "AIzaSyDvFDByPPo9zgwKLdPaREz1OVMQCXmPfrs",
     authDomain: "bets-d795d.firebaseapp.com",
@@ -253,12 +140,7 @@ var firebaseConfig = {
 firebase.initializeApp(firebaseConfig);
 var db = firebase.database();
 
-// Generate unique referral code
-function generateRefCode() {
-    return 'DM' + Math.random().toString(36).substring(2, 8).toUpperCase();
-}
-
-// Get referral code from URL ?ref=CODE
+// Get referral code from URL ?ref=DMCGFS32
 function getRefFromURL() {
     const params = new URLSearchParams(window.location.search);
     return params.get('ref');
@@ -289,8 +171,7 @@ function register() {
     }
 
     loader.style.display = "block";
-    let referralCode = generateRefCode();
-    let referredBy = getRefFromURL(); // This gets the person who referred
+    let referredBy = getRefFromURL(); // DMCGFS32
 
     firebase.auth().createUserWithEmailAndPassword(email, password)
     .then((userCredential) => {
@@ -300,17 +181,15 @@ function register() {
             name: name,
             email: email,
             balance: 0,
-            affiliateBalance: 0, // For 30% commission
-            referralCode: referralCode,
-            referredBy: referredBy || null,
+            affiliateBalance: 0,
+            referredBy: referredBy || null, // saves DMCGFS32 only
             totalReferrals: 0,
             createdAt: Date.now()
         });
     })
     .then(() => {
         loader.style.display = "none";
-        let myRefLink = window.location.origin + "/index.html?ref=" + referralCode;
-        alert("Account created successfully ✅\n\nYour referral link:\n" + myRefLink + "\n\nShare it to earn 30% of every deposit!");
+        alert("Account created successfully ✅\n\nYou can get your referral link after login in Affiliate page");
         window.location.href = "loging.html";
     })
     .catch((err) => {
