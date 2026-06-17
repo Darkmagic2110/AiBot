@@ -228,45 +228,62 @@ function toast(msg) {
 }
 
 /* =========================
-   🔥 AFFILIATE FUNCTION (NEW)
+   🔥 FIXED AFFILIATE SYSTEM
 ========================= */
 function processAffiliate(userId, amountRaw, txId) {
 
-    db.ref("users/" + userId + "/referredBy").once("value").then(snap => {
+    const userRef = db.ref("users/" + userId);
+
+    userRef.child("referredBy").once("value").then(snap => {
         const refCode = snap.val();
-        if (!refCode) return;
 
-        // find referrer by referral code
-        db.ref("users").once("value").then(allUsers => {
+        if (!refCode) return; // no referral
 
-            let referrerId = null;
+        // prevent duplicate commission
+        db.ref("processedAffiliates/" + txId).once("value").then(check => {
+            if (check.exists()) return;
 
-            allUsers.forEach(child => {
-                const u = child.val();
-                if (u.refCode === refCode) {
+            // find referrer by refCode (FAST QUERY)
+            db.ref("users").orderByChild("refCode").equalTo(refCode).once("value")
+            .then(result => {
+
+                let referrerId = null;
+
+                result.forEach(child => {
                     referrerId = child.key;
-                }
-            });
+                });
 
-            if (!referrerId) return;
+                if (!referrerId) return;
 
-            const commission = amountRaw * 0.30;
+                const commission = amountRaw * 0.30;
 
-            db.ref("users/" + referrerId + "/affiliateBalance").transaction(v => (v || 0) + commission);
-            db.ref("users/" + referrerId + "/totalEarned").transaction(v => (v || 0) + commission);
+                db.ref("users/" + referrerId + "/affiliate/availableBalance")
+                    .transaction(v => (v || 0) + commission);
 
-            db.ref("referrals").push({
-                referrerId,
-                referredId: userId,
-                amount: amountRaw,
-                commission,
-                txId,
-                time: Date.now()
+                db.ref("users/" + referrerId + "/affiliate/totalEarned")
+                    .transaction(v => (v || 0) + commission);
+
+                db.ref("users/" + referrerId + "/totalReferrals")
+                    .transaction(v => (v || 0) + 1);
+
+                db.ref("referrals").push({
+                    referrerId,
+                    referredId: userId,
+                    amount: amountRaw,
+                    commission,
+                    txId,
+                    time: Date.now()
+                });
+
+                db.ref("processedAffiliates/" + txId).set(true);
             });
         });
     });
 }
 
+/* =========================
+   TRANSACTION HISTORY
+========================= */
 firebase.auth().onAuthStateChanged(user => {
     if (!user) {
         window.location.href = "login.html";
@@ -303,10 +320,12 @@ firebase.auth().onAuthStateChanged(user => {
                 </div>`;
             }
         });
-
     });
 });
 
+/* =========================
+   FLUTTERWAVE
+========================= */
 let flutterwaveKey = null;
 db.ref("settings/flutterwaveKeys/public").once("value").then(snap => {
     flutterwaveKey = snap.val() || "";
@@ -339,7 +358,6 @@ function startPayment(user, amountRaw, coins) {
         callback: function (response) {
 
             const txId = response.transaction_id;
-
             if (!txId) return toast("Payment not completed");
 
             const userRef = db.ref("users/" + user.uid);
@@ -352,32 +370,29 @@ function startPayment(user, amountRaw, coins) {
 
                         db.ref("processedPayments/" + txId).set(true);
 
-                        // add balance
                         userRef.child("balance").transaction(v => (v || 0) + coins);
 
-                        // save transaction
                         userRef.child("transactions").push({
                             type: "deposit",
-                            coins: coins,
+                            coins,
                             amount: amountRaw,
                             ref: txId,
                             time: Date.now()
                         });
 
-                        // 🔥 RUN AFFILIATE SYSTEM
+                        // 🔥 RUN AFFILIATE SYSTEM (FIXED)
                         processAffiliate(user.uid, amountRaw, txId);
 
                         toast("Payment successful! Ref: " + txId);
                         depositStatus.innerHTML = `Payment complete! Coins added: ${coins}`;
-
                     } else {
                         return toast("Payment not verified yet");
                     }
                 }
 
-                setTimeout(()=>{
+                setTimeout(() => {
                     window.location.href = "maining.html";
-                },1500);
+                }, 1500);
 
             });
         },
@@ -388,6 +403,9 @@ function startPayment(user, amountRaw, coins) {
     });
 }
 
+/* =========================
+   BUTTON
+========================= */
 submitBtn.onclick = () => {
     const user = firebase.auth().currentUser;
     if (!user) return toast("Please login again");
