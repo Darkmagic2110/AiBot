@@ -212,7 +212,8 @@ const firebaseConfig = {
     databaseURL: "https://bets-d795d-default-rtdb.firebaseio.com"
 };
 
-firebase.initializeApp(firebaseConfig);
+if (!firebase.apps.length) firebase.initializeApp(firebaseConfig);
+
 const db = firebase.database();
 
 const depositStatus = document.getElementById("depositStatus");
@@ -224,43 +225,35 @@ function toast(msg) {
     const t = document.getElementById("toast");
     t.innerHTML = msg;
     t.className = "show";
-    setTimeout(() => { t.className = t.className.replace("show", ""); }, 3000);
+    setTimeout(() => t.className = t.className.replace("show", ""), 3000);
 }
 
 /* =========================
-   🔥 FIXED AFFILIATE SYSTEM
+   🔥 AFFILIATE SYSTEM (FIXED)
 ========================= */
 function processAffiliate(userId, amountRaw, txId) {
 
-    const userRef = db.ref("users/" + userId);
+    db.ref("users/" + userId).once("value").then(userSnap => {
+        const userData = userSnap.val();
+        if (!userData || !userData.referredBy) return;
 
-    userRef.child("referredBy").once("value").then(snap => {
-        const refCode = snap.val();
+        const refCode = userData.referredBy;
 
-        if (!refCode) return; // no referral
-
-        // prevent duplicate commission
+        // prevent double payment
         db.ref("processedAffiliates/" + txId).once("value").then(check => {
             if (check.exists()) return;
 
-            // find referrer by refCode (FAST QUERY)
-            db.ref("users").orderByChild("refCode").equalTo(refCode).once("value")
-            .then(result => {
-
-                let referrerId = null;
-
-                result.forEach(child => {
-                    referrerId = child.key;
-                });
-
+            // DIRECT LOOKUP (FAST + CLEAN)
+            db.ref("promoCodes/" + refCode).once("value").then(res => {
+                const referrerId = res.val();
                 if (!referrerId) return;
 
                 const commission = amountRaw * 0.30;
 
-                db.ref("users/" + referrerId + "/affiliate/availableBalance")
+                db.ref("users/" + referrerId + "/affiliateBalance")
                     .transaction(v => (v || 0) + commission);
 
-                db.ref("users/" + referrerId + "/affiliate/totalEarned")
+                db.ref("users/" + referrerId + "/totalEarned")
                     .transaction(v => (v || 0) + commission);
 
                 db.ref("users/" + referrerId + "/totalReferrals")
@@ -282,28 +275,21 @@ function processAffiliate(userId, amountRaw, txId) {
 }
 
 /* =========================
-   TRANSACTION HISTORY
+   HISTORY
 ========================= */
 firebase.auth().onAuthStateChanged(user => {
-    if (!user) {
-        window.location.href = "login.html";
-        return;
-    }
+    if (!user) return (window.location.href = "login.html");
 
     db.ref("users/" + user.uid + "/transactions").once("value").then(snap => {
         historyList.innerHTML = "";
         let arr = [];
 
-        snap.forEach(child => {
-            let tx = child.val();
-            tx.key = child.key;
-            arr.push(tx);
-        });
+        snap.forEach(child => arr.push(child.val()));
 
-        arr.sort((a,b)=> b.time - a.time);
+        arr.sort((a, b) => b.time - a.time);
 
         arr.forEach(tx => {
-            if(tx.type === "deposit"){
+            if (tx.type === "deposit") {
                 const d = new Date(tx.time).toLocaleString();
 
                 historyList.innerHTML += `
@@ -327,6 +313,7 @@ firebase.auth().onAuthStateChanged(user => {
    FLUTTERWAVE
 ========================= */
 let flutterwaveKey = null;
+
 db.ref("settings/flutterwaveKeys/public").once("value").then(snap => {
     flutterwaveKey = snap.val() || "";
 });
@@ -335,13 +322,11 @@ function validateAmount(amount) {
     const min = 1000;
     const rate = 200;
 
-    if (amount < min) return { valid: false, msg: `Minimum deposit is ₦${min}` };
+    if (amount < min)
+        return { valid: false, msg: `Minimum deposit is ₦${min}` };
 
-    if (amount % rate !== 0) {
-        const lower = amount - (amount % rate);
-        const upper = amount + (rate - (amount % rate));
-        return { valid: false, msg: `Enter a multiple of ₦${rate}. Try ₦${lower} or ₦${upper}` };
-    }
+    if (amount % rate !== 0)
+        return { valid: false, msg: `Enter a multiple of ₦${rate}` };
 
     return { valid: true, coins: amount / rate };
 }
@@ -380,26 +365,21 @@ function startPayment(user, amountRaw, coins) {
                             time: Date.now()
                         });
 
-                        // 🔥 RUN AFFILIATE SYSTEM (FIXED)
+                        // ✅ AFFILIATE TRIGGER
                         processAffiliate(user.uid, amountRaw, txId);
 
-                        toast("Payment successful! Ref: " + txId);
-                        depositStatus.innerHTML = `Payment complete! Coins added: ${coins}`;
-                    } else {
-                        return toast("Payment not verified yet");
+                        toast("Payment successful!");
+                        depositStatus.innerHTML = `Coins added: ${coins}`;
                     }
                 }
 
                 setTimeout(() => {
                     window.location.href = "maining.html";
                 }, 1500);
-
             });
         },
 
-        onclose: function() {
-            toast("Payment cancelled");
-        }
+        onclose: () => toast("Payment cancelled")
     });
 }
 
@@ -411,21 +391,18 @@ submitBtn.onclick = () => {
     if (!user) return toast("Please login again");
 
     const amountRaw = Number(depositInput.value);
-    if (!amountRaw) return toast("Enter a valid deposit amount");
+    if (!amountRaw) return toast("Enter valid amount");
 
-    const validation = validateAmount(amountRaw);
-    if (!validation.valid) return toast(validation.msg);
+    const check = validateAmount(amountRaw);
+    if (!check.valid) return toast(check.msg);
 
-    const coins = validation.coins;
-    depositStatus.innerHTML = `You will receive ${coins} coin(s) for ₦${amountRaw}`;
-
-    if (!flutterwaveKey) return toast("Payment key not loaded — try again");
+    if (!flutterwaveKey) return toast("Payment key not loaded");
 
     document.getElementById("instructionModal").style.display = "block";
 
-    document.getElementById("agreeBtn").onclick = function() {
+    document.getElementById("agreeBtn").onclick = function () {
         document.getElementById("instructionModal").style.display = "none";
-        startPayment(user, amountRaw, coins);
+        startPayment(user, amountRaw, check.coins);
     };
 };
 </script>
