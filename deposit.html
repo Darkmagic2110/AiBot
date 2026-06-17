@@ -191,6 +191,7 @@ const firebaseConfig = {
     appId: "1:384386108287:android:d238a5ec8068d9bb9be84a",
     databaseURL: "https://bets-d795d-default-rtdb.firebaseio.com"
 };
+
 firebase.initializeApp(firebaseConfig);
 const db = firebase.database();
 
@@ -207,116 +208,86 @@ function toast(msg) {
     setTimeout(() => { t.className = t.className.replace("show", ""); }, 3000);
 }
 
-// UPDATED: Shows referral email on screen
+
+// ✅ FIXED AFFILIATE SYSTEM (30% EVERY DEPOSIT)
 function creditAffiliateCommission(depositorId, depositAmount, txId) {
-    let debugRef = db.ref("debug/" + txId);
-    debugRef.set({step: "START", time: Date.now(), depositor: depositorId, amount: depositAmount});
-    
-    db.ref("users/" + depositorId + "/referredBy").once("value").then(snap => {
-        let refCode = snap.val(); // DMCGFS32
-        debugRef.update({step: "1_code", value: refCode});
-        refEmailDiv.innerText = "Referral Code: " + (refCode || "None");
-        
-        if (!refCode || refCode === "null") {
-            debugRef.update({error: "No referral code found"});
-            refEmailDiv.innerText = "Referral: No code found ❌";
-            return;
-        }
-        
-        db.ref("processedCommissions/" + txId).once("value").then(checkSnap => {
-            if (checkSnap.exists()) {
-                debugRef.update({error: "TX already processed"});
-                return;
-            }
-            
-            // STEP 2: Get email from referralCodes/DMCGFS32
-            db.ref("referralCodes/" + refCode).once("value").then(codeSnap => {
-                let referrerEmail = codeSnap.val(); // eok@gmail.com
-                debugRef.update({step: "2_email_from_code", email: referrerEmail});
-                refEmailDiv.innerText = "Referral Email: " + (referrerEmail || "Not found ❌");
-                
-                if (!referrerEmail) {
-                    debugRef.update({error: "Code not found in referralCodes", code: refCode});
-                    return;
+
+    const commission = depositAmount * 0.30;
+
+    db.ref("processedCommissions/" + txId).once("value").then(snap => {
+        if (snap.exists()) return; // prevent double payout
+
+        db.ref("users/" + depositorId + "/referredBy").once("value").then((snap) => {
+
+            const referrerUID = snap.val();
+            if (!referrerUID) return;
+
+            db.ref("processedCommissions/" + txId).set(true);
+
+            // update affiliate wallet safely
+            db.ref("users/" + referrerUID + "/affiliate").transaction((data) => {
+                if (!data) {
+                    return {
+                        totalEarned: commission,
+                        availableBalance: commission,
+                        withdrawn: 0
+                    };
                 }
-                
-                // STEP 3: Find user by that email
-                db.ref("users").orderByChild("email").equalTo(referrerEmail).once("value").then(refSnap => {
-                    let found = false;
-                    refSnap.forEach(child => {
-                        found = true;
-                        let referrerId = child.key;
-                        let commission = depositAmount * 0.30;
-                        debugRef.update({step: "3_foundUID", referrerId: referrerId, commission: commission});
-                        refEmailDiv.innerText = "✅ Paying to: " + referrerEmail + " | ₦" + commission;
-                        
-                        // Pay commission - GET+SET for mobile safety
-                        db.ref("users/" + referrerId + "/affiliateBalance").once("value").then(balSnap => {
-                            let currentBal = Number(balSnap.val()) || 0;
-                            let newBal = currentBal + commission;
-                            db.ref("users/" + referrerId + "/affiliateBalance").set(newBal)
-                            .then(() => {
-                                debugRef.update({step: "4_SUCCESS_paid", newBalance: newBal});
-                                refEmailDiv.innerText = "✅ Commission sent to: " + referrerEmail;
-                            });
-                        });
-                        
-                        db.ref("users/" + referrerId + "/totalReferrals").once("value").then(countSnap => {
-                            let count = Number(countSnap.val()) || 0;
-                            db.ref("users/" + referrerId + "/totalReferrals").set(count + 1);
-                        });
-                        
-                        db.ref("referrals").push({
-                            referrerId: referrerId,
-                            referredId: depositorId,
-                            depositAmount: depositAmount,
-                            commission: commission,
-                            txId: txId,
-                            time: Date.now(),
-                            status: "paid"
-                        });
-                        
-                        db.ref("processedCommissions/" + txId).set(true);
-                    });
-                    
-                    if (!found) {
-                        debugRef.update({error: "No user found with email", email: referrerEmail});
-                        refEmailDiv.innerText = "❌ No user found with email: " + referrerEmail;
-                    }
-                });
+
+                return {
+                    totalEarned: (data.totalEarned || 0) + commission,
+                    availableBalance: (data.availableBalance || 0) + commission,
+                    withdrawn: data.withdrawn || 0
+                };
             });
+
+            // referral count
+            db.ref("users/" + referrerUID + "/totalReferrals").transaction(n => (n || 0) + 1);
+
+            // history log
+            db.ref("commissions").push({
+                referrerUID,
+                depositorId,
+                depositAmount,
+                commission,
+                txId,
+                time: Date.now()
+            });
+
         });
     });
 }
 
+
+// AUTH CHECK
 firebase.auth().onAuthStateChanged(user => {
     if (!user) {
         window.location.href = "login.html";
         return;
     }
 
-    // Show referral info immediately when page loads
     db.ref("users/" + user.uid + "/referredBy").once("value").then(snap => {
-        let refCode = snap.val();
-        if(refCode){
-            refEmailDiv.innerText = "Referral Code: " + refCode + " | Checking email...";
-        } else {
-            refEmailDiv.innerText = "No referral code";
-        }
+        let ref = snap.val();
+        refEmailDiv.innerText = ref
+            ? "Referred By: " + ref
+            : "No referral";
     });
 
     db.ref("users/" + user.uid + "/transactions").once("value").then(snap => {
         historyList.innerHTML = "";
+
         let arr = [];
         snap.forEach(child => {
             let tx = child.val();
-            tx.key = child.key;
             arr.push(tx);
         });
-        arr.sort((a,b)=> b.time - a.time);
+
+        arr.sort((a,b) => b.time - a.time);
+
         arr.forEach(tx => {
-            if(tx.type === "deposit"){
+            if (tx.type === "deposit") {
                 const d = new Date(tx.time).toLocaleString();
+
                 historyList.innerHTML += `
                 <div class="history-item">
                     <div class="history-left">
@@ -334,24 +305,34 @@ firebase.auth().onAuthStateChanged(user => {
     });
 });
 
+
+// LOAD FLUTTERWAVE KEY
 let flutterwaveKey = null;
 db.ref("settings/flutterwaveKeys/public").once("value").then(snap => {
     flutterwaveKey = snap.val() || "";
 });
 
+
+// VALIDATION
 function validateAmount(amount) {
     const min = 1000;
     const rate = 200;
+
     if (amount < min) return { valid: false, msg: `Minimum deposit is ₦${min}` };
+
     if (amount % rate !== 0) {
         const lower = amount - (amount % rate);
         const upper = amount + (rate - (amount % rate));
         return { valid: false, msg: `Enter a multiple of ₦${rate}. Try ₦${lower} or ₦${upper}` };
     }
+
     return { valid: true, coins: amount / rate };
 }
 
+
+// PAYMENT
 function startPayment(user, amountRaw, coins) {
+
     FlutterwaveCheckout({
         public_key: flutterwaveKey,
         tx_ref: "TX-" + Date.now(),
@@ -361,57 +342,61 @@ function startPayment(user, amountRaw, coins) {
         customer: { email: user.email },
 
         callback: function (response) {
+
             const txId = response.transaction_id;
 
-            if (!txId) {
-                return toast("Payment not completed");
-            }
+            if (!txId) return toast("Payment not completed");
 
             const userRef = db.ref("users/" + user.uid);
 
             db.ref("processedPayments/" + txId).once("value").then(snap => {
-                if (!snap.exists()) {
-                    if (response.status === "successful" || response.status === "completed") {
 
-                        db.ref("processedPayments/" + txId).set(true);
+                if (!snap.exists() &&
+                    (response.status === "successful" || response.status === "completed")) {
 
-                        // GET + SET for user balance
-                        userRef.child("balance").once("value").then(balSnap => {
-                            let current = Number(balSnap.val()) || 0;
-                            userRef.child("balance").set(current + coins);
-                        });
+                    db.ref("processedPayments/" + txId).set(true);
 
-                        userRef.child("transactions").push({
-                            type: "deposit",
-                            coins: coins,
-                            amount: amountRaw,
-                            ref: txId,
-                            time: Date.now()
-                        });
+                    // add user balance
+                    userRef.child("balance").once("value").then(balSnap => {
+                        let current = Number(balSnap.val()) || 0;
+                        userRef.child("balance").set(current + coins);
+                    });
 
-                        creditAffiliateCommission(user.uid, amountRaw, txId);
+                    // transaction history
+                    userRef.child("transactions").push({
+                        type: "deposit",
+                        coins: coins,
+                        amount: amountRaw,
+                        ref: txId,
+                        time: Date.now()
+                    });
 
-                        toast("Payment successful! Ref: " + txId);
-                        depositStatus.innerHTML = `Payment complete! Coins added: ${coins}`;
+                    // 🔥 AFFILIATE COMMISSION (30%)
+                    creditAffiliateCommission(user.uid, amountRaw, txId);
 
-                    } else {
-                        return toast("Payment not verified yet");
-                    }
+                    toast("Payment successful! Ref: " + txId);
+                    depositStatus.innerHTML = `Payment complete! Coins added: ${coins}`;
+
+                } else {
+                    toast("Payment already processed or failed");
                 }
 
-                setTimeout(()=>{
+                setTimeout(() => {
                     window.location.href = "maining.html";
-                },1500);
+                }, 1500);
             });
         },
 
-        onclose: function() {
+        onclose: function () {
             toast("Payment cancelled");
         }
     });
 }
 
+
+// BUTTON CLICK
 submitBtn.onclick = () => {
+
     const user = firebase.auth().currentUser;
     if (!user) return toast("Please login again");
 
@@ -422,17 +407,20 @@ submitBtn.onclick = () => {
     if (!validation.valid) return toast(validation.msg);
 
     const coins = validation.coins;
-    depositStatus.innerHTML = `You will receive ${coins} coin(s) for ₦${amountRaw}`;
 
-    if (!flutterwaveKey) return toast("Payment key not loaded — try again");
+    depositStatus.innerHTML =
+        `You will receive ${coins} coin(s) for ₦${amountRaw}`;
+
+    if (!flutterwaveKey) return toast("Payment key not loaded");
 
     document.getElementById("instructionModal").style.display = "block";
 
-    document.getElementById("agreeBtn").onclick = function() {
+    document.getElementById("agreeBtn").onclick = function () {
         document.getElementById("instructionModal").style.display = "none";
         startPayment(user, amountRaw, coins);
     };
 };
+
 </script>
 </body>
 </html>
