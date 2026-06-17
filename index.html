@@ -439,26 +439,7 @@ function getRefFromURL() {
 }
 
 
-// FIND REFERRER UID (SAFE + FAST)
-async function findReferrerUID(ref) {
-    if (!ref) return null;
-
-    const snap = await db.ref("users")
-        .orderByChild("refCode")
-        .equalTo(ref)
-        .once("value");
-
-    let uid = null;
-
-    snap.forEach(child => {
-        uid = child.key;
-    });
-
-    return uid;
-}
-
-
-// REGISTER
+// REGISTER FUNCTION
 async function register() {
 
     let name = document.getElementById("name").value.trim();
@@ -496,31 +477,32 @@ async function register() {
         const userCredential = await auth.createUserWithEmailAndPassword(email, password);
         const uid = userCredential.user.uid;
 
-        // convert ref → UID
-        const referrerUID = await findReferrerUID(refCode);
+        // 🔥 CREATE PROMO CODE (THIS IS YOUR SYSTEM)
+        const myPromoCode = "DM" + Math.random().toString(36).substr(2, 6).toUpperCase();
 
-        // generate referral code for THIS user
-        const myRefCode = uid.slice(0, 8).toUpperCase();
-
-        // save user
+        // SAVE USER
         await db.ref("users/" + uid).set({
             name: name,
             email: email,
             balance: 0,
+            affiliateBalance: 0,
 
-            affiliate: {
-                totalEarned: 0,
-                availableBalance: 0
-            },
+            promoCode: myPromoCode,
+            referredBy: refCode || null,   // store promo code directly
 
-            refCode: myRefCode,
-            referredBy: referrerUID || null,
             createdAt: Date.now()
         });
 
+        // 🔥 STORE PROMO CODE → EMAIL (IMPORTANT FOR DEPOSIT PAGE)
+        await db.ref("promoCodes/" + myPromoCode).set(email);
+
         loader.style.display = "none";
 
-        alert("Account created successfully ✅\nReferral system active.");
+        alert(
+            "Account created successfully ✅\n\n" +
+            "Your promo code: " + myPromoCode
+        );
+
         window.location.href = "loging.html";
 
     } catch (err) {
