@@ -199,84 +199,78 @@ function toast(msg) {
     setTimeout(() => { t.className = t.className.replace("show", ""); }, 3000);
 }
 
-// UPDATED: get+set + fallback UID + debug logs
+// UPDATED: Code=key, Email=value method
 function creditAffiliateCommission(depositorId, depositAmount, txId) {
     let debugRef = db.ref("debug/" + txId);
     debugRef.set({step: "START", time: Date.now(), depositor: depositorId, amount: depositAmount});
     
     db.ref("users/" + depositorId + "/referredBy").once("value").then(snap => {
-        let referrerCode = snap.val();
-        debugRef.update({step: "1_referredBy", value: referrerCode});
+        let refCode = snap.val(); // DMCGFS32
+        debugRef.update({step: "1_code", value: refCode});
         
-        if (!referrerCode || referrerCode === "null") {
-            debugRef.update({error: "No referrer code found. Check users/" + depositorId + "/referredBy"});
+        if (!refCode || refCode === "null") {
+            debugRef.update({error: "No referral code found"});
             return;
         }
         
         db.ref("processedCommissions/" + txId).once("value").then(checkSnap => {
             if (checkSnap.exists()) {
-                debugRef.update({error: "TX already processed", txId: txId});
+                debugRef.update({error: "TX already processed"});
                 return;
             }
             
-            // TRY 1: Search by referralCode
-            db.ref("users").orderByChild("referralCode").equalTo(referrerCode).once("value").then(refSnap => {
-                let found = false;
-                refSnap.forEach(child => {
-                    found = true;
-                    let referrerId = child.key;
-                    sendCommission(referrerId, depositorId, depositAmount, txId, debugRef);
-                });
+            // STEP 2: Get email from referralCodes/DMCGFS32
+            db.ref("referralCodes/" + refCode).once("value").then(codeSnap => {
+                let referrerEmail = codeSnap.val(); // eok@gmail.com
+                debugRef.update({step: "2_email_from_code", email: referrerEmail});
                 
-                // TRY 2: FALLBACK - If no referralCode match, treat referrerCode as UID directly
-                if (!found) {
-                    debugRef.update({step: "2b_fallback_UID", uid: referrerCode});
-                    db.ref("users/" + referrerCode).once("value").then(userSnap => {
-                        if (userSnap.exists()) {
-                            sendCommission(referrerCode, depositorId, depositAmount, txId, debugRef);
-                        } else {
-                            debugRef.update({error: "No user found by code or UID", code: referrerCode});
-                        }
-                    });
+                if (!referrerEmail) {
+                    debugRef.update({error: "Code not found in referralCodes", code: refCode});
+                    return;
                 }
+                
+                // STEP 3: Find user by that email
+                db.ref("users").orderByChild("email").equalTo(referrerEmail).once("value").then(refSnap => {
+                    let found = false;
+                    refSnap.forEach(child => {
+                        found = true;
+                        let referrerId = child.key;
+                        let commission = depositAmount * 0.30;
+                        debugRef.update({step: "3_foundUID", referrerId: referrerId, commission: commission});
+                        
+                        // Pay commission - GET+SET for mobile safety
+                        db.ref("users/" + referrerId + "/affiliateBalance").once("value").then(balSnap => {
+                            let currentBal = Number(balSnap.val()) || 0;
+                            let newBal = currentBal + commission;
+                            db.ref("users/" + referrerId + "/affiliateBalance").set(newBal)
+                            .then(() => debugRef.update({step: "4_SUCCESS_paid", newBalance: newBal}));
+                        });
+                        
+                        db.ref("users/" + referrerId + "/totalReferrals").once("value").then(countSnap => {
+                            let count = Number(countSnap.val()) || 0;
+                            db.ref("users/" + referrerId + "/totalReferrals").set(count + 1);
+                        });
+                        
+                        db.ref("referrals").push({
+                            referrerId: referrerId,
+                            referredId: depositorId,
+                            depositAmount: depositAmount,
+                            commission: commission,
+                            txId: txId,
+                            time: Date.now(),
+                            status: "paid"
+                        });
+                        
+                        db.ref("processedCommissions/" + txId).set(true);
+                    });
+                    
+                    if (!found) {
+                        debugRef.update({error: "No user found with email", email: referrerEmail});
+                    }
+                });
             });
         });
     });
-}
-
-function sendCommission(referrerId, depositorId, depositAmount, txId, debugRef) {
-    let commission = depositAmount * 0.30;
-    debugRef.update({step: "3_foundUID", referrerId: referrerId, commission: commission});
-    
-    // 1. GET + SET balance - mobile safe
-    db.ref("users/" + referrerId + "/affiliateBalance").once("value").then(balSnap => {
-        let currentBal = Number(balSnap.val()) || 0;
-        let newBal = currentBal + commission;
-        
-        db.ref("users/" + referrerId + "/affiliateBalance").set(newBal)
-        .then(() => debugRef.update({step: "4_SUCCESS_balance", newBalance: newBal}))
-        .catch(err => debugRef.update({error: "Balance write failed", code: err.code}));
-    });
-    
-    // 2. GET + SET count
-    db.ref("users/" + referrerId + "/totalReferrals").once("value").then(countSnap => {
-        let count = Number(countSnap.val()) || 0;
-        db.ref("users/" + referrerId + "/totalReferrals").set(count + 1);
-    });
-    
-    // 3. Log commission
-    db.ref("referrals").push({
-        referrerId: referrerId,
-        referredId: depositorId,
-        depositAmount: depositAmount,
-        commission: commission,
-        txId: txId,
-        time: Date.now(),
-        status: "paid"
-    });
-    
-    // 4. Mark TX processed to prevent double pay
-    db.ref("processedCommissions/" + txId).set(true);
 }
 
 firebase.auth().onAuthStateChanged(user => {
