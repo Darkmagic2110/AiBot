@@ -217,6 +217,13 @@ firebase.auth().onAuthStateChanged(user => {
             db.ref("referralCodes/" + myReferralCode).set(myEmail);
             
             toast("Referral code created: " + myReferralCode);
+        } else {
+            // If code exists but mapping missing, recreate it
+            db.ref("referralCodes/" + myReferralCode).once("value").then(mapSnap => {
+                if(!mapSnap.exists()){
+                    db.ref("referralCodes/" + myReferralCode).set(myEmail);
+                }
+            });
         }
 
         const refLink = window.location.origin + "/index.html?ref=" + myReferralCode;
