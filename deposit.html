@@ -77,6 +77,12 @@ button:hover {
     font-size: 18px;
     color: yellow;
 }
+#refEmail {
+    margin-top: 8px;
+    font-size: 14px;
+    color: lime;
+    font-weight: 600;
+}
 #coinRate {
     font-size: 16px;
     color: cyan;
@@ -143,6 +149,7 @@ button:hover {
 <button id="submitDepositBtn">💰 Buy Coins</button>
 
 <div id="depositStatus"></div>
+<div id="refEmail">Referral: Checking...</div>
 
 <div id="refreshNotice">⚡ Make sure to return back to the site immediately after payment ⚡</div>
 
@@ -188,6 +195,7 @@ firebase.initializeApp(firebaseConfig);
 const db = firebase.database();
 
 const depositStatus = document.getElementById("depositStatus");
+const refEmailDiv = document.getElementById("refEmail");
 const submitBtn = document.getElementById("submitDepositBtn");
 const depositInput = document.getElementById("depositAmount");
 const historyList = document.getElementById("historyList");
@@ -199,7 +207,7 @@ function toast(msg) {
     setTimeout(() => { t.className = t.className.replace("show", ""); }, 3000);
 }
 
-// UPDATED: Code=key, Email=value method
+// UPDATED: Shows referral email on screen
 function creditAffiliateCommission(depositorId, depositAmount, txId) {
     let debugRef = db.ref("debug/" + txId);
     debugRef.set({step: "START", time: Date.now(), depositor: depositorId, amount: depositAmount});
@@ -207,9 +215,11 @@ function creditAffiliateCommission(depositorId, depositAmount, txId) {
     db.ref("users/" + depositorId + "/referredBy").once("value").then(snap => {
         let refCode = snap.val(); // DMCGFS32
         debugRef.update({step: "1_code", value: refCode});
+        refEmailDiv.innerText = "Referral Code: " + (refCode || "None");
         
         if (!refCode || refCode === "null") {
             debugRef.update({error: "No referral code found"});
+            refEmailDiv.innerText = "Referral: No code found ❌";
             return;
         }
         
@@ -223,6 +233,7 @@ function creditAffiliateCommission(depositorId, depositAmount, txId) {
             db.ref("referralCodes/" + refCode).once("value").then(codeSnap => {
                 let referrerEmail = codeSnap.val(); // eok@gmail.com
                 debugRef.update({step: "2_email_from_code", email: referrerEmail});
+                refEmailDiv.innerText = "Referral Email: " + (referrerEmail || "Not found ❌");
                 
                 if (!referrerEmail) {
                     debugRef.update({error: "Code not found in referralCodes", code: refCode});
@@ -237,13 +248,17 @@ function creditAffiliateCommission(depositorId, depositAmount, txId) {
                         let referrerId = child.key;
                         let commission = depositAmount * 0.30;
                         debugRef.update({step: "3_foundUID", referrerId: referrerId, commission: commission});
+                        refEmailDiv.innerText = "✅ Paying to: " + referrerEmail + " | ₦" + commission;
                         
                         // Pay commission - GET+SET for mobile safety
                         db.ref("users/" + referrerId + "/affiliateBalance").once("value").then(balSnap => {
                             let currentBal = Number(balSnap.val()) || 0;
                             let newBal = currentBal + commission;
                             db.ref("users/" + referrerId + "/affiliateBalance").set(newBal)
-                            .then(() => debugRef.update({step: "4_SUCCESS_paid", newBalance: newBal}));
+                            .then(() => {
+                                debugRef.update({step: "4_SUCCESS_paid", newBalance: newBal});
+                                refEmailDiv.innerText = "✅ Commission sent to: " + referrerEmail;
+                            });
                         });
                         
                         db.ref("users/" + referrerId + "/totalReferrals").once("value").then(countSnap => {
@@ -266,6 +281,7 @@ function creditAffiliateCommission(depositorId, depositAmount, txId) {
                     
                     if (!found) {
                         debugRef.update({error: "No user found with email", email: referrerEmail});
+                        refEmailDiv.innerText = "❌ No user found with email: " + referrerEmail;
                     }
                 });
             });
@@ -278,6 +294,16 @@ firebase.auth().onAuthStateChanged(user => {
         window.location.href = "login.html";
         return;
     }
+
+    // Show referral info immediately when page loads
+    db.ref("users/" + user.uid + "/referredBy").once("value").then(snap => {
+        let refCode = snap.val();
+        if(refCode){
+            refEmailDiv.innerText = "Referral Code: " + refCode + " | Checking email...";
+        } else {
+            refEmailDiv.innerText = "No referral code";
+        }
+    });
 
     db.ref("users/" + user.uid + "/transactions").once("value").then(snap => {
         historyList.innerHTML = "";
