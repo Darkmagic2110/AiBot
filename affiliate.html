@@ -19,32 +19,39 @@ body {
 }
 
 .container {
-    max-width: 420px;
+    max-width: 480px;
     margin: auto;
 }
 
 h2 {
     text-align: center;
-    color: red;
-    margin-bottom: 20px;
+    color: #ff3333;
+    margin-bottom: 25px;
     font-weight: 600;
+    letter-spacing: 0.5px;
 }
 
 /* CARD DESIGN */
 .card {
     background: #111;
-    padding: 15px;
-    border-radius: 12px;
-    margin-bottom: 15px;
+    padding: 18px;
+    border-radius: 14px;
+    margin-bottom: 16px;
     border: 1px solid #222;
+    box-shadow: 0 4px 12px rgba(0,0,0,0.4);
+}
+
+.card b {
+    font-size: 15px;
+    color: #ccc;
 }
 
 /* STATS */
 .stat {
     display: flex;
     justify-content: space-between;
-    margin: 10px 0;
-    font-size: 14px;
+    margin: 12px 0;
+    font-size: 15px;
 }
 
 .stat span:last-child {
@@ -56,37 +63,45 @@ h2 {
 #refLink {
     word-break: break-all;
     font-size: 13px;
-    color: cyan;
+    color: #00e6e6;
     background: #0a0a0a;
-    padding: 10px;
+    padding: 12px;
     border-radius: 8px;
     margin-top: 10px;
     display: block;
+    border: 1px solid #222;
 }
 
 /* BUTTON */
 button {
     width: 100%;
-    padding: 12px;
-    margin-top: 10px;
+    padding: 13px;
+    margin-top: 12px;
     border: none;
     border-radius: 10px;
-    background: red;
+    background: #ff3333;
     color: white;
     font-weight: bold;
     cursor: pointer;
     transition: 0.2s;
+    font-size: 15px;
 }
 
 button:hover {
-    opacity: 0.85;
+    opacity: 0.9;
+    transform: translateY(-1px);
+}
+
+button.secondary {
+    background: #222;
+    border: 1px solid #333;
 }
 
 /* USER LIST */
 .user {
     background: #1a1a1a;
     padding: 10px;
-    margin: 5px 0;
+    margin: 6px 0;
     border-radius: 8px;
     font-size: 13px;
     border: 1px solid #222;
@@ -117,32 +132,79 @@ button:hover {
     bottom: 50px;
 }
 
-/* POPUP */
-#popup {
+/* POPUP - hidden by default */
+.modal {
     display: none;
     position: fixed;
     top: 0;
     left: 0;
     width: 100%;
     height: 100%;
-    background: rgba(0,0,0,0.8);
+    background: rgba(0,0,0,0.85);
     z-index: 999;
+    align-items: center;
+    justify-content: center;
 }
 
-#popupBox {
+.modal-content {
     background: #111;
-    margin: 25% auto;
-    padding: 20px;
-    width: 85%;
-    border-radius: 12px;
+    padding: 22px;
+    width: 90%;
+    max-width: 380px;
+    border-radius: 14px;
     text-align: center;
     border: 1px solid #222;
+    box-shadow: 0 10px 30px rgba(0,0,0,0.6);
+}
+
+.modal-content input {
+    width: 100%;
+    padding: 11px;
+    margin: 8px 0;
+    background: #0a0a0a;
+    border: 1px solid #333;
+    border-radius: 8px;
+    color: white;
+    font-size: 14px;
+    box-sizing: border-box;
+}
+
+.modal-content h3 {
+    margin-top: 0;
+    margin-bottom: 15px;
+}
+
+/* HOW IT WORKS */
+.how-works {
+    background: #0f0f0f;
+    padding: 18px;
+    border-radius: 12px;
+    border: 1px solid #222;
+    margin-top: 25px;
+}
+
+.how-works h3 {
+    color: #ff3333;
+    margin-top: 0;
+    font-size: 16px;
+}
+
+.how-works ol {
+    padding-left: 18px;
+    font-size: 14px;
+    line-height: 1.7;
+    color: #ccc;
+}
+
+.how-works li {
+    margin-bottom: 8px;
 }
 </style>
 </head>
 
 <body>
 
+<div class="container">
 <h2>Affiliate Dashboard</h2>
 
 <div class="card">
@@ -152,51 +214,66 @@ button:hover {
 </div>
 
 <div class="card">
-    <b>Affiliate Balance:</b>
-    <div id="balance">₦0</div>
+    <div class="stat">
+        <span>Affiliate Balance:</span>
+        <span id="balance">₦0</span>
+    </div>
 </div>
 
 <div class="card">
-    <b>Total Referred Users:</b>
-    <div id="totalRef">0</div>
+    <div class="stat">
+        <span>Total Referred Users:</span>
+        <span id="totalRef">0</span>
+    </div>
+    <button class="secondary" onclick="toggleUsers()">Show Referred Emails</button>
+    <div id="userList" style="display:none; margin-top:12px;"></div>
 </div>
 
 <div class="card">
-    <b>Total Earned:</b>
-    <div id="totalEarned">₦0</div>
-</div>
-
-<div class="card">
-    <b>Referred Users</b>
-    <div id="userList"></div>
+    <div class="stat">
+        <span>Total Earned:</span>
+        <span id="totalEarned">₦0</span>
+    </div>
 </div>
 
 <div class="card">
     <button onclick="withdraw()">Withdraw</button>
 </div>
 
-<!-- WITHDRAW FORM -->
+<!-- HOW IT WORKS -->
+<div class="how-works">
+    <h3>How It Works</h3>
+    <ol>
+        <li>Copy your unique referral link and share with friends</li>
+        <li>Earn commission when they sign up and deposit using your link</li>
+        <li>Track all your referrals and earnings in real time above</li>
+        <li>Withdraw minimum ₦5,000 to your bank account anytime</li>
+        <li>Withdrawals are processed instantly to the account details you provide</li>
+    </ol>
+</div>
+
+</div>
+
+<!-- WITHDRAW FORM - hidden by default -->
 <div id="withdrawModal" class="modal">
   <div class="modal-content">
-    <h3 style="color:red;text-align:center;">Withdrawal Form</h3>
-
+    <h3 style="color:red;">Withdrawal Form</h3>
     <input id="accNumber" placeholder="Account Number">
     <input id="bankName" placeholder="Bank Name (e.g OPAY)">
     <input id="accName" placeholder="Account Name">
-    <input id="withdrawAmount" placeholder="Amount (Min ₦5000)">
-
+    <input id="withdrawAmount" type="number" placeholder="Amount (Min ₦5000)">
     <button onclick="submitWithdraw()">Continue</button>
+    <button class="secondary" onclick="closeWithdraw()">Cancel</button>
   </div>
 </div>
 
-<!-- CONFIRMATION -->
+<!-- CONFIRMATION - hidden by default -->
 <div id="confirmModal" class="modal">
   <div class="modal-content">
-    <h3 style="color:red;text-align:center;">Confirm Withdrawal</h3>
-
+    <h3 style="color:red;">Confirm Withdrawal</h3>
     <p id="confirmText">I have a pending withdrawal</p>
-
     <button onclick="copyAndRedirect()">Copy Text & Continue</button>
+    <button class="secondary" onclick="closeConfirm()">Back</button>
   </div>
 </div>
 
@@ -226,19 +303,15 @@ firebase.auth().onAuthStateChanged(user => {
 
     db.ref("users/" + userUID).once("value").then(snap => {
         const data = snap.val() || {};
-
         refCode = data.refCode || "";
-
         document.getElementById("refLink").innerText =
             window.location.origin + "/index.html?ref=" + refCode;
-
         loadDashboard();
     });
 });
 
 /* DASHBOARD */
 function loadDashboard() {
-
     db.ref("users/" + userUID + "/affiliateBalance").on("value", snap => {
         document.getElementById("balance").innerText =
             "₦" + (snap.val() || 0).toFixed(2);
@@ -252,7 +325,6 @@ function loadDashboard() {
     db.ref("users").once("value").then(snap => {
         let count = 0;
         let list = [];
-
         snap.forEach(child => {
             const u = child.val() || {};
             if (u.referredBy === refCode) {
@@ -260,20 +332,8 @@ function loadDashboard() {
                 list.push(u);
             }
         });
-
         document.getElementById("totalRef").innerText = count;
-
-        const box = document.getElementById("userList");
-        box.innerHTML = "";
-
-        list.forEach(u => {
-            box.innerHTML += `
-                <div class="user">
-                    <b>${u.name}</b><br>
-                    ${u.email}
-                </div>
-            `;
-        });
+        window.referredUsers = list; // store for toggle
     });
 }
 
@@ -283,23 +343,46 @@ function copyLink() {
     alert("Copied!");
 }
 
-/* WITHDRAW */
+/* TOGGLE USER LIST */
+function toggleUsers() {
+    const box = document.getElementById("userList");
+    const btn = event.target;
+    if (box.style.display === "none") {
+        box.innerHTML = "";
+        (window.referredUsers || []).forEach(u => {
+            box.innerHTML += `
+                <div class="user">
+                    <b>${u.name}</b><br>
+                    ${u.email}
+                </div>
+            `;
+        });
+        box.style.display = "block";
+        btn.innerText = "Hide Referred Emails";
+    } else {
+        box.style.display = "none";
+        btn.innerText = "Show Referred Emails";
+    }
+}
+
+/* WITHDRAW - only show if balance >= 5000 */
 function withdraw() {
     db.ref("users/" + userUID + "/affiliateBalance").once("value").then(snap => {
         const bal = snap.val() || 0;
-
         if (bal < 5000) {
             alert("Minimum withdrawal is ₦5,000");
             return;
         }
-
-        document.getElementById("withdrawModal").style.display = "block";
+        document.getElementById("withdrawModal").style.display = "flex";
     });
 }
 
-/* SUBMIT WITHDRAW */
-function submitWithdraw() {
+function closeWithdraw() {
+    document.getElementById("withdrawModal").style.display = "none";
+}
 
+/* SUBMIT WITHDRAW - only show confirm after this */
+function submitWithdraw() {
     const amount = Number(document.getElementById("withdrawAmount").value);
     const bank = document.getElementById("bankName").value;
     const accNum = document.getElementById("accNumber").value;
@@ -315,14 +398,16 @@ function submitWithdraw() {
     withdrawData = { amount, bank, accNum, accName };
 
     document.getElementById("withdrawModal").style.display = "none";
-    document.getElementById("confirmModal").style.display = "block";
+    document.getElementById("confirmModal").style.display = "flex";
+}
+
+function closeConfirm() {
+    document.getElementById("confirmModal").style.display = "none";
 }
 
 /* CONFIRM */
 function copyAndRedirect() {
-
     const email = firebase.auth().currentUser.email;
-
     const text =
 `I have a pending withdrawal
 Email: ${email}
