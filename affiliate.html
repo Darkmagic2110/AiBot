@@ -182,9 +182,8 @@ if (!firebase.apps.length) {
 }
 
 const db = firebase.database();
+
 let myUID = null;
-let myReferralCode = null;
-let myEmail = null;
 
 function toast(msg) {
     const t = document.getElementById("toast");
@@ -193,6 +192,8 @@ function toast(msg) {
     setTimeout(() => { t.className = t.className.replace("show", ""); }, 3000);
 }
 
+
+// AUTH
 firebase.auth().onAuthStateChanged(user => {
     if (!user) {
         window.location.href = "login.html";
@@ -200,89 +201,92 @@ firebase.auth().onAuthStateChanged(user => {
     }
 
     myUID = user.uid;
-    myEmail = user.email;
 
-    db.ref("users/" + myUID).once("value").then(snap => {
-        const data = snap.val() || {};
-        myReferralCode = data.referralCode;
-
-        // AUTO-GENERATE referral code if missing + create code→email mapping
-        if (!myReferralCode) {
-            myReferralCode = "DM" + Math.random().toString(36).substr(2, 6).toUpperCase();
-            
-            // 1. Save code to user profile
-            db.ref("users/" + myUID + "/referralCode").set(myReferralCode);
-            
-            // 2. KEY STEP: Save code→email mapping for deposit.html to use
-            db.ref("referralCodes/" + myReferralCode).set(myEmail);
-            
-            toast("Referral code created: " + myReferralCode);
-        } else {
-            // If code exists but mapping missing, recreate it
-            db.ref("referralCodes/" + myReferralCode).once("value").then(mapSnap => {
-                if(!mapSnap.exists()){
-                    db.ref("referralCodes/" + myReferralCode).set(myEmail);
-                }
-            });
-        }
-
-        const refLink = window.location.origin + "/index.html?ref=" + myReferralCode;
-        document.getElementById("refLink").innerText = refLink;
-
-        // LIVE listener - balance updates instantly after deposit
-        db.ref("users/" + myUID + "/affiliateBalance").on("value", balSnap => {
-            let bal = Number(balSnap.val()) || 0;
-            document.getElementById("balance").innerText = "₦" + bal.toFixed(2);
-        });
-
-        loadStats();
-    });
+    loadProfile();
+    loadReferrals();
+    listenBalance();
 });
 
-function loadStats() {
-    let totalRef = 0;
-    let list = [];
 
+// PROFILE + REF LINK
+function loadProfile() {
+    db.ref("users/" + myUID).once("value").then(snap => {
+        const data = snap.val() || {};
+
+        const myCode = data.referralCode || ("DM" + myUID.slice(0,6).toUpperCase());
+
+        db.ref("users/" + myUID + "/referralCode").set(myCode);
+
+        const refLink = window.location.origin + "/index.html?ref=" + myCode;
+
+        document.getElementById("refLink").innerText = refLink;
+    });
+}
+
+
+// LIVE BALANCE (30% COMMISSION UPDATES HERE)
+function listenBalance() {
+    db.ref("users/" + myUID + "/affiliate").on("value", snap => {
+        const data = snap.val() || {};
+
+        const balance = data.availableBalance || 0;
+
+        document.getElementById("balance").innerText = "₦" + balance.toFixed(2);
+
+        document.getElementById("totalEarned").innerText =
+            "₦" + (data.totalEarned || 0).toFixed(2);
+    });
+}
+
+
+// REFERRALS LIST (FIXED)
+function loadReferrals() {
     db.ref("users").once("value").then(snap => {
+
+        let list = [];
+        let count = 0;
+
         snap.forEach(child => {
             const u = child.val();
-            if (u.referredBy === myReferralCode) {
-                totalRef++;
+
+            if (u.referredBy === myUID) {
+                count++;
                 list.push({
-                    email: u.email,
                     name: u.name,
-                    uid: child.key,
-                    createdAt: u.createdAt
+                    email: u.email,
+                    date: u.createdAt
                 });
             }
         });
 
-        document.getElementById("totalRef").innerText = totalRef;
-        renderUsers(list);
-    });
+        document.getElementById("totalRef").innerText = count;
 
-    db.ref("referrals").orderByChild("referrerId").equalTo(myUID).once("value").then(refSnap => {
-        let totalEarned = 0;
-        refSnap.forEach(child => {
-            totalEarned += child.val().commission || 0;
-        });
-        document.getElementById("totalEarned").innerText = "₦" + totalEarned.toFixed(2);
+        renderUsers(list);
     });
 }
 
+
+// UI RENDER
 function renderUsers(list) {
     const box = document.getElementById("userList");
     box.innerHTML = "";
 
     if (list.length === 0) {
-        box.innerHTML = "<div style='color:#666; text-align:center; padding:20px;'>No referrals yet. Share your link!</div>";
+        box.innerHTML = `
+        <div style="color:#777;text-align:center;padding:20px;">
+            No referrals yet. Share your link!
+        </div>`;
         return;
     }
 
     list.forEach(u => {
         let div = document.createElement("div");
         div.className = "user-item";
-        let date = u.createdAt ? new Date(u.createdAt).toLocaleDateString() : "N/A";
+
+        let date = u.date
+            ? new Date(u.date).toLocaleDateString()
+            : "N/A";
+
         div.innerText = (u.name || "User") + " - " + u.email;
 
         div.onclick = () => {
@@ -295,35 +299,45 @@ function renderUsers(list) {
     });
 }
 
+
+// COPY LINK
 function copyLink() {
     navigator.clipboard.writeText(document.getElementById("refLink").innerText);
-    toast("Referral link copied! 📋");
+    toast("Referral link copied 📋");
 }
 
+
+// WITHDRAW
 function withdraw() {
-    db.ref("users/" + myUID + "/affiliateBalance").once("value").then(snap => {
-        let bal = Number(snap.val()) || 0;
+    db.ref("users/" + myUID + "/affiliate").once("value").then(snap => {
+        const data = snap.val() || {};
+        let bal = data.availableBalance || 0;
+
         let minWithdraw = 2000;
-        
+
         if (bal < minWithdraw) {
-            alert("Minimum withdrawal is ₦" + minWithdraw + "\nCurrent balance: ₦" + bal.toFixed(2));
+            alert("Minimum withdrawal is ₦" + minWithdraw + "\nCurrent: ₦" + bal);
             return;
         }
-        
-        if (confirm("Request withdrawal of ₦" + bal.toFixed(2) + "?")) {
+
+        if (confirm("Withdraw ₦" + bal + "?")) {
+
             db.ref("withdrawals").push({
                 userId: myUID,
                 amount: bal,
                 status: "pending",
                 time: Date.now()
             });
-            
-            db.ref("users/" + myUID + "/affiliateBalance").set(0);
-            alert("Withdrawal request sent! Admin will pay you soon.");
+
+            db.ref("users/" + myUID + "/affiliate/availableBalance").set(0);
+
+            alert("Withdrawal request sent!");
         }
     });
 }
 
+
+// CLOSE POPUP
 function closePopup() {
     document.getElementById("popup").style.display = "none";
 }
