@@ -184,6 +184,7 @@ if (!firebase.apps.length) {
 const db = firebase.database();
 let myUID = null;
 let myReferralCode = null;
+let myEmail = null;
 
 function toast(msg) {
     const t = document.getElementById("toast");
@@ -199,15 +200,22 @@ firebase.auth().onAuthStateChanged(user => {
     }
 
     myUID = user.uid;
+    myEmail = user.email;
 
     db.ref("users/" + myUID).once("value").then(snap => {
         const data = snap.val() || {};
         myReferralCode = data.referralCode;
 
-        // AUTO-GENERATE referral code if missing - no Firebase manual edit needed
+        // AUTO-GENERATE referral code if missing + create code→email mapping
         if (!myReferralCode) {
             myReferralCode = "DM" + Math.random().toString(36).substr(2, 6).toUpperCase();
+            
+            // 1. Save code to user profile
             db.ref("users/" + myUID + "/referralCode").set(myReferralCode);
+            
+            // 2. KEY STEP: Save code→email mapping for deposit.html to use
+            db.ref("referralCodes/" + myReferralCode).set(myEmail);
+            
             toast("Referral code created: " + myReferralCode);
         }
 
