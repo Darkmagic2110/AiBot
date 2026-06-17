@@ -414,7 +414,6 @@ button:hover {
 </div>
 
 <script>
-// FIREBASE CONFIG
 var firebaseConfig = {
     apiKey: "AIzaSyDvFDByPPo9zgwKLdPaREz1OVMQCXmPfrs",
     authDomain: "bets-d795d.firebaseapp.com",
@@ -425,21 +424,15 @@ var firebaseConfig = {
     appId: "1:384386108287:android:d238a5ec8068d9bb9be84a"
 };
 
-if (!firebase.apps.length) {
-    firebase.initializeApp(firebaseConfig);
-}
+if (!firebase.apps.length) firebase.initializeApp(firebaseConfig);
 
 const db = firebase.database();
 const auth = firebase.auth();
 
-
-// GET REF FROM URL
 function getRefFromURL() {
     return new URLSearchParams(window.location.search).get("ref");
 }
 
-
-// REGISTER FUNCTION
 async function register() {
 
     let name = document.getElementById("name").value.trim();
@@ -472,41 +465,44 @@ async function register() {
 
     try {
 
-        const refCode = getRefFromURL();
+        const refCodeFromURL = getRefFromURL();
 
         const userCredential = await auth.createUserWithEmailAndPassword(email, password);
         const uid = userCredential.user.uid;
 
-        // 🔥 CREATE PROMO CODE (THIS IS YOUR SYSTEM)
-        const myPromoCode = "DM" + Math.random().toString(36).substr(2, 6).toUpperCase();
+        // ✅ CREATE UNIQUE REF CODE
+        const myRefCode = "DM" + Math.random().toString(36).substring(2, 8).toUpperCase();
 
-        // SAVE USER
+        // 🔥 SAVE USER
         await db.ref("users/" + uid).set({
-            name: name,
-            email: email,
+            name,
+            email,
             balance: 0,
-            affiliateBalance: 0,
 
-            promoCode: myPromoCode,
-            referredBy: refCode || null,   // store promo code directly
+            affiliateBalance: 0,
+            totalEarned: 0,
+
+            refCode: myRefCode,
+            referredBy: refCodeFromURL || null,
 
             createdAt: Date.now()
         });
 
-        // 🔥 STORE PROMO CODE → EMAIL (IMPORTANT FOR DEPOSIT PAGE)
-        await db.ref("promoCodes/" + myPromoCode).set(email);
+        // 🔥 MAP CODE → UID
+        await db.ref("promoCodes/" + myRefCode).set(uid);
 
         loader.style.display = "none";
 
+        const link = window.location.origin + "/index.html?ref=" + myRefCode;
+
         alert(
             "Account created successfully ✅\n\n" +
-            "Your promo code: " + myPromoCode
+            "Your referral link:\n" + link
         );
 
         window.location.href = "loging.html";
 
     } catch (err) {
-
         loader.style.display = "none";
 
         if (err.code === "auth/email-already-in-use") {
