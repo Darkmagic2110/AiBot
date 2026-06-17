@@ -245,7 +245,7 @@ button.secondary {
     <h3>How It Works</h3>
     <ol>
         <li>Copy your unique referral link and share with friends</li>
-        <li>Earn commission when they sign up and deposit using your link</li>
+        <li>Earn 30% commission when they sign up and deposit using your link</li>
         <li>Track all your referrals and earnings in real time above</li>
         <li>Withdraw minimum ₦5,000 to your bank account anytime</li>
         <li>Withdrawals are processed instantly to the account details you provide</li>
@@ -369,7 +369,7 @@ function toggleUsers() {
 function withdraw() {
     db.ref("users/" + userUID + "/affiliateBalance").once("value").then(snap => {
         const bal = snap.val() || 0;
-        if (bal < 5000) {
+        if (bal < 100) {
             alert("Minimum withdrawal is ₦5,000");
             return;
         }
@@ -388,7 +388,7 @@ function submitWithdraw() {
     const accNum = document.getElementById("accNumber").value;
     const accName = document.getElementById("accName").value;
 
-    if (!amount || amount < 5000) {
+    if (!amount || amount < 100) {
         alert("Minimum ₦5,000");
         return;
     }
