@@ -2,169 +2,88 @@
 <html lang="en">
 <head>
 <meta charset="UTF-8">
-<title>Affiliate Dashboard - Dark Magic AI</title>
-
-<link href="https://fonts.googleapis.com/css2?family=Poppins:wght@400;600&display=swap" rel="stylesheet">
-
-<style>
-body {
-    margin: 0;
-    font-family: 'Poppins', sans-serif;
-    background: #0a0a0a;
-    color: white;
-    padding: 20px;
-}
-.container { max-width: 420px; margin: auto; }
-h1 { color: red; text-align: center; margin-bottom: 20px; }
-.card {
-    background: #111;
-    padding: 15px;
-    border-radius: 12px;
-    margin-bottom: 15px;
-    border: 1px solid #222;
-}
-.stat {
-    display: flex;
-    justify-content: space-between;
-    margin: 10px 0;
-}
-.stat span:last-child { color: lime; font-weight: bold; }
-button {
-    width: 100%;
-    padding: 12px;
-    margin-top: 10px;
-    border: none;
-    border-radius: 10px;
-    background: red;
-    color: white;
-    font-weight: bold;
-    cursor: pointer;
-}
-.ref-link {
-    word-break: break-all;
-    font-size: 13px;
-    color: cyan;
-    background: #0a0a0a;
-    padding: 10px;
-    border-radius: 8px;
-    margin: 10px 0;
-}
-.user-list {
-    max-height: 200px;
-    overflow-y: auto;
-    margin-top: 10px;
-}
-.user-item {
-    background: #1a1a1a;
-    padding: 8px;
-    margin: 5px 0;
-    border-radius: 8px;
-    font-size: 13px;
-    cursor: pointer;
-}
-.user-item:hover { background: #222; }
-#popup {
-    display: none;
-    position: fixed;
-    top: 0;
-    left: 0;
-    width: 100%;
-    height: 100%;
-    background: rgba(0,0,0,0.8);
-    z-index: 999;
-}
-#popupBox {
-    background: #111;
-    margin: 20% auto;
-    padding: 20px;
-    width: 80%;
-    border-radius: 12px;
-    text-align: center;
-}
-#toast {
-    visibility: hidden;
-    min-width: 240px;
-    background-color: lime;
-    color: black;
-    text-align: center;
-    border-radius: 10px;
-    padding: 12px;
-    position: fixed;
-    bottom: 30px;
-    left: 50%;
-    transform: translateX(-50%);
-    font-size: 16px;
-    z-index: 99999;
-    opacity: 0;
-    transition: opacity 0.3s;
-}
-#toast.show {
-    visibility: visible;
-    opacity: 1;
-    bottom: 50px;
-}
-</style>
-</head>
-<body>
-
-<div class="container">
-
-<h1>Affiliate Dashboard</h1>
-
-<div class="card">
-    <h3>Your Referral Link</h3>
-    <div class="ref-link" id="refLink">Loading...</div>
-    <button onclick="copyLink()">Copy Link</button>
-</div>
-
-<div class="card">
-    <div class="stat">
-        <span>Total Referrals</span>
-        <span id="totalRef">0</span>
-    </div>
-    <div class="stat">
-        <span>Available Balance</span>
-        <span id="balance">₦0</span>
-    </div>
-    <div class="stat">
-        <span>Total Earned</span>
-        <span id="totalEarned">₦0</span>
-    </div>
-    <button onclick="withdraw()">Withdraw</button>
-</div>
-
-<div class="card">
-    <h3>Referred Users</h3>
-    <div class="user-list" id="userList">Loading...</div>
-</div>
-
-<div class="card">
-    <h3>How Affiliate Works</h3>
-    <p style="font-size:13px; color:#ccc; line-height:1.6;">
-        1. Share your referral link.<br>
-        2. When users register with your link, they become your referrals.<br>
-        3. You earn 30% commission on every deposit they make.<br>
-        4. Earnings are added automatically to your affiliate wallet.<br>
-        5. Minimum withdrawal: ₦2000
-    </p>
-</div>
-
-</div>
-
-<div id="popup">
-    <div id="popupBox">
-        <h3>Referred User</h3>
-        <p id="popupEmail"></p>
-        <p id="popupDate" style="font-size:12px; color:#aaa;"></p>
-        <button onclick="closePopup()">Close</button>
-    </div>
-</div>
-
-<div id="toast"></div>
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Affiliate Dashboard</title>
 
 <script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-app.js"></script>
 <script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-auth.js"></script>
 <script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-database.js"></script>
+
+<style>
+body {
+    margin: 0;
+    font-family: Arial;
+    background: #000;
+    color: white;
+    padding: 20px;
+}
+
+.card {
+    background: #111;
+    padding: 15px;
+    border-radius: 10px;
+    margin-bottom: 15px;
+    box-shadow: 0 0 10px rgba(255,0,0,0.3);
+}
+
+h2 {
+    color: red;
+    text-align: center;
+}
+
+button {
+    width: 100%;
+    padding: 12px;
+    background: red;
+    border: none;
+    color: white;
+    font-weight: bold;
+    border-radius: 8px;
+    margin-top: 10px;
+    cursor: pointer;
+}
+
+.user {
+    padding: 10px;
+    border-bottom: 1px solid #222;
+    font-size: 14px;
+}
+</style>
+</head>
+
+<body>
+
+<h2>Affiliate Dashboard</h2>
+
+<div class="card">
+    <div><b>Your Referral Link:</b></div>
+    <div id="refLink">Loading...</div>
+    <button onclick="copyLink()">Copy Link</button>
+</div>
+
+<div class="card">
+    <div><b>Affiliate Balance:</b></div>
+    <div id="balance">₦0</div>
+</div>
+
+<div class="card">
+    <div><b>Total Referred Users:</b></div>
+    <div id="totalRef">0</div>
+</div>
+
+<div class="card">
+    <div><b>Total Earned:</b></div>
+    <div id="totalEarned">₦0</div>
+</div>
+
+<div class="card">
+    <div><b>Referred Users</b></div>
+    <div id="userList"></div>
+</div>
+
+<div class="card">
+    <button onclick="withdraw()">Withdraw</button>
+</div>
 
 <script>
 const firebaseConfig = {
@@ -177,84 +96,57 @@ const firebaseConfig = {
     appId: "1:384386108287:android:d238a5ec8068d9bb9be84a"
 };
 
-if (!firebase.apps.length) {
-    firebase.initializeApp(firebaseConfig);
-}
-
+firebase.initializeApp(firebaseConfig);
 const db = firebase.database();
 
-let myUID = null;
+let userUID = null;
+let refCode = null;
 
-function toast(msg) {
-    const t = document.getElementById("toast");
-    t.innerHTML = msg;
-    t.className = "show";
-    setTimeout(() => { t.className = t.className.replace("show", ""); }, 3000);
-}
-
-
-// AUTH
+/* ================= LOGIN CHECK ================= */
 firebase.auth().onAuthStateChanged(user => {
     if (!user) {
         window.location.href = "login.html";
         return;
     }
 
-    myUID = user.uid;
+    userUID = user.uid;
 
-    loadProfile();
-    loadReferrals();
-    listenBalance();
+    db.ref("users/" + userUID).once("value").then(snap => {
+        const data = snap.val();
+
+        refCode = data.refCode;
+
+        document.getElementById("refLink").innerText =
+            window.location.origin + "/index.html?ref=" + refCode;
+
+        loadDashboard();
+    });
 });
 
+/* ================= DASHBOARD ================= */
+function loadDashboard() {
 
-// PROFILE + REF LINK
-function loadProfile() {
-    db.ref("users/" + myUID).once("value").then(snap => {
-        const data = snap.val() || {};
-
-        const myCode = data.referralCode || ("DM" + myUID.slice(0,6).toUpperCase());
-
-        db.ref("users/" + myUID + "/referralCode").set(myCode);
-
-        const refLink = window.location.origin + "/index.html?ref=" + myCode;
-
-        document.getElementById("refLink").innerText = refLink;
+    // LIVE BALANCE
+    db.ref("users/" + userUID + "/affiliateBalance").on("value", snap => {
+        document.getElementById("balance").innerText =
+            "₦" + (snap.val() || 0).toFixed(2);
     });
-}
 
-
-// LIVE BALANCE (30% COMMISSION UPDATES HERE)
-function listenBalance() {
-    db.ref("users/" + myUID + "/affiliate").on("value", snap => {
-        const data = snap.val() || {};
-
-        const balance = data.availableBalance || 0;
-
-        document.getElementById("balance").innerText = "₦" + balance.toFixed(2);
-
-        document.getElementById("totalEarned").innerText =
-            "₦" + (data.totalEarned || 0).toFixed(2);
-    });
-}
-
-
-// REFERRALS LIST (FIXED)
-function loadReferrals() {
+    // TOTAL REFERRALS
     db.ref("users").once("value").then(snap => {
-
-        let list = [];
         let count = 0;
+        let list = [];
 
         snap.forEach(child => {
             const u = child.val();
 
-            if (u.referredBy === myUID) {
+            if (u.referredBy === refCode) {
                 count++;
+
                 list.push({
                     name: u.name,
                     email: u.email,
-                    date: u.createdAt
+                    time: u.createdAt
                 });
             }
         });
@@ -263,84 +155,73 @@ function loadReferrals() {
 
         renderUsers(list);
     });
+
+    // TOTAL EARNED
+    db.ref("users/" + userUID + "/totalEarned").once("value").then(snap => {
+        document.getElementById("totalEarned").innerText =
+            "₦" + (snap.val() || 0).toFixed(2);
+    });
 }
 
-
-// UI RENDER
+/* ================= USERS LIST ================= */
 function renderUsers(list) {
     const box = document.getElementById("userList");
     box.innerHTML = "";
 
     if (list.length === 0) {
-        box.innerHTML = `
-        <div style="color:#777;text-align:center;padding:20px;">
-            No referrals yet. Share your link!
-        </div>`;
+        box.innerHTML = "<div>No referrals yet</div>";
         return;
     }
 
     list.forEach(u => {
-        let div = document.createElement("div");
-        div.className = "user-item";
+        const div = document.createElement("div");
+        div.className = "user";
 
-        let date = u.date
-            ? new Date(u.date).toLocaleDateString()
-            : "N/A";
+        const date = u.time ? new Date(u.time).toLocaleDateString() : "N/A";
 
-        div.innerText = (u.name || "User") + " - " + u.email;
-
-        div.onclick = () => {
-            document.getElementById("popupEmail").innerText = u.email;
-            document.getElementById("popupDate").innerText = "Joined: " + date;
-            document.getElementById("popup").style.display = "block";
-        };
+        div.innerHTML = `
+            <b>${u.name || "User"}</b><br>
+            ${u.email}<br>
+            <small>Joined: ${date}</small>
+        `;
 
         box.appendChild(div);
     });
 }
 
-
-// COPY LINK
+/* ================= COPY LINK ================= */
 function copyLink() {
-    navigator.clipboard.writeText(document.getElementById("refLink").innerText);
-    toast("Referral link copied 📋");
+    navigator.clipboard.writeText(
+        document.getElementById("refLink").innerText
+    );
+    alert("Copied!");
 }
 
-
-// WITHDRAW
+/* ================= WITHDRAW ================= */
 function withdraw() {
-    db.ref("users/" + myUID + "/affiliate").once("value").then(snap => {
-        const data = snap.val() || {};
-        let bal = data.availableBalance || 0;
+    db.ref("users/" + userUID + "/affiliateBalance").once("value").then(snap => {
+        const bal = snap.val() || 0;
 
-        let minWithdraw = 2000;
-
-        if (bal < minWithdraw) {
-            alert("Minimum withdrawal is ₦" + minWithdraw + "\nCurrent: ₦" + bal);
+        if (bal < 2000) {
+            alert("Minimum withdrawal is ₦2000");
             return;
         }
 
-        if (confirm("Withdraw ₦" + bal + "?")) {
-
+        if (confirm("Withdraw ₦" + bal + " ?")) {
             db.ref("withdrawals").push({
-                userId: myUID,
+                userId: userUID,
                 amount: bal,
                 status: "pending",
                 time: Date.now()
             });
 
-            db.ref("users/" + myUID + "/affiliate/availableBalance").set(0);
+            db.ref("users/" + userUID + "/affiliateBalance").set(0);
 
             alert("Withdrawal request sent!");
         }
     });
 }
-
-
-// CLOSE POPUP
-function closePopup() {
-    document.getElementById("popup").style.display = "none";
-}
 </script>
+
 </body>
 </html>
