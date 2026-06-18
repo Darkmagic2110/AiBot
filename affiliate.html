@@ -372,18 +372,18 @@ function toggleUsers() {
     }
 }
 
-/* WITHDRAW - UPDATED (admin + day check + balance safe) */
+/* WITHDRAW */
 function withdraw() {
     const day = new Date().getDay(); 
     const isAllowedDay = (day === 2 || day === 5); // Tue & Fri
 
     if (!withdrawalEnabled) {
-        alert("Withdrawal is currently disabled by admin.");
+        alert("Withdrawal is only available on Tuesday and Friday every week.");
         return;
     }
 
     if (!isAllowedDay) {
-        alert("Withdrawal is open only Tuesday and Friday every week.");
+        alert("Withdrawal is only available on Tuesday and Friday every week.");
         return;
     }
 
@@ -403,7 +403,7 @@ function closeWithdraw() {
     document.getElementById("withdrawModal").style.display = "none";
 }
 
-/* SUBMIT WITHDRAW - FIXED BALANCE ISSUE */
+/* SUBMIT WITHDRAW */
 function submitWithdraw() {
     const amount = Number(document.getElementById("withdrawAmount").value);
     const bank = document.getElementById("bankName").value;
