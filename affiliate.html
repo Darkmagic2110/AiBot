@@ -295,6 +295,13 @@ let userUID = null;
 let refCode = null;
 let withdrawData = {};
 
+/* NEW: withdrawal control */
+let withdrawalEnabled = true;
+
+db.ref("settings/withdrawal/enabled").on("value", snap => {
+    withdrawalEnabled = snap.val() !== false;
+});
+
 /* LOGIN */
 firebase.auth().onAuthStateChanged(user => {
     if (!user) return window.location.href = "login.html";
@@ -333,7 +340,7 @@ function loadDashboard() {
             }
         });
         document.getElementById("totalRef").innerText = count;
-        window.referredUsers = list; // store for toggle
+        window.referredUsers = list;
     });
 }
 
@@ -365,14 +372,29 @@ function toggleUsers() {
     }
 }
 
-/* WITHDRAW - only show if balance >= 5000 */
+/* WITHDRAW - UPDATED (admin + day check + balance safe) */
 function withdraw() {
+    const day = new Date().getDay(); 
+    const isAllowedDay = (day === 2 || day === 5); // Tue & Fri
+
+    if (!withdrawalEnabled) {
+        alert("Withdrawal is currently disabled by admin.");
+        return;
+    }
+
+    if (!isAllowedDay) {
+        alert("Withdrawal is open only Tuesday and Friday every week.");
+        return;
+    }
+
     db.ref("users/" + userUID + "/affiliateBalance").once("value").then(snap => {
         const bal = snap.val() || 0;
+
         if (bal < 5000) {
             alert("Minimum withdrawal is ₦5,000");
             return;
         }
+
         document.getElementById("withdrawModal").style.display = "flex";
     });
 }
@@ -381,7 +403,7 @@ function closeWithdraw() {
     document.getElementById("withdrawModal").style.display = "none";
 }
 
-/* SUBMIT WITHDRAW - only show confirm after this */
+/* SUBMIT WITHDRAW - FIXED BALANCE ISSUE */
 function submitWithdraw() {
     const amount = Number(document.getElementById("withdrawAmount").value);
     const bank = document.getElementById("bankName").value;
@@ -393,19 +415,30 @@ function submitWithdraw() {
         return;
     }
 
-    db.ref("users/" + userUID + "/affiliateBalance").transaction(v => (v || 0) - amount);
+    db.ref("users/" + userUID + "/affiliateBalance").once("value").then(snap => {
+        const bal = snap.val() || 0;
 
-    withdrawData = { amount, bank, accNum, accName };
+        if (amount > bal) {
+            alert("Insufficient balance");
+            return;
+        }
 
-    document.getElementById("withdrawModal").style.display = "none";
-    document.getElementById("confirmModal").style.display = "flex";
+        db.ref("users/" + userUID + "/affiliateBalance")
+            .transaction(v => (v || 0) - amount);
+
+        withdrawData = { amount, bank, accNum, accName };
+
+        document.getElementById("withdrawModal").style.display = "none";
+        document.getElementById("confirmModal").style.display = "flex";
+    });
 }
 
+/* CONFIRM */
 function closeConfirm() {
     document.getElementById("confirmModal").style.display = "none";
 }
 
-/* CONFIRM */
+/* FINAL SUBMIT */
 function copyAndRedirect() {
     const email = firebase.auth().currentUser.email;
     const text =
