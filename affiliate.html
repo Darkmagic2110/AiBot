@@ -281,186 +281,206 @@ button.secondary {
 const firebaseConfig = {
     apiKey: "AIzaSyDvFDByPPo9zgwKLdPaREz1OVMQCXmPfrs",
     authDomain: "bets-d795d.firebaseapp.com",
-    databaseURL: "https://bets-d795d-default-rtdb.firebaseio.com",
     projectId: "bets-d795d",
     storageBucket: "bets-d795d.appspot.com",
     messagingSenderId: "384386108287",
-    appId: "1:384386108287:android:d238a5ec8068d9bb9be84a"
+    appId: "1:384386108287:android:d238a5ec8068d9bb9be84a",
+    databaseURL: "https://bets-d795d-default-rtdb.firebaseio.com"
 };
 
 if (!firebase.apps.length) firebase.initializeApp(firebaseConfig);
+
 const db = firebase.database();
 
-let userUID = null;
-let refCode = null;
-let withdrawData = {};
+const depositStatus = document.getElementById("depositStatus");
+const submitBtn = document.getElementById("submitDepositBtn");
+const depositInput = document.getElementById("depositAmount");
+const historyList = document.getElementById("historyList");
 
-/* NEW: withdrawal control */
-let withdrawalEnabled = true;
+function toast(msg) {
+    const t = document.getElementById("toast");
+    t.innerHTML = msg;
+    t.className = "show";
+    setTimeout(() => t.className = t.className.replace("show", ""), 3000);
+}
 
-db.ref("settings/withdrawal/enabled").on("value", snap => {
-    withdrawalEnabled = snap.val() !== false;
-});
+/* =========================
+   🔥 AFFILIATE SYSTEM (FIXED)
+========================= */
+function processAffiliate(userId, amountRaw, txId) {
 
-/* LOGIN */
+    db.ref("users/" + userId).once("value").then(userSnap => {
+        const userData = userSnap.val();
+        if (!userData || !userData.referredBy) return;
+
+        const refCode = userData.referredBy;
+
+        // prevent double payment
+        db.ref("processedAffiliates/" + txId).once("value").then(check => {
+            if (check.exists()) return;
+
+            // DIRECT LOOKUP (FAST + CLEAN)
+            db.ref("promoCodes/" + refCode).once("value").then(res => {
+                const referrerId = res.val();
+                if (!referrerId) return;
+
+                const commission = amountRaw * 0.30;
+
+                db.ref("users/" + referrerId + "/affiliateBalance")
+                    .transaction(v => (v || 0) + commission);
+
+                db.ref("users/" + referrerId + "/totalEarned")
+                    .transaction(v => (v || 0) + commission);
+
+                db.ref("users/" + referrerId + "/totalReferrals")
+                    .transaction(v => (v || 0) + 1);
+
+                db.ref("referrals").push({
+                    referrerId,
+                    referredId: userId,
+                    amount: amountRaw,
+                    commission,
+                    txId,
+                    time: Date.now()
+                });
+
+                db.ref("processedAffiliates/" + txId).set(true);
+            });
+        });
+    });
+}
+
+/* =========================
+   HISTORY
+========================= */
 firebase.auth().onAuthStateChanged(user => {
-    if (!user) return window.location.href = "login.html";
+    if (!user) return (window.location.href = "login.html");
 
-    userUID = user.uid;
+    db.ref("users/" + user.uid + "/transactions").once("value").then(snap => {
+        historyList.innerHTML = "";
+        let arr = [];
 
-    db.ref("users/" + userUID).once("value").then(snap => {
-        const data = snap.val() || {};
-        refCode = data.refCode || "";
-        document.getElementById("refLink").innerText =
-            window.location.origin + "/index.html?ref=" + refCode;
-        loadDashboard();
-    });
-});
+        snap.forEach(child => arr.push(child.val()));
 
-/* DASHBOARD */
-function loadDashboard() {
-    db.ref("users/" + userUID + "/affiliateBalance").on("value", snap => {
-        document.getElementById("balance").innerText =
-            "₦" + (snap.val() || 0).toFixed(2);
-    });
+        arr.sort((a, b) => b.time - a.time);
 
-    db.ref("users/" + userUID + "/totalEarned").on("value", snap => {
-        document.getElementById("totalEarned").innerText =
-            "₦" + (snap.val() || 0).toFixed(2);
-    });
+        arr.forEach(tx => {
+            if (tx.type === "deposit") {
+                const d = new Date(tx.time).toLocaleString();
 
-    db.ref("users").once("value").then(snap => {
-        let count = 0;
-        let list = [];
-        snap.forEach(child => {
-            const u = child.val() || {};
-            if (u.referredBy === refCode) {
-                count++;
-                list.push(u);
+                historyList.innerHTML += `
+                <div class="history-item">
+                    <div class="history-left">
+                        <div class="history-title">+${tx.coins} Coins</div>
+                        <div class="history-sub">Ref: ${tx.ref}</div>
+                        <div class="history-sub">${d}</div>
+                    </div>
+                    <div class="history-right">
+                        <div>+${tx.coins}</div>
+                        <div class="history-naira">₦${tx.amount}</div>
+                    </div>
+                </div>`;
             }
         });
-        document.getElementById("totalRef").innerText = count;
-        window.referredUsers = list;
+    });
+});
+
+/* =========================
+   FLUTTERWAVE
+========================= */
+let flutterwaveKey = null;
+
+db.ref("settings/flutterwaveKeys/public").once("value").then(snap => {
+    flutterwaveKey = snap.val() || "";
+});
+
+function validateAmount(amount) {
+    const min = 1000;
+    const rate = 200;
+
+    if (amount < min)
+        return { valid: false, msg: `Minimum deposit is ₦${min}` };
+
+    if (amount % rate !== 0)
+        return { valid: false, msg: `Enter a multiple of ₦${rate}` };
+
+    return { valid: true, coins: amount / rate };
+}
+
+function startPayment(user, amountRaw, coins) {
+    FlutterwaveCheckout({
+        public_key: flutterwaveKey,
+        tx_ref: "TX-" + Date.now(),
+        amount: amountRaw,
+        currency: "NGN",
+        payment_options: "card, banktransfer, ussd",
+        customer: { email: user.email },
+
+        callback: function (response) {
+
+            const txId = response.transaction_id;
+            if (!txId) return toast("Payment not completed");
+
+            const userRef = db.ref("users/" + user.uid);
+
+            db.ref("processedPayments/" + txId).once("value").then(snap => {
+
+                if (!snap.exists()) {
+
+                    if (response.status === "successful" || response.status === "completed") {
+
+                        db.ref("processedPayments/" + txId).set(true);
+
+                        userRef.child("balance").transaction(v => (v || 0) + coins);
+
+                        userRef.child("transactions").push({
+                            type: "deposit",
+                            coins,
+                            amount: amountRaw,
+                            ref: txId,
+                            time: Date.now()
+                        });
+
+                        // ✅ AFFILIATE TRIGGER
+                        processAffiliate(user.uid, amountRaw, txId);
+
+                        toast("Payment successful!");
+                        depositStatus.innerHTML = `Coins added: ${coins}`;
+                    }
+                }
+
+                setTimeout(() => {
+                    window.location.href = "maining.html";
+                }, 1500);
+            });
+        },
+
+        onclose: () => toast("Payment cancelled")
     });
 }
 
-/* COPY */
-function copyLink() {
-    navigator.clipboard.writeText(document.getElementById("refLink").innerText);
-    alert("Copied!");
-}
+/* =========================
+   BUTTON
+========================= */
+submitBtn.onclick = () => {
+    const user = firebase.auth().currentUser;
+    if (!user) return toast("Please login again");
 
-/* TOGGLE USER LIST */
-function toggleUsers() {
-    const box = document.getElementById("userList");
-    const btn = event.target;
-    if (box.style.display === "none") {
-        box.innerHTML = "";
-        (window.referredUsers || []).forEach(u => {
-            box.innerHTML += `
-                <div class="user">
-                    <b>${u.name}</b><br>
-                    ${u.email}
-                </div>
-            `;
-        });
-        box.style.display = "block";
-        btn.innerText = "Hide Referred Emails";
-    } else {
-        box.style.display = "none";
-        btn.innerText = "Show Referred Emails";
-    }
-}
+    const amountRaw = Number(depositInput.value);
+    if (!amountRaw) return toast("Enter valid amount");
 
-/* WITHDRAW */
-function withdraw() {
-    const day = new Date().getDay(); 
-    const isAllowedDay = (day === 2 || day === 5); // Tue & Fri
+    const check = validateAmount(amountRaw);
+    if (!check.valid) return toast(check.msg);
 
-    if (!withdrawalEnabled) {
-        alert("Withdrawal is only available on Tuesday and Friday every week.");
-        return;
-    }
+    if (!flutterwaveKey) return toast("Payment key not loaded");
 
-    if (!isAllowedDay) {
-        alert("Withdrawal is only available on Tuesday and Friday every week.");
-        return;
-    }
+    document.getElementById("instructionModal").style.display = "block";
 
-    db.ref("users/" + userUID + "/affiliateBalance").once("value").then(snap => {
-        const bal = snap.val() || 0;
-
-        if (bal < 5000) {
-            alert("Minimum withdrawal is ₦5,000");
-            return;
-        }
-
-        document.getElementById("withdrawModal").style.display = "flex";
-    });
-}
-
-function closeWithdraw() {
-    document.getElementById("withdrawModal").style.display = "none";
-}
-
-/* SUBMIT WITHDRAW */
-function submitWithdraw() {
-    const amount = Number(document.getElementById("withdrawAmount").value);
-    const bank = document.getElementById("bankName").value;
-    const accNum = document.getElementById("accNumber").value;
-    const accName = document.getElementById("accName").value;
-
-    if (!amount || amount < 5000) {
-        alert("Minimum ₦5,000");
-        return;
-    }
-
-    db.ref("users/" + userUID + "/affiliateBalance").once("value").then(snap => {
-        const bal = snap.val() || 0;
-
-        if (amount > bal) {
-            alert("Insufficient balance");
-            return;
-        }
-
-        db.ref("users/" + userUID + "/affiliateBalance")
-            .transaction(v => (v || 0) - amount);
-
-        withdrawData = { amount, bank, accNum, accName };
-
-        document.getElementById("withdrawModal").style.display = "none";
-        document.getElementById("confirmModal").style.display = "flex";
-    });
-}
-
-/* CONFIRM */
-function closeConfirm() {
-    document.getElementById("confirmModal").style.display = "none";
-}
-
-/* FINAL SUBMIT */
-function copyAndRedirect() {
-    const email = firebase.auth().currentUser.email;
-    const text =
-`I have a pending withdrawal
-Email: ${email}
-Amount: ₦${withdrawData.amount}
-Bank: ${withdrawData.bank}
-Account: ${withdrawData.accNum}
-Name: ${withdrawData.accName}`;
-
-    navigator.clipboard.writeText(text);
-
-    db.ref("withdrawals").push({
-        userId: userUID,
-        email,
-        ...withdrawData,
-        time: Date.now(),
-        status: "instant"
-    });
-
-    window.location.href = "https://t.me/+8oZEn_u8W1I4NmJk";
-}
+    document.getElementById("agreeBtn").onclick = function () {
+        document.getElementById("instructionModal").style.display = "none";
+        startPayment(user, amountRaw, check.coins);
+    };
+};
 </script>
 
 </body>
