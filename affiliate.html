@@ -294,6 +294,7 @@ const db = firebase.database();
 let userUID = null;
 let refCode = null;
 let withdrawData = {};
+let currentBalance = 0;
 
 /* LOGIN */
 firebase.auth().onAuthStateChanged(user => {
@@ -313,8 +314,13 @@ firebase.auth().onAuthStateChanged(user => {
 /* DASHBOARD */
 function loadDashboard() {
     db.ref("users/" + userUID + "/affiliateBalance").on("value", snap => {
+        currentBalance = snap.val() || 0;
         document.getElementById("balance").innerText =
-            "₦" + (snap.val() || 0).toFixed(2);
+            "₦" + currentBalance.toFixed(2);
+        
+        // Set max so user can't type more than balance
+        const input = document.getElementById("withdrawAmount");
+        if(input) input.max = currentBalance;
     });
 
     db.ref("users/" + userUID + "/totalEarned").on("value", snap => {
@@ -367,38 +373,60 @@ function toggleUsers() {
 
 /* WITHDRAW - only show if balance >= 5000 */
 function withdraw() {
-    db.ref("users/" + userUID + "/affiliateBalance").once("value").then(snap => {
-        const bal = snap.val() || 0;
-        if (bal < 5000) {
-            alert("Minimum withdrawal is ₦5,000");
-            return;
-        }
-        document.getElementById("withdrawModal").style.display = "flex";
-    });
+    if (currentBalance < 5000) {
+        alert("Minimum withdrawal is ₦5,000");
+        return;
+    }
+    document.getElementById("withdrawModal").style.display = "flex";
 }
 
 function closeWithdraw() {
     document.getElementById("withdrawModal").style.display = "none";
 }
 
-/* SUBMIT WITHDRAW - only show confirm after this */
+/* SUBMIT WITHDRAW - with balance check to prevent debt */
 function submitWithdraw() {
     const amount = Number(document.getElementById("withdrawAmount").value);
     const bank = document.getElementById("bankName").value;
     const accNum = document.getElementById("accNumber").value;
     const accName = document.getElementById("accName").value;
 
-    if (!amount || amount < 5000) {
+    if (!amount || isNaN(amount)) {
+        alert("Enter valid amount");
+        return;
+    }
+
+    if (amount < 5000) {
         alert("Minimum ₦5,000");
         return;
     }
 
-    db.ref("users/" + userUID + "/affiliateBalance").transaction(v => (v || 0) - amount);
+    // Check balance before deducting
+    db.ref("users/" + userUID + "/affiliateBalance").once("value").then(snap => {
+        const bal = snap.val() || 0;
+        
+        if (amount > bal) {
+            alert("Insufficient balance. Your affiliate balance is ₦" + bal.toFixed(2));
+            return;
+        }
 
-    withdrawData = { amount, bank, accNum, accName };
+        // Safe transaction - abort if balance changed
+        db.ref("users/" + userUID + "/affiliateBalance").transaction(v => {
+            const current = v || 0;
+            if (current < amount) return; // abort
+            return current - amount;
+        }).then(result => {
+            if (!result.committed) {
+                alert("Withdrawal failed. Balance changed. Try again.");
+                return;
+            }
 
-    document.getElementById("withdrawModal").style.display = "none";
-    document.getElementById("confirmModal").style.display = "flex";
+            withdrawData = { amount, bank, accNum, accName };
+
+            document.getElementById("withdrawModal").style.display = "none";
+            document.getElementById("confirmModal").style.display = "flex";
+        });
+    });
 }
 
 function closeConfirm() {
