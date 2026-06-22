@@ -1,13 +1,16 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
+
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-<title>Aviator Pro Red</title>
 
-<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600;700;800&display=swap" rel="stylesheet">
+<title>Nova Aviator Pro</title>
+
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
 
 <style>
+
 *{
   margin:0;
   padding:0;
@@ -17,357 +20,438 @@
 
 body{
   min-height:100vh;
-  background: radial-gradient(circle at top,#2a0000 0%,#120000 45%,#050505 100%);
-  color:white;
+  background: radial-gradient(circle at top,#2a0a0a 0%,#120606 45%,#050505 100%);
   overflow-x:hidden;
+  color:white;
+  position:relative;
 }
 
-/* glow */
 .bg-glow{
   position:absolute;
-  width:520px;
-  height:520px;
+  width:500px;
+  height:500px;
   border-radius:50%;
-  background:rgba(255,0,0,.18);
+  background:rgba(255,40,40,.18);
   filter:blur(120px);
-  top:-200px;
+  top:-220px;
   left:50%;
   transform:translateX(-50%);
 }
 
 .app{
   position:relative;
-  z-index:5;
+  z-index:10;
+  width:100%;
   max-width:430px;
   margin:auto;
   padding:18px;
 }
 
-/* TOP */
+/* TOPBAR */
 .topbar{
   display:flex;
   justify-content:space-between;
   align-items:center;
-  margin-bottom:20px;
+  margin-bottom:24px;
+}
+
+.logo-wrap{
+  display:flex;
+  align-items:center;
+  gap:12px;
 }
 
 .logo{
   width:56px;
   height:56px;
   border-radius:18px;
-  background:linear-gradient(135deg,#ff0000,#ff4d4d);
+  background:linear-gradient(135deg,#ff2a2a,#ff5a5a);
   display:flex;
   justify-content:center;
   align-items:center;
-  font-weight:900;
-  box-shadow:0 0 30px rgba(255,0,0,.5);
-}
-
-.brand h1{
-  font-size:20px;
+  font-size:24px;
   font-weight:800;
+  color:#1a0000;
+  box-shadow:0 0 35px rgba(255,50,50,.55);
 }
 
-.brand p{
-  font-size:12px;
-  opacity:.6;
-}
+.brand h1{font-size:20px;font-weight:800;}
+.brand p{font-size:12px;opacity:.6;}
 
 /* BALANCE */
 .balance-card{
   background:rgba(255,255,255,.05);
   border:1px solid rgba(255,255,255,.08);
-  border-radius:16px;
-  padding:10px 14px;
+  backdrop-filter:blur(18px);
+  border-radius:18px;
+  padding:10px 15px;
   text-align:right;
+  box-shadow:0 12px 35px rgba(0,0,0,.35);
 }
 
-.balance-card h2{
-  color:#ff3b3b;
-}
+.balance-card small{font-size:11px;opacity:.65;}
+.balance-card h2{margin-top:4px;color:#ff4d4d;font-size:20px;}
 
 /* MAIN */
 .main-card{
-  background:rgba(255,255,255,.04);
+  background:rgba(255,255,255,.05);
   border:1px solid rgba(255,255,255,.08);
-  border-radius:26px;
-  padding:20px;
-  backdrop-filter:blur(18px);
+  backdrop-filter:blur(22px);
+  border-radius:30px;
+  padding:22px;
+  box-shadow:0 20px 55px rgba(0,0,0,.45);
 }
 
-/* toggle */
+/* LIVE */
+.live-bar{
+  display:flex;
+  justify-content:space-between;
+  align-items:center;
+  margin-bottom:18px;
+}
+
+.live{
+  background:#ff2a2a22;
+  border:1px solid #ff2a2a55;
+  color:#ff6b6b;
+  padding:8px 14px;
+  border-radius:999px;
+  font-size:12px;
+  font-weight:700;
+}
+
+.session{font-size:12px;opacity:.6;}
+
+/* TOGGLE */
 .mode-toggle{
   display:flex;
-  background:#1a0000;
-  border-radius:16px;
+  background:#1a0707;
+  border-radius:18px;
   padding:5px;
-  margin-bottom:14px;
+  margin-bottom:18px;
 }
 
 .mode-btn{
   flex:1;
-  padding:12px;
+  padding:14px;
+  border-radius:14px;
   text-align:center;
-  border-radius:12px;
-  font-weight:700;
-  color:#aaa;
   cursor:pointer;
+  transition:.25s;
+  color:#c9a0a0;
+  font-weight:600;
 }
 
 .mode-btn.active{
-  background:linear-gradient(135deg,#ff0000,#ff4d4d);
-  color:white;
+  background:linear-gradient(135deg,#ff2a2a,#ff5a5a);
+  color:#1a0000;
+  box-shadow:0 10px 30px rgba(255,50,50,.45);
 }
 
 /* INFO */
-.info{
-  background:#120000;
-  padding:14px;
-  border-radius:14px;
-  margin-bottom:14px;
-  border:1px solid rgba(255,0,0,.2);
+.info-card{
+  background:#1a0a0a;
+  border-radius:18px;
+  padding:16px;
+  margin-bottom:20px;
+  border:1px solid rgba(255,255,255,.06);
 }
 
-.info span{
-  color:#ff4d4d;
-  font-weight:700;
-}
+.info-title{font-size:12px;opacity:.6;margin-bottom:6px;}
+#modeInfo{font-size:14px;color:#ff6b6b;font-weight:700;}
 
 /* IMAGE */
 .image-wrap{
   display:flex;
   justify-content:center;
-  margin-bottom:14px;
+  margin-bottom:22px;
 }
 
-.image-wrap img{
-  width:200px;
-  border-radius:20px;
-  border:2px solid rgba(255,0,0,.4);
-  box-shadow:0 0 40px rgba(255,0,0,.25);
-  animation:pulse 2s infinite;
+#botImage{
+  width:220px;
+  height:220px;
+  object-fit:cover;
+  border-radius:28px;
+  border:3px solid rgba(255,60,60,.3);
+  box-shadow:0 0 45px rgba(255,50,50,.35);
+  animation:pulse 2.5s infinite;
 }
 
 @keyframes pulse{
-  0%,100%{transform:scale(1);}
-  50%{transform:scale(1.05);}
+  0%,100%{transform:scale(1);box-shadow:0 0 45px rgba(255,50,50,.35);}
+  50%{transform:scale(1.03);box-shadow:0 0 65px rgba(255,50,50,.55);}
+}
+
+/* LOADING */
+#loadingText{
+  display:none;
+  text-align:center;
+  margin-bottom:20px;
+  color:#ff6b6b;
+  font-weight:700;
+  animation:blink 1s infinite;
+}
+
+@keyframes blink{
+  0%,100%{opacity:1;}
+  50%{opacity:.35;}
 }
 
 /* BUTTON */
-button{
+#predictBtn{
   width:100%;
-  padding:16px;
   border:none;
-  border-radius:16px;
+  background:linear-gradient(135deg,#ff2a2a,#ff5a5a);
+  color:#1a0000;
+  padding:18px;
+  border-radius:18px;
+  font-size:16px;
   font-weight:800;
-  font-size:15px;
-  color:white;
-  background:linear-gradient(135deg,#ff0000,#ff4d4d);
-  box-shadow:0 10px 30px rgba(255,0,0,.3);
   cursor:pointer;
+  transition:.25s;
+  box-shadow:0 12px 35px rgba(255,50,50,.4);
 }
 
-button:disabled{
-  opacity:.5;
-}
+#predictBtn:hover{transform:translateY(-2px);}
+#predictBtn:active{transform:scale(.98);}
+#predictBtn:disabled{opacity:.6;cursor:not-allowed;}
 
-/* loading */
-#loading{
-  text-align:center;
-  margin:10px 0;
-  color:#ff4d4d;
-  display:none;
-}
-
-/* RESULT */
+/* PREDICTION */
 #predictionBox{
   display:none;
-  margin-top:16px;
-  padding:16px;
-  border-radius:18px;
-  background:linear-gradient(145deg,#1a0000,#0d0000);
-  border:1px solid rgba(255,0,0,.25);
-  box-shadow:0 0 25px rgba(255,0,0,.2);
+  margin-top:22px;
+  background:linear-gradient(145deg,#1a0a0a,#0f0505);
+  border-radius:22px;
+  padding:20px;
+  border:1px solid rgba(255,60,60,.18);
+  box-shadow:0 0 35px rgba(255,50,50,.18);
 }
 
-.title{
+.prediction-title{
+  color:#ff6b6b;
+  font-size:14px;
+  margin-bottom:14px;
   font-weight:800;
-  color:#ff4d4d;
   letter-spacing:1px;
-  margin-bottom:10px;
 }
 
-.big{
-  font-size:13px;
-  opacity:.7;
-  margin-bottom:6px;
+.prediction-item{
+  display:flex;
+  justify-content:space-between;
+  padding:10px 0;
+  border-bottom:1px solid rgba(255,255,255,.06);
 }
 
-.value{
-  font-size:18px;
-  font-weight:800;
-  color:#fff;
+.prediction-item:last-child{border-bottom:none;}
+
+.label{opacity:.65;font-size:13px;}
+.value{font-weight:800;color:#ff6b6b;font-size:16px;}
+
+/* ROCKET */
+.rocket{
+  position:fixed;
+  font-size:42px;
+  z-index:9999;
+  pointer-events:none;
 }
 
-.cool{
-  background:linear-gradient(90deg,#ff0000,#ff6666);
-  -webkit-background-clip:text;
-  -webkit-text-fill-color:transparent;
-  font-weight:900;
+/* TRAIL */
+.trail{
+  position:fixed;
+  width:10px;
+  height:10px;
+  background:#ff2a2a;
+  border-radius:50%;
+  z-index:9998;
+  box-shadow:0 0 15px #ff2a2a;
 }
 
+/* FOOTER */
 .footer{
   text-align:center;
-  margin-top:14px;
+  margin-top:18px;
   opacity:.4;
   font-size:12px;
 }
 
-/* rocket */
-.rocket{
-  position:fixed;
-  font-size:40px;
-  z-index:999;
-}
 </style>
 </head>
 
 <body>
+
 <div class="bg-glow"></div>
 
 <div class="app">
 
-<div class="topbar">
-  <div class="logo">A</div>
-  <div class="brand">
-    <h1>Aviator Pro</h1>
-    <p>Red Quantum Engine</p>
+  <div class="topbar">
+    <div class="logo-wrap">
+      <div class="logo">A</div>
+      <div class="brand">
+        <h1>Nova Aviator Pro</h1>
+        <p>Red Quantum Engine</p>
+      </div>
+    </div>
+
+    <div class="balance-card">
+      <small>COINS</small>
+      <h2><span id="balanceAmount">0</span></h2>
+    </div>
   </div>
-  <div class="balance-card">
-    <small>BALANCE</small>
-    <h2 id="balance">0</h2>
+
+  <div class="main-card">
+
+    <div class="live-bar">
+      <div class="live">● LIVE SIGNAL</div>
+      <div class="session" id="sessionId"></div>
+    </div>
+
+    <div class="mode-toggle">
+      <div class="mode-btn active" id="regularBtn">Regular</div>
+      <div class="mode-btn" id="premiumBtn">Premium</div>
+    </div>
+
+    <div class="info-card">
+      <div class="info-title">ENGINE</div>
+      <div id="modeInfo">Regular Engine Active</div>
+    </div>
+
+    <div class="image-wrap">
+      <img id="botImage" src="aviator.jpg">
+    </div>
+
+    <div id="loadingText">Calculating Signal...</div>
+
+    <button id="predictBtn">Generate Signal</button>
+
+    <div id="predictionBox">
+
+      <div class="prediction-title">BET ON AVIATOR</div>
+
+      <div class="prediction-item">
+        <div class="label">TIME</div>
+        <div class="value" id="timeValue">--:--</div>
+      </div>
+
+      <div class="prediction-item">
+        <div class="label">CASHOUT RANGE</div>
+        <div class="value" id="cashRange">0x - 0x</div>
+      </div>
+
+      <div class="prediction-item">
+        <div class="label">SAFE</div>
+        <div class="value" id="safeValue">0.00x</div>
+      </div>
+
+    </div>
+
   </div>
-</div>
 
-<div class="main-card">
-
-<div class="mode-toggle">
-  <div class="mode-btn active" id="regular">Regular</div>
-  <div class="mode-btn" id="premium">Premium</div>
-</div>
-
-<div class="info">
-  Engine: <span id="modeText">Regular Mode</span>
-</div>
-
-<div class="image-wrap">
-  <img src="aviator.jpg" />
-</div>
-
-<div id="loading">Calculating signal...</div>
-
-<button id="btn">Generate Signal</button>
-
-<div id="predictionBox">
-
-  <div class="title">BET ON AVIATOR</div>
-
-  <div class="big">TIME WINDOW</div>
-  <div class="value" id="time"></div>
-
-  <div class="big">CASHOUT RANGE</div>
-  <div class="value cool" id="cash"></div>
-
-  <div class="big">SAFE ZONE</div>
-  <div class="value" id="safe"></div>
+  <div class="footer">Nova Aviator Pro © 2026</div>
 
 </div>
 
-</div>
-
-<div class="footer">Aviator Pro System © 2026</div>
-</div>
+<script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-app.js"></script>
+<script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-auth.js"></script>
+<script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-database.js"></script>
 
 <script>
+
+const firebaseConfig = {
+  apiKey:"AIzaSyDvFDByPPo9zgwKLdPaREz1OVMQCXmPfrs",
+  authDomain:"bets-d795d.firebaseapp.com",
+  databaseURL:"https://bets-d795d-default-rtdb.firebaseio.com",
+  projectId:"bets-d795d",
+  storageBucket:"bets-d795d.appspot.com",
+  messagingSenderId:"384386108287",
+  appId:"1:384386108287:android:d238a5ec8068d9bb9be84a"
+};
+
+firebase.initializeApp(firebaseConfig);
+const db = firebase.database();
+
+let uid=null;
 let mode="regular";
-let cooldown=null;
 
-const btn=document.getElementById("btn");
-const loading=document.getElementById("loading");
-const box=document.getElementById("predictionBox");
+/* SESSION */
+document.getElementById("sessionId").innerText =
+"SESSION #" + Math.floor(Math.random()*99999);
 
-const regular=document.getElementById("regular");
-const premium=document.getElementById("premium");
-
-regular.onclick=()=>{
-mode="regular";
-regular.classList.add("active");
-premium.classList.remove("active");
-document.getElementById("modeText").innerText="Regular Mode";
+/* MODE SWITCH */
+regularBtn.onclick=()=>{
+  mode="regular";
+  regularBtn.classList.add("active");
+  premiumBtn.classList.remove("active");
+  modeInfo.innerText="Regular Engine Active";
 };
 
-premium.onclick=()=>{
-mode="premium";
-premium.classList.add("active");
-regular.classList.remove("active");
-document.getElementById("modeText").innerText="Premium Mode";
+premiumBtn.onclick=()=>{
+  mode="premium";
+  premiumBtn.classList.add("active");
+  regularBtn.classList.remove("active");
+  modeInfo.innerText="Premium Engine Active";
 };
 
-function gen(){
-if(cooldown && Date.now()<cooldown){
-alert("Wait for current signal");
-return;
+/* AUTH */
+firebase.auth().onAuthStateChanged(user=>{
+  if(!user) return;
+  uid=user.uid;
+
+  db.ref("users/"+uid+"/balance").on("value",s=>{
+    balanceAmount.innerText=s.val()||0;
+  });
+});
+
+/* RANDOMS */
+function rand(min,max){return (Math.random()*(max-min)+min).toFixed(2);}
+
+/* PREDICTION */
+document.getElementById("predictBtn").onclick=()=>generate();
+
+function generate(){
+
+  if(!uid) return;
+
+  const cost=mode==="premium"?2:1;
+
+  db.ref("users/"+uid+"/balance").transaction(v=>{
+    v=v||0;
+    if(v<cost) return;
+    return v-cost;
+  },(e,ok)=>{
+
+    if(!ok) return;
+
+    const now=new Date();
+    const offset=Math.floor(Math.random()*2)+2;
+
+    const future=new Date(now.getTime()+offset*60000);
+
+    const time=`${String(future.getHours()).padStart(2,'0')}:${String(future.getMinutes()).padStart(2,'0')}`;
+
+    const min=rand(1.5,2.5);
+    const max=rand(4.0,9.0);
+
+    const safe = mode==="premium"?2.17:3.31;
+
+    document.getElementById("predictionBox").style.display="block";
+
+    document.getElementById("timeValue").innerText=time;
+
+    document.getElementById("cashRange").innerText=`${min}x - ${max}x`;
+
+    document.getElementById("safeValue").innerText=safe+"x";
+
+    db.ref("users/"+uid+"/transactions").push({
+      type:"bet",
+      coins:-cost,
+      game:"Aviator Pro",
+      time:Date.now()
+    });
+
+  });
+
 }
 
-loading.style.display="block";
-box.style.display="none";
-btn.disabled=true;
-
-setTimeout(()=>{
-loading.style.display="none";
-
-const now=new Date();
-const start=new Date(now.getTime()+2*60000);
-
-const end=new Date(start.getTime()+60000);
-
-const r1=mode==="premium"?4.18:5.22;
-const r2=mode==="premium"?6.88:9.59;
-const safe=mode==="premium"?2.17:3.31;
-
-document.getElementById("time").innerText=
-start.getHours()+":"+String(start.getMinutes()).padStart(2,"0")+" - "+
-end.getHours()+":"+String(end.getMinutes()).padStart(2,"0");
-
-document.getElementById("cash").innerText=
-r1.toFixed(2)+"X - "+r2.toFixed(2)+"X CASHOUT";
-
-document.getElementById("safe").innerText=
-"SAFE : "+safe.toFixed(2)+"X";
-
-box.style.display="block";
-
-cooldown=end.getTime()+60000;
-localStorage.setItem("cooldown",cooldown);
-
-btn.disabled=false;
-
-},2000);
-}
-
-btn.onclick=gen;
-
-window.onload=()=>{
-const saved=localStorage.getItem("cooldown");
-if(saved && Date.now()<saved){
-btn.disabled=true;
-document.getElementById("loading").style.display="block";
-setTimeout(()=>{
-btn.disabled=false;
-document.getElementById("loading").style.display="none";
-},1500);
-}
-};
 </script>
 
 </body>
