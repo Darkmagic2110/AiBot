@@ -47,7 +47,6 @@ body{
   padding:18px;
 }
 
-/* TOPBAR */
 .topbar{
   display:flex;
   justify-content:space-between;
@@ -192,10 +191,7 @@ body{
   animation:blink 1s infinite;
 }
 
-@keyframes blink{
-  0%,100%{opacity:1;}
-  50%{opacity:.35;}
-}
+@keyframes blink{0%,100%{opacity:1;}50%{opacity:.35;}}
 
 /* BUTTON */
 #predictBtn{
@@ -212,9 +208,9 @@ body{
   box-shadow:0 12px 35px rgba(255,50,50,.4);
 }
 
+#predictBtn:disabled{opacity:.5;cursor:not-allowed;}
 #predictBtn:hover{transform:translateY(-2px);}
 #predictBtn:active{transform:scale(.98);}
-#predictBtn:disabled{opacity:.6;cursor:not-allowed;}
 
 /* PREDICTION */
 #predictionBox{
@@ -247,32 +243,7 @@ body{
 .label{opacity:.65;font-size:13px;}
 .value{font-weight:800;color:#ff6b6b;font-size:16px;}
 
-/* ROCKET */
-.rocket{
-  position:fixed;
-  font-size:42px;
-  z-index:9999;
-  pointer-events:none;
-}
-
-/* TRAIL */
-.trail{
-  position:fixed;
-  width:10px;
-  height:10px;
-  background:#ff2a2a;
-  border-radius:50%;
-  z-index:9998;
-  box-shadow:0 0 15px #ff2a2a;
-}
-
-/* FOOTER */
-.footer{
-  text-align:center;
-  margin-top:18px;
-  opacity:.4;
-  font-size:12px;
-}
+.footer{text-align:center;margin-top:18px;opacity:.4;font-size:12px;}
 
 </style>
 </head>
@@ -367,28 +338,42 @@ const firebaseConfig = {
 };
 
 firebase.initializeApp(firebaseConfig);
-const db = firebase.database();
+const db=firebase.database();
 
 let uid=null;
 let mode="regular";
 
-/* SESSION */
 document.getElementById("sessionId").innerText =
 "SESSION #" + Math.floor(Math.random()*99999);
 
-/* MODE SWITCH */
+let activePrediction = JSON.parse(localStorage.getItem("aviator_prediction") || "null");
+
+function rand(min,max){return (Math.random()*(max-min)+min).toFixed(2);}
+
+function renderPrediction(p){
+  document.getElementById("predictionBox").style.display="block";
+  document.getElementById("predictBtn").disabled=true;
+
+  document.getElementById("timeValue").innerText=p.time;
+  document.getElementById("cashRange").innerText=p.cash;
+  document.getElementById("safeValue").innerText=p.safe;
+}
+
+if(activePrediction && Date.now() < activePrediction.endTime){
+  renderPrediction(activePrediction);
+}
+
+/* MODE */
 regularBtn.onclick=()=>{
   mode="regular";
   regularBtn.classList.add("active");
   premiumBtn.classList.remove("active");
-  modeInfo.innerText="Regular Engine Active";
 };
 
 premiumBtn.onclick=()=>{
   mode="premium";
   premiumBtn.classList.add("active");
   regularBtn.classList.remove("active");
-  modeInfo.innerText="Premium Engine Active";
 };
 
 /* AUTH */
@@ -399,19 +384,24 @@ firebase.auth().onAuthStateChanged(user=>{
   db.ref("users/"+uid+"/balance").on("value",s=>{
     balanceAmount.innerText=s.val()||0;
   });
+
+  if(activePrediction && Date.now()<activePrediction.endTime){
+    document.getElementById("predictBtn").disabled=true;
+  }
 });
 
-/* RANDOMS */
-function rand(min,max){return (Math.random()*(max-min)+min).toFixed(2);}
-
-/* PREDICTION */
-document.getElementById("predictBtn").onclick=()=>generate();
+/* GENERATE */
+document.getElementById("predictBtn").onclick=generate;
 
 function generate(){
 
   if(!uid) return;
 
-  const cost=mode==="premium"?2:1;
+  if(activePrediction && Date.now() < activePrediction.endTime){
+    return;
+  }
+
+  const cost = mode==="premium"?2:1;
 
   db.ref("users/"+uid+"/balance").transaction(v=>{
     v=v||0;
@@ -423,23 +413,25 @@ function generate(){
 
     const now=new Date();
     const offset=Math.floor(Math.random()*2)+2;
-
     const future=new Date(now.getTime()+offset*60000);
 
-    const time=`${String(future.getHours()).padStart(2,'0')}:${String(future.getMinutes()).padStart(2,'0')}`;
+    const time = `${String(future.getHours()).padStart(2,'0')}:${String(future.getMinutes()).padStart(2,'0')}`;
 
-    const min=rand(1.5,2.5);
-    const max=rand(4.0,9.0);
+    const min = rand(1.5,2.5);
+    const max = rand(4.0,9.0);
 
-    const safe = mode==="premium"?2.17:3.31;
+    const safe = mode==="premium" ? 2.17 : 3.31;
 
-    document.getElementById("predictionBox").style.display="block";
+    activePrediction = {
+      time,
+      cash:`${min}x - ${max}x`,
+      safe:safe+"x",
+      endTime: future.getTime()
+    };
 
-    document.getElementById("timeValue").innerText=time;
+    localStorage.setItem("aviator_prediction", JSON.stringify(activePrediction));
 
-    document.getElementById("cashRange").innerText=`${min}x - ${max}x`;
-
-    document.getElementById("safeValue").innerText=safe+"x";
+    renderPrediction(activePrediction);
 
     db.ref("users/"+uid+"/transactions").push({
       type:"bet",
@@ -449,8 +441,15 @@ function generate(){
     });
 
   });
-
 }
+
+setInterval(()=>{
+  if(activePrediction && Date.now() >= activePrediction.endTime){
+    activePrediction=null;
+    localStorage.removeItem("aviator_prediction");
+    document.getElementById("predictBtn").disabled=false;
+  }
+},1000);
 
 </script>
 
