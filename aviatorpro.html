@@ -337,7 +337,6 @@ const db=firebase.database();
 
 let uid=null;
 let mode="regular";
-
 let activePrediction=null;
 
 /* SESSION */
@@ -348,12 +347,14 @@ regularBtn.onclick=()=>{
   mode="regular";
   regularBtn.classList.add("active");
   premiumBtn.classList.remove("active");
+  modeInfo.innerText="Regular Engine Active";
 };
 
 premiumBtn.onclick=()=>{
   mode="premium";
   premiumBtn.classList.add("active");
   regularBtn.classList.remove("active");
+  modeInfo.innerText="Premium Engine Active";
 };
 
 /* AUTH */
@@ -368,7 +369,7 @@ firebase.auth().onAuthStateChanged(user=>{
   loadPrediction();
 });
 
-/* LOAD EXISTING */
+/* LOAD */
 function loadPrediction(){
   const saved=localStorage.getItem("aviator_"+uid);
   if(!saved) return;
@@ -377,7 +378,7 @@ function loadPrediction(){
 
   if(Date.now() < data.endTime){
     activePrediction=data;
-    showPrediction(data,true);
+    showPrediction(data);
   }else{
     localStorage.removeItem("aviator_"+uid);
   }
@@ -405,18 +406,22 @@ function generate(){
     if(!ok) return;
 
     const now=new Date();
-    const start=new Date();
     const end=new Date(now.getTime()+60000);
+    const start=new Date();
 
-    const time=formatRange(start,end);
+    const time=`${String(start.getHours()).padStart(2,'0')}:${String(start.getMinutes()).padStart(2,'0')} - ${String(end.getHours()).padStart(2,'0')}:${String(end.getMinutes()).padStart(2,'0')}`;
 
-    const min=rand(1.5,2.5);
-    const max=rand(4.0,9.0);
-    const safe=mode==="premium"?2.17:3.31;
+    const cash = mode==="regular"
+      ? `${rand(5,5.99)}x - ${rand(9,9.99)}x`
+      : `${rand(4,4.99)}x - ${rand(6,6.99)}x`;
+
+    const safe = mode==="regular"
+      ? rand(3,3.99)
+      : rand(2,2.99);
 
     const data={
       time,
-      cash:`${min}x - ${max}x`,
+      cash,
       safe:safe+"x",
       endTime:end.getTime()
     };
@@ -424,7 +429,7 @@ function generate(){
     activePrediction=data;
     localStorage.setItem("aviator_"+uid,JSON.stringify(data));
 
-    showPrediction(data,false);
+    showPrediction(data);
 
     db.ref("users/"+uid+"/transactions").push({
       type:"bet",
@@ -436,43 +441,18 @@ function generate(){
   });
 }
 
-/* DISPLAY */
-function showPrediction(data,fromLoad){
-
+/* SHOW */
+function showPrediction(data){
   predictionBox.style.display="block";
-
   timeValue.innerText=data.time;
   cashRange.innerText=data.cash;
   safeValue.innerText=data.safe;
-
   predictBtn.disabled=Date.now()<data.endTime;
-
-  if(!fromLoad){
-    setTimeout(checkUnlock,1000);
-  }
 }
 
-/* UNLOCK */
-function checkUnlock(){
-  const timer=setInterval(()=>{
-    if(activePrediction && Date.now()>=activePrediction.endTime){
-      activePrediction=null;
-      localStorage.removeItem("aviator_"+uid);
-      predictBtn.disabled=false;
-      clearInterval(timer);
-    }
-  },1000);
-}
-
-/* HELPERS */
+/* RANDOM */
 function rand(min,max){
   return (Math.random()*(max-min)+min).toFixed(2);
-}
-
-function formatRange(start,end){
-  const a=`${String(start.getHours()).padStart(2,'0')}:${String(start.getMinutes()).padStart(2,'0')}`;
-  const b=`${String(end.getHours()).padStart(2,'0')}:${String(end.getMinutes()).padStart(2,'0')}`;
-  return `${a} - ${b}`;
 }
 
 </script>
