@@ -2,243 +2,306 @@
 <html lang="en">
 <head>
 <meta charset="UTF-8">
-<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
 <title>Aviator Predictor Pro</title>
 
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;700;800&display=swap" rel="stylesheet">
+
 <style>
+*{
+  margin:0;
+  padding:0;
+  box-sizing:border-box;
+  font-family:'Inter',sans-serif;
+}
+
 body{
-    font-family: Arial;
-    background:#0b0b0b;
-    color:white;
-    text-align:center;
-    padding:20px;
+  min-height:100vh;
+  background: radial-gradient(circle at top,#2a0b0b,#0b0505);
+  color:white;
+  padding:18px;
 }
 
-button{
-    padding:15px;
-    border:none;
-    border-radius:10px;
-    background:orange;
-    color:black;
-    font-weight:bold;
-    cursor:pointer;
-    margin-top:10px;
+/* TOP */
+.topbar{
+  display:flex;
+  justify-content:space-between;
+  align-items:center;
+  margin-bottom:20px;
 }
 
+.balance{
+  background:rgba(255,255,255,0.06);
+  padding:10px 14px;
+  border-radius:14px;
+  border:1px solid rgba(255,255,255,0.08);
+}
+
+.balance span{
+  color:#ff884d;
+  font-weight:800;
+}
+
+/* CARD */
 .card{
-    background:#1a1a1a;
-    padding:20px;
-    border-radius:15px;
-    margin-top:20px;
+  background:rgba(255,255,255,0.05);
+  border:1px solid rgba(255,255,255,0.08);
+  border-radius:20px;
+  padding:18px;
 }
 
-.mode{
-    display:flex;
-    justify-content:center;
-    gap:10px;
+/* MODE */
+.toggle{
+  display:flex;
+  background:#1a0a0a;
+  border-radius:14px;
+  margin-bottom:15px;
 }
 
-.mode div{
-    padding:10px;
-    background:#333;
-    cursor:pointer;
-    border-radius:8px;
+.toggle div{
+  flex:1;
+  padding:12px;
+  text-align:center;
+  cursor:pointer;
+  font-weight:700;
+  color:#aaa;
 }
 
-.mode .active{
-    background:orange;
-    color:black;
+.toggle .active{
+  background:#ff3d00;
+  color:white;
+  border-radius:14px;
 }
 
-#result{
-    margin-top:20px;
-    display:none;
-    background:#111;
-    padding:15px;
-    border-radius:10px;
+/* BUTTON */
+button{
+  width:100%;
+  padding:15px;
+  border:none;
+  border-radius:14px;
+  background:linear-gradient(135deg,#ff3d00,#ff7a00);
+  color:white;
+  font-weight:800;
+  cursor:pointer;
+  margin-top:15px;
 }
+
+/* RESULT */
+.result{
+  margin-top:20px;
+  display:none;
+  background:#120707;
+  padding:15px;
+  border-radius:16px;
+  border:1px solid rgba(255,120,80,0.2);
+}
+
+.row{
+  display:flex;
+  justify-content:space-between;
+  padding:10px 0;
+  border-bottom:1px solid rgba(255,255,255,0.06);
+}
+
+.row:last-child{
+  border-bottom:none;
+}
+
+.label{opacity:0.6}
+.value{color:#ff884d;font-weight:800}
 </style>
 </head>
 
 <body>
 
-<h2>Aviator Predictor Pro</h2>
-
-<h3>Balance: <span id="bal">0</span></h3>
-
-<div class="mode">
-    <div id="regular" class="active">Regular</div>
-    <div id="premium">Premium</div>
+<div class="topbar">
+  <h3>Aviator Pro</h3>
+  <div class="balance">
+    Coins: <span id="balanceAmount">0</span>
+  </div>
 </div>
 
-<button id="predict">GENERATE SIGNAL</button>
+<div class="card">
 
-<div id="result"></div>
+  <div class="toggle">
+    <div id="regularBtn" class="active">Regular</div>
+    <div id="premiumBtn">Premium</div>
+  </div>
+
+  <button id="predictBtn">GENERATE SIGNAL</button>
+
+  <div class="result" id="resultBox">
+
+    <div class="row">
+      <div class="label">BET ON AVIATOR</div>
+      <div class="value" id="timeRange"></div>
+    </div>
+
+    <div class="row">
+      <div class="label">CASHOUT</div>
+      <div class="value" id="cashout"></div>
+    </div>
+
+    <div class="row">
+      <div class="label">SAFE ZONE</div>
+      <div class="value" id="safe"></div>
+    </div>
+
+  </div>
+
+</div>
 
 <script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-app.js"></script>
 <script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-auth.js"></script>
 <script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-database.js"></script>
 
 <script>
+
 const firebaseConfig = {
-    apiKey: "AIzaSyDvFDByPPo9zgwKLdPaREz1OVMQCXmPfrs",
-    authDomain: "bets-d795d.firebaseapp.com",
-    databaseURL: "https://bets-d795d-default-rtdb.firebaseio.com",
-    projectId: "bets-d795d",
-    storageBucket: "bets-d795d.appspot.com",
-    messagingSenderId: "384386108287",
-    appId: "1:384386108287:android:d238a5ec8068d9bb9be84a"
+  apiKey: "AIzaSyDvFDByPPo9zgwKLdPaREz1OVMQCXmPfrs",
+  authDomain: "bets-d795d.firebaseapp.com",
+  databaseURL: "https://bets-d795d-default-rtdb.firebaseio.com",
+  projectId: "bets-d795d",
+  storageBucket: "bets-d795d.appspot.com",
+  messagingSenderId: "384386108287",
+  appId: "1:384386108287:android:d238a5ec8068d9bb9be84a"
 };
 
 firebase.initializeApp(firebaseConfig);
-
 const db = firebase.database();
 
 let uid = null;
 let mode = "regular";
 
-const bal = document.getElementById("bal");
-const result = document.getElementById("result");
+/* MODE */
+document.getElementById("regularBtn").onclick = () => {
+  mode = "regular";
+  regularBtn.classList.add("active");
+  premiumBtn.classList.remove("active");
+};
 
+document.getElementById("premiumBtn").onclick = () => {
+  mode = "premium";
+  premiumBtn.classList.add("active");
+  regularBtn.classList.remove("active");
+};
+
+/* AUTH */
 firebase.auth().onAuthStateChanged(user=>{
-    if(!user) return alert("Login required");
-    uid = user.uid;
+  if(!user) return;
+  uid = user.uid;
 
-    db.ref("users/"+uid+"/balance").on("value",s=>{
-        bal.innerText = Math.floor(s.val()||0);
-    });
+  db.ref("users/"+uid+"/balance").on("value",snap=>{
+    document.getElementById("balanceAmount").innerText = snap.val() || 0;
+  });
 
-    restoreSignal();
+  loadSavedPrediction();
 });
 
-document.getElementById("regular").onclick=()=>{
-    mode="regular";
-    setModeUI();
-};
-
-document.getElementById("premium").onclick=()=>{
-    mode="premium";
-    setModeUI();
-};
-
-function setModeUI(){
-    document.getElementById("regular").classList.toggle("active",mode==="regular");
-    document.getElementById("premium").classList.toggle("active",mode==="premium");
+/* SAVE KEY */
+function saveKey(){
+  return "aviator_signal_" + uid;
 }
 
-/* COEFFICIENTS */
-function cashoutRange(){
-    if(mode==="premium"){
-        return {
-            min:4,
-            max:6,
-            safe:2
-        };
-    }
+/* GENERATE TIME */
+function getTime(){
+  const now = new Date();
+  const addMin = 2 + Math.floor(Math.random()*2);
+
+  const start = new Date(now.getTime() + (addMin*60000));
+  const end = new Date(start.getTime() + 60000);
+
+  return {
+    start: start.toTimeString().slice(0,5),
+    end: end.toTimeString().slice(0,5),
+    expire: end.getTime()
+  };
+}
+
+/* COEFFICIENT */
+function getData(){
+  if(mode==="regular"){
     return {
-        min:5,
-        max:9,
-        safe:3
+      cashout:(5 + Math.random()*4).toFixed(2),
+      safe:"3.00x"
     };
+  }else{
+    return {
+      cashout:(4 + Math.random()*2).toFixed(2),
+      safe:"2.00x"
+    };
+  }
 }
 
-function rand(min,max){
-    return (Math.random()*(max-min)+min).toFixed(2);
-}
+/* SHOW */
+function show(data,time){
 
-/* TIME */
-function getTimeRange(){
-    const now = new Date();
+  document.getElementById("resultBox").style.display="block";
 
-    const startOffset = 2 + Math.floor(Math.random()*2); // 2–3 mins
-    const start = new Date(now.getTime() + startOffset*60000);
-    const end = new Date(start.getTime()+60000);
+  document.getElementById("timeRange").innerText =
+  time.start + " - " + time.end;
 
-    const format = d =>
-        String(d.getHours()).padStart(2,'0')+":"+
-        String(d.getMinutes()).padStart(2,'0');
+  document.getElementById("cashout").innerText =
+  data.cashout + "x";
 
-    return {start,end,text:`${format(start)} - ${format(end)}`};
+  document.getElementById("safe").innerText =
+  data.safe;
 }
 
 /* SAVE */
-function saveSignal(data){
-    localStorage.setItem("aviator_signal",JSON.stringify(data));
+function savePrediction(obj){
+  localStorage.setItem(saveKey(), JSON.stringify(obj));
 }
 
-/* RESTORE */
-function restoreSignal(){
-    const saved = localStorage.getItem("aviator_signal");
-    if(!saved) return;
+/* LOAD */
+function loadSavedPrediction(){
 
-    const data = JSON.parse(saved);
-    const now = Date.now();
+  if(!uid) return;
 
-    if(now > data.expiry){
-        localStorage.removeItem("aviator_signal");
-        return;
-    }
+  const saved = localStorage.getItem(saveKey());
+  if(!saved) return;
 
-    result.style.display="block";
-    result.innerHTML = data.html;
+  const data = JSON.parse(saved);
+
+  if(Date.now() < data.expire){
+    show(data.data, data.time);
+  }else{
+    localStorage.removeItem(saveKey());
+  }
 }
 
-/* GENERATE */
-document.getElementById("predict").onclick=async()=>{
+/* CLICK */
+document.getElementById("predictBtn").onclick = () => {
 
-    if(!uid) return;
+  if(!uid) return alert("Login required");
 
-    const cost = mode==="premium"?2:1;
+  const cost = mode==="premium"?2:1;
 
-    const ref = db.ref("users/"+uid+"/balance");
+  const ref = db.ref("users/"+uid+"/balance");
 
-    ref.transaction(b=>{
-        b = b||0;
-        if(b < cost){
-            alert("No balance");
-            return;
-        }
-        return b - cost;
-    },(e,ok)=>{
-        if(!ok) return;
+  ref.transaction(val=>{
+    val = val || 0;
+    if(val < cost) return;
+    return val - cost;
+  },(err,ok)=>{
+    if(!ok) return;
 
-        db.ref("users/"+uid+"/transactions").push({
-            type:"bet",
-            coins:-cost,
-            game:"aviator",
-            time:Date.now()
-        });
+    const time = getTime();
+    const data = getData();
 
-        generateSignal();
-    });
+    const obj = {
+      time,
+      data,
+      expire: time.expire
+    };
+
+    savePrediction(obj);
+    show(data,time);
+
+  });
+
 };
 
-function generateSignal(){
-
-    const range = cashoutRange();
-    const time = getTimeRange();
-
-    const cashMin = rand(range.min, range.max);
-    const cashMax = rand(parseFloat(cashMin)+0.5, range.max+1);
-    const safe = range.safe.toFixed(2);
-
-    const html = `
-    <h3>BET ON AVIATOR</h3>
-    <h2>${time.text}</h2>
-    <p>${cashMin}X - ${cashMax}X CASHOUT</p>
-    <p><b>SAFE : ${safe}X</b></p>
-    `;
-
-    result.style.display="block";
-    result.innerHTML = html;
-
-    const expiry = time.end.getTime();
-
-    saveSignal({
-        html,
-        expiry
-    });
-}
 </script>
 
 </body>
