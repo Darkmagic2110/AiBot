@@ -3,12 +3,11 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-<title>Aviator Pro</title>
+<title>Aviator Pro Red</title>
 
-<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600;700;800&display=swap" rel="stylesheet">
 
 <style>
-
 *{
   margin:0;
   padding:0;
@@ -18,17 +17,16 @@
 
 body{
   min-height:100vh;
-  background: radial-gradient(circle at top,#2a0000 0%,#120000 50%,#050505 100%);
-  overflow-x:hidden;
+  background: radial-gradient(circle at top,#2a0000 0%,#120000 45%,#050505 100%);
   color:white;
-  position:relative;
+  overflow-x:hidden;
 }
 
 /* glow */
 .bg-glow{
   position:absolute;
-  width:500px;
-  height:500px;
+  width:520px;
+  height:520px;
   border-radius:50%;
   background:rgba(255,0,0,.18);
   filter:blur(120px);
@@ -40,7 +38,6 @@ body{
 .app{
   position:relative;
   z-index:5;
-  width:100%;
   max-width:430px;
   margin:auto;
   padding:18px;
@@ -51,26 +48,19 @@ body{
   display:flex;
   justify-content:space-between;
   align-items:center;
-  margin-bottom:24px;
-}
-
-.logo-wrap{
-  display:flex;
-  align-items:center;
-  gap:12px;
+  margin-bottom:20px;
 }
 
 .logo{
   width:56px;
   height:56px;
   border-radius:18px;
-  background:linear-gradient(135deg,#ff0000,#7a0000);
+  background:linear-gradient(135deg,#ff0000,#ff4d4d);
   display:flex;
-  align-items:center;
   justify-content:center;
-  font-weight:800;
-  font-size:24px;
-  box-shadow:0 0 35px rgba(255,0,0,.55);
+  align-items:center;
+  font-weight:900;
+  box-shadow:0 0 30px rgba(255,0,0,.5);
 }
 
 .brand h1{
@@ -87,9 +77,8 @@ body{
 .balance-card{
   background:rgba(255,255,255,.05);
   border:1px solid rgba(255,255,255,.08);
-  backdrop-filter:blur(18px);
-  border-radius:18px;
-  padding:10px 15px;
+  border-radius:16px;
+  padding:10px 14px;
   text-align:right;
 }
 
@@ -99,308 +88,286 @@ body{
 
 /* MAIN */
 .main-card{
-  background:rgba(255,255,255,.05);
+  background:rgba(255,255,255,.04);
   border:1px solid rgba(255,255,255,.08);
-  backdrop-filter:blur(22px);
-  border-radius:30px;
-  padding:22px;
+  border-radius:26px;
+  padding:20px;
+  backdrop-filter:blur(18px);
 }
 
-/* LIVE */
-.live-bar{
-  display:flex;
-  justify-content:space-between;
-  margin-bottom:18px;
-}
-
-.live{
-  background:#ff000022;
-  border:1px solid #ff000055;
-  color:#ff6b6b;
-  padding:8px 14px;
-  border-radius:999px;
-  font-size:12px;
-  font-weight:700;
-}
-
-.session{
-  font-size:12px;
-  opacity:.6;
-}
-
-/* MODE */
+/* toggle */
 .mode-toggle{
   display:flex;
-  background:#120000;
-  border-radius:18px;
+  background:#1a0000;
+  border-radius:16px;
   padding:5px;
-  margin-bottom:18px;
+  margin-bottom:14px;
 }
 
 .mode-btn{
   flex:1;
-  padding:14px;
+  padding:12px;
   text-align:center;
-  cursor:pointer;
+  border-radius:12px;
+  font-weight:700;
   color:#aaa;
-  font-weight:600;
+  cursor:pointer;
 }
 
 .mode-btn.active{
-  background:linear-gradient(135deg,#ff0000,#7a0000);
-  border-radius:14px;
+  background:linear-gradient(135deg,#ff0000,#ff4d4d);
   color:white;
+}
+
+/* INFO */
+.info{
+  background:#120000;
+  padding:14px;
+  border-radius:14px;
+  margin-bottom:14px;
+  border:1px solid rgba(255,0,0,.2);
+}
+
+.info span{
+  color:#ff4d4d;
+  font-weight:700;
 }
 
 /* IMAGE */
 .image-wrap{
   display:flex;
   justify-content:center;
-  margin-bottom:20px;
+  margin-bottom:14px;
 }
 
-#botImage{
-  width:220px;
-  height:220px;
-  object-fit:cover;
-  border-radius:28px;
-  border:3px solid rgba(255,0,0,.35);
-  box-shadow:0 0 45px rgba(255,0,0,.35);
-  animation:pulse 2.5s infinite;
+.image-wrap img{
+  width:200px;
+  border-radius:20px;
+  border:2px solid rgba(255,0,0,.4);
+  box-shadow:0 0 40px rgba(255,0,0,.25);
+  animation:pulse 2s infinite;
 }
 
 @keyframes pulse{
   0%,100%{transform:scale(1);}
-  50%{transform:scale(1.03);}
+  50%{transform:scale(1.05);}
 }
 
 /* BUTTON */
-#predictBtn{
+button{
   width:100%;
+  padding:16px;
   border:none;
-  background:linear-gradient(135deg,#ff0000,#7a0000);
-  color:white;
-  padding:18px;
-  border-radius:18px;
-  font-size:16px;
+  border-radius:16px;
   font-weight:800;
+  font-size:15px;
+  color:white;
+  background:linear-gradient(135deg,#ff0000,#ff4d4d);
+  box-shadow:0 10px 30px rgba(255,0,0,.3);
+  cursor:pointer;
 }
 
-/* PREDICTION */
+button:disabled{
+  opacity:.5;
+}
+
+/* loading */
+#loading{
+  text-align:center;
+  margin:10px 0;
+  color:#ff4d4d;
+  display:none;
+}
+
+/* RESULT */
 #predictionBox{
   display:none;
-  margin-top:22px;
-  background:#120000;
-  border-radius:22px;
-  padding:20px;
-  border:1px solid rgba(255,0,0,.2);
+  margin-top:16px;
+  padding:16px;
+  border-radius:18px;
+  background:linear-gradient(145deg,#1a0000,#0d0000);
+  border:1px solid rgba(255,0,0,.25);
+  box-shadow:0 0 25px rgba(255,0,0,.2);
 }
 
-.prediction-title{
-  color:#ff4d4d;
+.title{
   font-weight:800;
-  margin-bottom:14px;
+  color:#ff4d4d;
+  letter-spacing:1px;
+  margin-bottom:10px;
 }
 
-.prediction-item{
-  display:flex;
-  justify-content:space-between;
-  padding:12px 0;
-  border-bottom:1px solid rgba(255,255,255,.05);
+.big{
+  font-size:13px;
+  opacity:.7;
+  margin-bottom:6px;
 }
 
 .value{
-  color:#ff4d4d;
+  font-size:18px;
   font-weight:800;
+  color:#fff;
 }
 
-/* FX */
+.cool{
+  background:linear-gradient(90deg,#ff0000,#ff6666);
+  -webkit-background-clip:text;
+  -webkit-text-fill-color:transparent;
+  font-weight:900;
+}
+
+.footer{
+  text-align:center;
+  margin-top:14px;
+  opacity:.4;
+  font-size:12px;
+}
+
+/* rocket */
 .rocket{
   position:fixed;
   font-size:40px;
-  z-index:9999;
-  pointer-events:none;
+  z-index:999;
 }
-
-.trail{
-  position:fixed;
-  width:10px;
-  height:10px;
-  background:#ff0000;
-  border-radius:50%;
-  z-index:9998;
-  pointer-events:none;
-}
-
 </style>
 </head>
 
 <body>
-
 <div class="bg-glow"></div>
 
 <div class="app">
 
 <div class="topbar">
-  <div class="logo-wrap">
-    <div class="logo">A</div>
-    <div>
-      <h1>Aviator Pro</h1>
-      <p>Signal Engine</p>
-    </div>
+  <div class="logo">A</div>
+  <div class="brand">
+    <h1>Aviator Pro</h1>
+    <p>Red Quantum Engine</p>
   </div>
-
   <div class="balance-card">
-    <small>COINS</small>
-    <h2 id="balanceAmount">0</h2>
+    <small>BALANCE</small>
+    <h2 id="balance">0</h2>
   </div>
 </div>
 
 <div class="main-card">
 
-<div class="live-bar">
-  <div class="live">● LIVE SIGNAL</div>
-  <div class="session" id="sessionId"></div>
+<div class="mode-toggle">
+  <div class="mode-btn active" id="regular">Regular</div>
+  <div class="mode-btn" id="premium">Premium</div>
 </div>
 
-<div class="mode-toggle">
-  <div class="mode-btn active" id="regularBtn">Regular</div>
-  <div class="mode-btn" id="premiumBtn">Premium</div>
+<div class="info">
+  Engine: <span id="modeText">Regular Mode</span>
 </div>
 
 <div class="image-wrap">
-  <img id="botImage" src="aviator.jpg">
+  <img src="aviator.jpg" />
 </div>
 
-<div id="loadingText" style="display:none;text-align:center;color:#ff4d4d;margin-bottom:10px;font-weight:700;">
-  Generating Signal...
-</div>
+<div id="loading">Calculating signal...</div>
 
-<button id="predictBtn">Generate Signal</button>
+<button id="btn">Generate Signal</button>
 
 <div id="predictionBox">
 
-  <div class="prediction-title">AVIATOR PRO SIGNAL</div>
+  <div class="title">BET ON AVIATOR</div>
 
-  <div class="prediction-item">
-    <span>BET ON AVIATOR</span>
-    <span id="timeValue"></span>
-  </div>
+  <div class="big">TIME WINDOW</div>
+  <div class="value" id="time"></div>
 
-  <div class="prediction-item">
-    <span>CASHOUT</span>
-    <span id="coefValue"></span>
-  </div>
+  <div class="big">CASHOUT RANGE</div>
+  <div class="value cool" id="cash"></div>
 
-  <div class="prediction-item">
-    <span>SAFE</span>
-    <span id="safeValue"></span>
-  </div>
+  <div class="big">SAFE ZONE</div>
+  <div class="value" id="safe"></div>
 
 </div>
 
 </div>
 
-<script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-app.js"></script>
-<script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-auth.js"></script>
-<script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-database.js"></script>
+<div class="footer">Aviator Pro System © 2026</div>
+</div>
 
 <script>
+let mode="regular";
+let cooldown=null;
 
-const firebaseConfig = {
- apiKey:"AIzaSyDvFDByPPo9zgwKLdPaREz1OVMQCXmPfrs",
- authDomain:"bets-d795d.firebaseapp.com",
- databaseURL:"https://bets-d795d-default-rtdb.firebaseio.com",
- projectId:"bets-d795d"
+const btn=document.getElementById("btn");
+const loading=document.getElementById("loading");
+const box=document.getElementById("predictionBox");
+
+const regular=document.getElementById("regular");
+const premium=document.getElementById("premium");
+
+regular.onclick=()=>{
+mode="regular";
+regular.classList.add("active");
+premium.classList.remove("active");
+document.getElementById("modeText").innerText="Regular Mode";
 };
 
-firebase.initializeApp(firebaseConfig);
-const db = firebase.database();
+premium.onclick=()=>{
+mode="premium";
+premium.classList.add("active");
+regular.classList.remove("active");
+document.getElementById("modeText").innerText="Premium Mode";
+};
 
-let uid=null;
-let active=null;
-
-function pad(n){return n<10?"0"+n:n;}
-
-firebase.auth().onAuthStateChanged(user=>{
- if(!user) return;
- uid=user.uid;
-
- db.ref("users/"+uid+"/balance").on("value",s=>{
-  document.getElementById("balanceAmount").innerText=s.val()||0;
- });
-
- const saved=localStorage.getItem("aviator_pro");
- if(saved){
-  const data=JSON.parse(saved);
-  if(Date.now()<data.expiry){
-    active=data;
-    show(data);
-  }else{
-    localStorage.removeItem("aviator_pro");
-  }
- }
-});
-
-document.getElementById("sessionId").innerText="SESSION #"+Math.floor(Math.random()*99999);
-
-let mode="regular";
-
-document.getElementById("regularBtn").onclick=()=>mode="regular";
-document.getElementById("premiumBtn").onclick=()=>mode="premium";
-
-document.getElementById("predictBtn").onclick=generate;
-
-function generate(){
-
- if(active && Date.now()<active.expiry){
-  alert("Wait for current signal");
-  return;
- }
-
- const now=new Date();
- const offset=2+Math.floor(Math.random()*2);
-
- const start=new Date(now.getTime()+offset*60000);
- const end=new Date(start.getTime()+60000);
-
- const t1=pad(start.getHours())+":"+pad(start.getMinutes());
- const t2=pad(end.getHours())+":"+pad(end.getMinutes());
-
- const regularCash=(Math.random()*(9-5)+5).toFixed(2);
- const premiumCash=(Math.random()*(6-4)+4).toFixed(2);
- const safe=(Math.random()*(3-2)+2).toFixed(2);
-
- const data={
-  start:t1,
-  end:t2,
-  cash:regularCash,
-  premium:premiumCash,
-  safe:safe,
-  expiry:end.getTime()
- };
-
- active=data;
- localStorage.setItem("aviator_pro",JSON.stringify(data));
-
- animateShow(data);
+function gen(){
+if(cooldown && Date.now()<cooldown){
+alert("Wait for current signal");
+return;
 }
 
-function animateShow(d){
+loading.style.display="block";
+box.style.display="none";
+btn.disabled=true;
 
- document.getElementById("predictionBox").style.display="block";
+setTimeout(()=>{
+loading.style.display="none";
 
- document.getElementById("timeValue").innerText=d.start+" - "+d.end;
+const now=new Date();
+const start=new Date(now.getTime()+2*60000);
 
- document.getElementById("coefValue").innerText=
- mode==="premium"
- ? "4.00X - 6.00X CASHOUT"
- : "5.00X - 9.00X CASHOUT";
+const end=new Date(start.getTime()+60000);
 
- document.getElementById("safeValue").innerText=
- mode==="premium" ? "SAFE : 2.00X" : "SAFE : 3.00X";
+const r1=mode==="premium"?4.18:5.22;
+const r2=mode==="premium"?6.88:9.59;
+const safe=mode==="premium"?2.17:3.31;
+
+document.getElementById("time").innerText=
+start.getHours()+":"+String(start.getMinutes()).padStart(2,"0")+" - "+
+end.getHours()+":"+String(end.getMinutes()).padStart(2,"0");
+
+document.getElementById("cash").innerText=
+r1.toFixed(2)+"X - "+r2.toFixed(2)+"X CASHOUT";
+
+document.getElementById("safe").innerText=
+"SAFE : "+safe.toFixed(2)+"X";
+
+box.style.display="block";
+
+cooldown=end.getTime()+60000;
+localStorage.setItem("cooldown",cooldown);
+
+btn.disabled=false;
+
+},2000);
 }
 
+btn.onclick=gen;
+
+window.onload=()=>{
+const saved=localStorage.getItem("cooldown");
+if(saved && Date.now()<saved){
+btn.disabled=true;
+document.getElementById("loading").style.display="block";
+setTimeout(()=>{
+btn.disabled=false;
+document.getElementById("loading").style.display="none";
+},1500);
+}
+};
 </script>
 
 </body>
