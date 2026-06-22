@@ -47,6 +47,7 @@ body{
   padding:18px;
 }
 
+/* TOPBAR */
 .topbar{
   display:flex;
   justify-content:space-between;
@@ -173,12 +174,6 @@ body{
   border-radius:28px;
   border:3px solid rgba(255,60,60,.3);
   box-shadow:0 0 45px rgba(255,50,50,.35);
-  animation:pulse 2.5s infinite;
-}
-
-@keyframes pulse{
-  0%,100%{transform:scale(1);box-shadow:0 0 45px rgba(255,50,50,.35);}
-  50%{transform:scale(1.03);box-shadow:0 0 65px rgba(255,50,50,.55);}
 }
 
 /* LOADING */
@@ -188,10 +183,7 @@ body{
   margin-bottom:20px;
   color:#ff6b6b;
   font-weight:700;
-  animation:blink 1s infinite;
 }
-
-@keyframes blink{0%,100%{opacity:1;}50%{opacity:.35;}}
 
 /* BUTTON */
 #predictBtn{
@@ -204,13 +196,13 @@ body{
   font-size:16px;
   font-weight:800;
   cursor:pointer;
-  transition:.25s;
   box-shadow:0 12px 35px rgba(255,50,50,.4);
 }
 
-#predictBtn:disabled{opacity:.5;cursor:not-allowed;}
-#predictBtn:hover{transform:translateY(-2px);}
-#predictBtn:active{transform:scale(.98);}
+#predictBtn:disabled{
+  opacity:.5;
+  cursor:not-allowed;
+}
 
 /* PREDICTION */
 #predictionBox{
@@ -220,7 +212,6 @@ body{
   border-radius:22px;
   padding:20px;
   border:1px solid rgba(255,60,60,.18);
-  box-shadow:0 0 35px rgba(255,50,50,.18);
 }
 
 .prediction-title{
@@ -243,7 +234,12 @@ body{
 .label{opacity:.65;font-size:13px;}
 .value{font-weight:800;color:#ff6b6b;font-size:16px;}
 
-.footer{text-align:center;margin-top:18px;opacity:.4;font-size:12px;}
+.footer{
+  text-align:center;
+  margin-top:18px;
+  opacity:.4;
+  font-size:12px;
+}
 
 </style>
 </head>
@@ -300,7 +296,7 @@ body{
 
       <div class="prediction-item">
         <div class="label">TIME</div>
-        <div class="value" id="timeValue">--:--</div>
+        <div class="value" id="timeValue">--</div>
       </div>
 
       <div class="prediction-item">
@@ -310,7 +306,7 @@ body{
 
       <div class="prediction-item">
         <div class="label">SAFE</div>
-        <div class="value" id="safeValue">0.00x</div>
+        <div class="value" id="safeValue">0x</div>
       </div>
 
     </div>
@@ -327,7 +323,7 @@ body{
 
 <script>
 
-const firebaseConfig = {
+firebase.initializeApp({
   apiKey:"AIzaSyDvFDByPPo9zgwKLdPaREz1OVMQCXmPfrs",
   authDomain:"bets-d795d.firebaseapp.com",
   databaseURL:"https://bets-d795d-default-rtdb.firebaseio.com",
@@ -335,33 +331,17 @@ const firebaseConfig = {
   storageBucket:"bets-d795d.appspot.com",
   messagingSenderId:"384386108287",
   appId:"1:384386108287:android:d238a5ec8068d9bb9be84a"
-};
+});
 
-firebase.initializeApp(firebaseConfig);
 const db=firebase.database();
 
 let uid=null;
 let mode="regular";
 
-document.getElementById("sessionId").innerText =
-"SESSION #" + Math.floor(Math.random()*99999);
+let activePrediction=null;
 
-let activePrediction = JSON.parse(localStorage.getItem("aviator_prediction") || "null");
-
-function rand(min,max){return (Math.random()*(max-min)+min).toFixed(2);}
-
-function renderPrediction(p){
-  document.getElementById("predictionBox").style.display="block";
-  document.getElementById("predictBtn").disabled=true;
-
-  document.getElementById("timeValue").innerText=p.time;
-  document.getElementById("cashRange").innerText=p.cash;
-  document.getElementById("safeValue").innerText=p.safe;
-}
-
-if(activePrediction && Date.now() < activePrediction.endTime){
-  renderPrediction(activePrediction);
-}
+/* SESSION */
+sessionId.innerText="SESSION #"+Math.floor(Math.random()*99999);
 
 /* MODE */
 regularBtn.onclick=()=>{
@@ -385,13 +365,26 @@ firebase.auth().onAuthStateChanged(user=>{
     balanceAmount.innerText=s.val()||0;
   });
 
-  if(activePrediction && Date.now()<activePrediction.endTime){
-    document.getElementById("predictBtn").disabled=true;
-  }
+  loadPrediction();
 });
 
+/* LOAD EXISTING */
+function loadPrediction(){
+  const saved=localStorage.getItem("aviator_"+uid);
+  if(!saved) return;
+
+  const data=JSON.parse(saved);
+
+  if(Date.now() < data.endTime){
+    activePrediction=data;
+    showPrediction(data,true);
+  }else{
+    localStorage.removeItem("aviator_"+uid);
+  }
+}
+
 /* GENERATE */
-document.getElementById("predictBtn").onclick=generate;
+predictBtn.onclick=()=>generate();
 
 function generate(){
 
@@ -401,7 +394,7 @@ function generate(){
     return;
   }
 
-  const cost = mode==="premium"?2:1;
+  const cost=mode==="premium"?2:1;
 
   db.ref("users/"+uid+"/balance").transaction(v=>{
     v=v||0;
@@ -412,26 +405,26 @@ function generate(){
     if(!ok) return;
 
     const now=new Date();
-    const offset=Math.floor(Math.random()*2)+2;
-    const future=new Date(now.getTime()+offset*60000);
+    const start=new Date();
+    const end=new Date(now.getTime()+60000);
 
-    const time = `${String(future.getHours()).padStart(2,'0')}:${String(future.getMinutes()).padStart(2,'0')}`;
+    const time=formatRange(start,end);
 
-    const min = rand(1.5,2.5);
-    const max = rand(4.0,9.0);
+    const min=rand(1.5,2.5);
+    const max=rand(4.0,9.0);
+    const safe=mode==="premium"?2.17:3.31;
 
-    const safe = mode==="premium" ? 2.17 : 3.31;
-
-    activePrediction = {
+    const data={
       time,
       cash:`${min}x - ${max}x`,
       safe:safe+"x",
-      endTime: future.getTime()
+      endTime:end.getTime()
     };
 
-    localStorage.setItem("aviator_prediction", JSON.stringify(activePrediction));
+    activePrediction=data;
+    localStorage.setItem("aviator_"+uid,JSON.stringify(data));
 
-    renderPrediction(activePrediction);
+    showPrediction(data,false);
 
     db.ref("users/"+uid+"/transactions").push({
       type:"bet",
@@ -443,13 +436,44 @@ function generate(){
   });
 }
 
-setInterval(()=>{
-  if(activePrediction && Date.now() >= activePrediction.endTime){
-    activePrediction=null;
-    localStorage.removeItem("aviator_prediction");
-    document.getElementById("predictBtn").disabled=false;
+/* DISPLAY */
+function showPrediction(data,fromLoad){
+
+  predictionBox.style.display="block";
+
+  timeValue.innerText=data.time;
+  cashRange.innerText=data.cash;
+  safeValue.innerText=data.safe;
+
+  predictBtn.disabled=Date.now()<data.endTime;
+
+  if(!fromLoad){
+    setTimeout(checkUnlock,1000);
   }
-},1000);
+}
+
+/* UNLOCK */
+function checkUnlock(){
+  const timer=setInterval(()=>{
+    if(activePrediction && Date.now()>=activePrediction.endTime){
+      activePrediction=null;
+      localStorage.removeItem("aviator_"+uid);
+      predictBtn.disabled=false;
+      clearInterval(timer);
+    }
+  },1000);
+}
+
+/* HELPERS */
+function rand(min,max){
+  return (Math.random()*(max-min)+min).toFixed(2);
+}
+
+function formatRange(start,end){
+  const a=`${String(start.getHours()).padStart(2,'0')}:${String(start.getMinutes()).padStart(2,'0')}`;
+  const b=`${String(end.getHours()).padStart(2,'0')}:${String(end.getMinutes()).padStart(2,'0')}`;
+  return `${a} - ${b}`;
+}
 
 </script>
 
