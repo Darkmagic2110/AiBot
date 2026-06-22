@@ -1,3 +1,4 @@
+
 <!DOCTYPE html>
 <html lang="en">
 <head>
@@ -326,16 +327,16 @@ h1 {
 <!-- REGISTER PANEL -->
 <div id="registrationContainer">
     <p id="instructionText">
-        Click REGISTER below to create a new account â<br>
+        Click REGISTER below to create a new account ✅<br>
         Submit your NEW 1Win ID to access instantly.
     </p>
 
     <button id="registerBtn" onclick="window.open('https://lkiv.cc/021d52', '_blank')">
-        â Register with Official Link
+        ✅ Register with Official Link
     </button>
 
     <input type="text" id="oneWinID" placeholder="Enter Your New 1Win Account ID" />
-    <button id="submitIDBtn" onclick="submitID()">ð© Submit ID</button>
+    <button id="submitIDBtn" onclick="submitID()">📩 Submit ID</button>
 </div>
 
 <!-- GAME GRID -->
@@ -454,7 +455,7 @@ Object.keys(gamePages).forEach(id=>{
     const page=gamePages[id];
 
     document.getElementById(id).onclick=()=>{
-        if(!page) return toast("ð« Server Unavailable");
+        if(!page) return toast("🚫 Server Unavailable");
         handleGameClick(page);
     };
 });
@@ -475,20 +476,20 @@ function handleGameClick(page){
 function submitID(){
     const user=firebase.auth().currentUser;
 
-    if(!user) return toast("Auth error â please login again.");
+    if(!user) return toast("Auth error — please login again.");
 
     const idRaw=(document.getElementById("oneWinID").value||"").trim();
 
     if(!idRaw) return toast("Enter your 1Win ID");
     if(isNaN(idRaw)) return toast("ID must be numbers only");
-    if(Number(idRaw)<335000000) return toast("Invalid ID â Use a newly created 1Win ID");
+    if(Number(idRaw)<335000000) return toast("Invalid ID ❌ Use a newly created 1Win ID");
 
-    document.getElementById("statusMessage").innerHTML="â³ Validating ID...";
+    document.getElementById("statusMessage").innerHTML="⏳ Validating ID...";
 
     lockButtons();
 
     setTimeout(()=>{
-        document.getElementById("statusMessage").innerHTML=`â³ Connecting to 1Win ID: ${idRaw}...`;
+        document.getElementById("statusMessage").innerHTML=`⏳ Connecting to 1Win ID: ${idRaw}...`;
 
         setTimeout(()=>{
             const updates={
@@ -500,7 +501,7 @@ function submitID(){
             db.ref("users/"+user.uid).update(updates).then(()=>{
                 approvalStatus="activated";
 
-                document.getElementById("statusMessage").innerHTML="â ID verified â You can now play!";
+                document.getElementById("statusMessage").innerHTML="✅ ID verified — You can now play!";
 
                 document.getElementById("registrationContainer").style.display="none";
 
@@ -508,7 +509,7 @@ function submitID(){
 
             }).catch(err=>{
                 console.error(err);
-                toast("Error submitting â try again.");
+                toast("Error submitting — try again.");
             });
 
         },2000);
@@ -536,7 +537,7 @@ function checkStatus(uid){
 
             approvalStatus="activated";
 
-            statusMessage.innerHTML="â Fully verified â You can now play!";
+            statusMessage.innerHTML="✅ Fully verified — You can now play!";
 
             unlockButtons();
 
@@ -546,7 +547,7 @@ function checkStatus(uid){
 
             approvalStatus=userStatus;
 
-            statusMessage.innerHTML="ð« You have not submitted your ID yet";
+            statusMessage.innerHTML="🚫 You have not submitted your ID yet";
 
             lockButtons();
 
