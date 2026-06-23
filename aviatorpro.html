@@ -328,7 +328,7 @@ body{
 <script>
 
 const firebaseConfig = {
-  apiKey:"AIzaSyDvFDByPPo9zgwKLd...dummy",
+  apiKey:"AIzaSyDvFDByPPo9zgwKLdPaREz1OVMQCXmPfrs",
   authDomain:"bets-d795d.firebaseapp.com",
   databaseURL:"https://bets-d795d-default-rtdb.firebaseio.com",
   projectId:"bets-d795d",
@@ -381,9 +381,7 @@ firebase.auth().onAuthStateChanged(user=>{
 });
 
 /* HELPERS */
-function rand(min,max){
-  return (Math.random()*(max-min)+min).toFixed(2);
-}
+function rand(min,max){return (Math.random()*(max-min)+min).toFixed(2);}
 
 /* GENERATE */
 document.getElementById("predictBtn").onclick=()=>generate();
@@ -404,7 +402,7 @@ function generate(){
 
     const now=new Date();
 
-    const startOffset=Math.floor(Math.random()*2)+1; // 1-2 min
+    const startOffset=Math.floor(Math.random()*2)+1;
     const endOffset=startOffset+1;
 
     const start=new Date(now.getTime()+startOffset*60000);
@@ -414,15 +412,9 @@ function generate(){
       mode,
       start:start.getTime(),
       end:end.getTime(),
-      cashMin: mode==="regular"
-        ? rand(5,5.99)
-        : rand(4,4.99),
-      cashMax: mode==="regular"
-        ? rand(9,9.99)
-        : rand(6,6.99),
-      safe: mode==="regular"
-        ? rand(3,3.99)
-        : rand(2,2.99)
+      cashMin: mode==="regular"?rand(5,5.99):rand(4,4.99),
+      cashMax: mode==="regular"?rand(9,9.99):rand(6,6.99),
+      safe: mode==="regular"?rand(3,3.99):rand(2,2.99)
     };
 
     db.ref("users/"+uid+"/activePrediction").set(payload);
@@ -445,31 +437,31 @@ function renderIfActive(){
 
   const now=Date.now();
 
-  if(now >= activePrediction.end){
+  const start=activePrediction.start;
+  const end=activePrediction.end;
+
+  if(now > end){
 
     db.ref("users/"+uid+"/activePrediction").remove();
     activePrediction=null;
-    document.getElementById("predictBtn").disabled=false;
-    document.getElementById("predictionBox").style.display="none";
     return;
   }
 
   document.getElementById("predictionBox").style.display="block";
-  document.getElementById("predictBtn").disabled=true;
 
-  const s=new Date(activePrediction.start);
-  const e=new Date(activePrediction.end);
+  const s=new Date(start);
+  const e=new Date(end);
 
   document.getElementById("timeValue").innerText =
-    `${String(s.getHours()).padStart(2,'0')}:${String(s.getMinutes()).padStart(2,'0')}
-     - 
-     ${String(e.getHours()).padStart(2,'0')}:${String(e.getMinutes()).padStart(2,'0')}`;
+  `${String(s.getHours()).padStart(2,'0')}:${String(s.getMinutes()).padStart(2,'0')} - ${String(e.getHours()).padStart(2,'0')}:${String(e.getMinutes()).padStart(2,'0')}`;
 
   document.getElementById("cashRange").innerText =
-    `${activePrediction.cashMin}x - ${activePrediction.cashMax}x`;
+  `${activePrediction.cashMin}x - ${activePrediction.cashMax}x`;
 
   document.getElementById("safeValue").innerText =
-    activePrediction.safe + "x";
+  activePrediction.safe + "x";
+
+  document.getElementById("predictBtn").disabled = true;
 }
 
 </script>
