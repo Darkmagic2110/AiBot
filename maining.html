@@ -249,7 +249,7 @@ h1 {
 <div id="registrationContainer">
     <p id="instructionText">TO ACCESS ALL FEATURES YOU MUST:</p>
     <p class="warning-text">⚠️ COMPULSORY: REGISTER WITH OUR OFFICIAL LINK BELOW ⚠️</p>
-    <p class="warning-text">IF YOU REGISTERED WITH ANOTHER LINK, THE BOT CANNOT VERIFY YOU</p>
+    <p class="warning-text">🚫 1 ID = 1 ACCOUNT. CANNOT BE SHARED 🚫</p>
 
     <button id="registerBtn" onclick="window.open('https://lkiv.cc/021d52', '_blank')">
         🔥 CLICK HERE TO REGISTER NEW 1WIN ACCOUNT 🔥
@@ -361,7 +361,17 @@ function handleGameClick(page){
     setTimeout(()=>{ location.href=page; },900);
 }
 
-// NEW WIDGET FUNCTION FROM REPLIT
+// NEW: CHECK IF ID IS ALREADY USED BY ANOTHER ACCOUNT
+async function isIdAlreadyUsed(onewinID, currentUID) {
+    const snap = await db.ref("onewin_ids/" + onewinID).once("value");
+    const data = snap.val();
+    if(data && data.uid!== currentUID) {
+        return data; // return who used it
+    }
+    return null;
+}
+
+// UPDATED WIDGET FUNCTION WITH ID LOCK
 let currentVerifyingID = null;
 async function checkOneWinId() {
   var input = document.getElementById("onewin-id-input");
@@ -387,6 +397,18 @@ async function checkOneWinId() {
   document.getElementById("verifyBtn").disabled = true;
 
   try {
+    // STEP 1: CHECK IF ID IS ALREADY LINKED TO ANOTHER ACCOUNT
+    const usedBy = await isIdAlreadyUsed(id, user.uid);
+    if(usedBy) {
+        result.style.background = "#4a0000";
+        result.style.color = "#ff8080";
+        result.textContent = `🚫 This ID is already verified on another account: ${usedBy.email || 'Hidden'}`;
+        document.getElementById("statusMessage").innerHTML="🚫 ID already in use";
+        document.getElementById("verifyBtn").disabled = false;
+        return;
+    }
+
+    // STEP 2: CHECK WITH REPLIT API
     var res = await fetch("https://telegram-guard.replit.app/api/onewin/check/" + id);
     var data = await res.json();
 
@@ -408,14 +430,23 @@ async function checkOneWinId() {
 
       approvalStatus="activated";
 
-      db.ref("users/"+user.uid).update({
+      // STEP 3: SAVE TO 2 PLACES - USER + GLOBAL ID LOCK
+      const updates = {};
+      updates["users/"+user.uid] = {
           email: user.email || "",
           oneWinID: id,
           verified: true,
           firstDepositAmount: data.deposit_amount,
           verifiedAt: Date.now(),
           status: "activated"
-      });
+      };
+      updates["onewin_ids/"+id] = {
+          uid: user.uid,
+          email: user.email || "",
+          lockedAt: Date.now()
+      };
+
+      await db.ref().update(updates);
 
       setTimeout(()=>{
           document.getElementById("registrationContainer").style.display="none";
@@ -428,6 +459,7 @@ async function checkOneWinId() {
     result.style.color = "#ff8080";
     result.textContent = "Connection error. Enable CORS on Replit.";
     toast("Server Error");
+    console.log(e);
   }
 
   document.getElementById("verifyBtn").disabled = false;
