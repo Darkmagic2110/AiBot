@@ -157,16 +157,16 @@ button:hover {
 
 <h1>Deposit Coins</h1>
 
-<input type="number" id="depositAmount" placeholder="Enter deposit amount (₦)" min="1000" />
-<div id="coinRate">₦200 = 1 coin</div>
-<button id="submitDepositBtn">💰 Buy Coins</button>
+<input type="number" id="depositAmount" placeholder="Enter deposit amount (â¦)" min="1000" />
+<div id="coinRate">â¦200 = 1 coin</div>
+<button id="submitDepositBtn">ð° Buy Coins</button>
 
 <div id="depositStatus"></div>
 
-<div id="refreshNotice">⚡ Make sure to return back to the site immediately after payment ⚡</div>
+<div id="refreshNotice">â¡ Make sure to return back to the site immediately after payment â¡</div>
 
 <div id="historyBox">
-    <h3>📜 Transactions</h3>
+    <h3>ð Transactions</h3>
     <div id="historyList"></div>
 </div>
 
@@ -181,7 +181,7 @@ button:hover {
 
         <p>1. You will be redirected to a payment page</p>
 
-        <p>2. If you don’t use card payment, below you will see a change payment method text, 
+        <p>2. If you donât use card payment, below you will see a change payment method text, 
         <span class="bold">CLICK IT AND CHOOSE YOUR DESIRE PAYMENT METHOD</span></p>
 
         <p>3. After sending the money to the account given to you, 
@@ -229,7 +229,7 @@ function toast(msg) {
 }
 
 /* =========================
-   🔥 AFFILIATE SYSTEM (FIXED)
+   ð¥ AFFILIATE SYSTEM (FIXED)
 ========================= */
 function processAffiliate(userId, amountRaw, txId) {
 
@@ -301,7 +301,7 @@ firebase.auth().onAuthStateChanged(user => {
                     </div>
                     <div class="history-right">
                         <div>+${tx.coins}</div>
-                        <div class="history-naira">₦${tx.amount}</div>
+                        <div class="history-naira">â¦${tx.amount}</div>
                     </div>
                 </div>`;
             }
@@ -310,119 +310,77 @@ firebase.auth().onAuthStateChanged(user => {
 });
 
 /* =========================
-FLUTTERWAVE
+   FLUTTERWAVE
 ========================= */
-
 let flutterwaveKey = null;
 
-db.ref(“settings/flutterwaveKeys/public”).once(“value”).then(snap => {
-flutterwaveKey = snap.val() || “”;
+db.ref("settings/flutterwaveKeys/public").once("value").then(snap => {
+    flutterwaveKey = snap.val() || "";
 });
 
 function validateAmount(amount) {
+    const min = 1000;
+    const rate = 200;
 
-const min = 1000;
-const rate = 200;
-if (amount < min) {
-    return {
-        valid: false,
-        msg: `Minimum deposit is ₦${min}`
-    };
-}
-if (amount % rate !== 0) {
-    return {
-        valid: false,
-        msg: `Enter a multiple of ₦${rate}`
-    };
-}
-return {
-    valid: true,
-    coins: amount / rate
-};
+    if (amount < min)
+        return { valid: false, msg: `Minimum deposit is â¦${min}` };
 
+    if (amount % rate !== 0)
+        return { valid: false, msg: `Enter a multiple of â¦${rate}` };
+
+    return { valid: true, coins: amount / rate };
 }
 
-/* =========================
-COUNTRY DETECTION
-========================= */
+function startPayment(user, amountRaw, coins) {
+    FlutterwaveCheckout({
+        public_key: flutterwaveKey,
+        tx_ref: "TX-" + Date.now(),
+        amount: amountRaw,
+        currency: "NGN",
+        payment_options: "card, banktransfer, ussd",
+        customer: { email: user.email },
 
-async function getCountry() {
+        callback: function (response) {
 
-try {
-    const res = await fetch("https://ipapi.co/json/");
-    const data = await res.json();
-    return data.country_code || "NG";
-} catch (e) {
-    return "NG";
-}
+            const txId = response.transaction_id;
+            if (!txId) return toast("Payment not completed");
 
-}
+            const userRef = db.ref("users/" + user.uid);
 
-/* =========================
-START PAYMENT
-========================= */
+            db.ref("processedPayments/" + txId).once("value").then(snap => {
 
-async function startPayment(user, amountRaw, coins) {
+                if (!snap.exists()) {
 
-const country = await getCountry();
-let currency = "USD";
-let paymentOptions = "card";
-// Nigerians
-if (country === "NG") {
-    currency = "NGN";
-    paymentOptions = "card, banktransfer, ussd";
-}
-FlutterwaveCheckout({
-    public_key: flutterwaveKey,
-    tx_ref: "TX-" + Date.now(),
-    amount: amountRaw,
-    currency: currency,
-    payment_options: paymentOptions,
-    customer: {
-        email: user.email
-    },
-    callback: function (response) {
-        const txId = response.transaction_id;
-        if (!txId) {
-            return toast("Payment not completed");
-        }
-        const userRef = db.ref("users/" + user.uid);
-        db.ref("processedPayments/" + txId).once("value").then(snap => {
-            if (!snap.exists()) {
-                if (
-                    response.status === "successful" ||
-                    response.status === "completed"
-                ) {
-                    db.ref("processedPayments/" + txId).set(true);
-                    userRef.child("balance")
-                        .transaction(v => (v || 0) + coins);
-                    userRef.child("transactions").push({
-                        type: "deposit",
-                        coins,
-                        amount: amountRaw,
-                        currency,
-                        ref: txId,
-                        time: Date.now()
-                    });
-                    // AFFILIATE
-                    processAffiliate(user.uid, amountRaw, txId);
-                    toast("Payment successful!");
-                    depositStatus.innerHTML =
-                        `Coins added: ${coins}`;
-                } else {
-                    toast("Payment failed");
+                    if (response.status === "successful" || response.status === "completed") {
+
+                        db.ref("processedPayments/" + txId).set(true);
+
+                        userRef.child("balance").transaction(v => (v || 0) + coins);
+
+                        userRef.child("transactions").push({
+                            type: "deposit",
+                            coins,
+                            amount: amountRaw,
+                            ref: txId,
+                            time: Date.now()
+                        });
+
+                        // â AFFILIATE TRIGGER
+                        processAffiliate(user.uid, amountRaw, txId);
+
+                        toast("Payment successful!");
+                        depositStatus.innerHTML = `Coins added: ${coins}`;
+                    }
                 }
-            }
-            setTimeout(() => {
-                window.location.href = "maining.html";
-            }, 1500);
-        });
-    },
-    onclose: () => {
-        toast("Payment cancelled");
-    }
-});
 
+                setTimeout(() => {
+                    window.location.href = "maining.html";
+                }, 1500);
+            });
+        },
+
+        onclose: () => toast("Payment cancelled")
+    });
 }
 
 /* =========================
