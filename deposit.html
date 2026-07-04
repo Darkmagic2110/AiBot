@@ -310,77 +310,119 @@ firebase.auth().onAuthStateChanged(user => {
 });
 
 /* =========================
-   FLUTTERWAVE
+FLUTTERWAVE
 ========================= */
+
 let flutterwaveKey = null;
 
-db.ref("settings/flutterwaveKeys/public").once("value").then(snap => {
-    flutterwaveKey = snap.val() || "";
+db.ref(“settings/flutterwaveKeys/public”).once(“value”).then(snap => {
+flutterwaveKey = snap.val() || “”;
 });
 
 function validateAmount(amount) {
-    const min = 1000;
-    const rate = 200;
 
-    if (amount < min)
-        return { valid: false, msg: `Minimum deposit is ₦${min}` };
+const min = 1000;
+const rate = 200;
+if (amount < min) {
+    return {
+        valid: false,
+        msg: `Minimum deposit is ₦${min}`
+    };
+}
+if (amount % rate !== 0) {
+    return {
+        valid: false,
+        msg: `Enter a multiple of ₦${rate}`
+    };
+}
+return {
+    valid: true,
+    coins: amount / rate
+};
 
-    if (amount % rate !== 0)
-        return { valid: false, msg: `Enter a multiple of ₦${rate}` };
-
-    return { valid: true, coins: amount / rate };
 }
 
-function startPayment(user, amountRaw, coins) {
-    FlutterwaveCheckout({
-        public_key: flutterwaveKey,
-        tx_ref: "TX-" + Date.now(),
-        amount: amountRaw,
-        currency: "NGN",
-        payment_options: "card, banktransfer, ussd",
-        customer: { email: user.email },
+/* =========================
+COUNTRY DETECTION
+========================= */
 
-        callback: function (response) {
+async function getCountry() {
 
-            const txId = response.transaction_id;
-            if (!txId) return toast("Payment not completed");
+try {
+    const res = await fetch("https://ipapi.co/json/");
+    const data = await res.json();
+    return data.country_code || "NG";
+} catch (e) {
+    return "NG";
+}
 
-            const userRef = db.ref("users/" + user.uid);
+}
 
-            db.ref("processedPayments/" + txId).once("value").then(snap => {
+/* =========================
+START PAYMENT
+========================= */
 
-                if (!snap.exists()) {
+async function startPayment(user, amountRaw, coins) {
 
-                    if (response.status === "successful" || response.status === "completed") {
-
-                        db.ref("processedPayments/" + txId).set(true);
-
-                        userRef.child("balance").transaction(v => (v || 0) + coins);
-
-                        userRef.child("transactions").push({
-                            type: "deposit",
-                            coins,
-                            amount: amountRaw,
-                            ref: txId,
-                            time: Date.now()
-                        });
-
-                        // ✅ AFFILIATE TRIGGER
-                        processAffiliate(user.uid, amountRaw, txId);
-
-                        toast("Payment successful!");
-                        depositStatus.innerHTML = `Coins added: ${coins}`;
-                    }
+const country = await getCountry();
+let currency = "USD";
+let paymentOptions = "card";
+// Nigerians
+if (country === "NG") {
+    currency = "NGN";
+    paymentOptions = "card, banktransfer, ussd";
+}
+FlutterwaveCheckout({
+    public_key: flutterwaveKey,
+    tx_ref: "TX-" + Date.now(),
+    amount: amountRaw,
+    currency: currency,
+    payment_options: paymentOptions,
+    customer: {
+        email: user.email
+    },
+    callback: function (response) {
+        const txId = response.transaction_id;
+        if (!txId) {
+            return toast("Payment not completed");
+        }
+        const userRef = db.ref("users/" + user.uid);
+        db.ref("processedPayments/" + txId).once("value").then(snap => {
+            if (!snap.exists()) {
+                if (
+                    response.status === "successful" ||
+                    response.status === "completed"
+                ) {
+                    db.ref("processedPayments/" + txId).set(true);
+                    userRef.child("balance")
+                        .transaction(v => (v || 0) + coins);
+                    userRef.child("transactions").push({
+                        type: "deposit",
+                        coins,
+                        amount: amountRaw,
+                        currency,
+                        ref: txId,
+                        time: Date.now()
+                    });
+                    // AFFILIATE
+                    processAffiliate(user.uid, amountRaw, txId);
+                    toast("Payment successful!");
+                    depositStatus.innerHTML =
+                        `Coins added: ${coins}`;
+                } else {
+                    toast("Payment failed");
                 }
+            }
+            setTimeout(() => {
+                window.location.href = "maining.html";
+            }, 1500);
+        });
+    },
+    onclose: () => {
+        toast("Payment cancelled");
+    }
+});
 
-                setTimeout(() => {
-                    window.location.href = "maining.html";
-                }, 1500);
-            });
-        },
-
-        onclose: () => toast("Payment cancelled")
-    });
 }
 
 /* =========================
