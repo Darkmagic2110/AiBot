@@ -12,7 +12,7 @@
 <style>
 /* BODY + FONT */
 body {
-    background: linear-gradient(to bottom, #000000, #1a0000);
+    background: linear-gradient(to bottom, #000, #1a0000);
     color: white;
     font-family: 'Poppins', sans-serif;
     text-align: center;
@@ -166,6 +166,12 @@ h1 {
 /* REGISTER PANEL */
 #registrationContainer {
     margin-bottom: 20px;
+    background: rgba(0,0,0,0.5);
+    padding: 20px;
+    border-radius: 15px;
+    border: 1px solid rgba(255,0,0,0.3);
+    max-width: 400px;
+    margin: 20px auto;
 }
 
 /* REGISTER BUTTON CUSTOM STYLE */
@@ -178,6 +184,7 @@ h1 {
     cursor: pointer;
     font-size: 16px;
     transition: 0.3s;
+    margin-bottom: 10px;
 }
 
 #registerBtn:hover {
@@ -189,12 +196,14 @@ h1 {
 #oneWinID {
     border: 2px solid cyan;
     border-radius: 12px;
-    padding: 8px 12px;
+    padding: 10px 12px;
     font-size: 15px;
     margin-top: 10px;
     width: 220px;
     text-align: center;
     outline: none;
+    background: #000;
+    color: white;
     transition: 0.3s;
 }
 
@@ -206,18 +215,24 @@ h1 {
 #submitIDBtn {
     border: 2px solid cyan;
     border-radius: 12px;
-    padding: 8px 14px;
+    padding: 10px 14px;
     margin-left: 10px;
     font-size: 15px;
     cursor: pointer;
     background: red;
     color: white;
+    font-weight: 600;
     transition: 0.3s;
 }
 
 #submitIDBtn:hover {
     background: #ff1a1a;
     transform: scale(1.05);
+}
+
+#submitIDBtn:disabled {
+    background: #444;
+    cursor: not-allowed;
 }
 
 /* GAME GRID */
@@ -237,6 +252,12 @@ h1 {
     border-radius: 12px;
     overflow: hidden;
     box-shadow: 0 0 10px rgba(255,0,0,0.5);
+}
+
+.game-button.locked img {
+    opacity: 0.25!important;
+    pointer-events: none!important;
+    filter: grayscale(1);
 }
 
 .game-button img {
@@ -265,7 +286,7 @@ h1 {
     visibility: hidden;
     min-width: 240px;
     background-color: red;
-    color: black;
+    color: white;
     text-align: center;
     border-radius: 10px;
     padding: 12px;
@@ -274,6 +295,7 @@ h1 {
     left: 50%;
     transform: translateX(-50%);
     font-size: 16px;
+    font-weight: 600;
     z-index: 99999;
     opacity: 0;
     transition: opacity 0.3s, bottom 0.3s;
@@ -307,14 +329,12 @@ h1 {
         </div>
 
         <div id="toolbar">
-    <button onclick="openTelegram()">JOIN TELEGRAM CHANNEL</button>
-    <button onclick="contactSupport()">CUSTOMER SUPPORT</button>
-    <button onclick="goHelp()">HELP</button>
-    <button onclick="goAbout()">ABOUT</button>
-
-    <!-- ADDED AFFILIATE BUTTON -->
-    <button onclick="openAffiliate()">AFFILIATE PROGRAM</button>
-</div>
+            <button onclick="openTelegram()">JOIN TELEGRAM CHANNEL</button>
+            <button onclick="contactSupport()">CUSTOMER SUPPORT</button>
+            <button onclick="goHelp()">HELP</button>
+            <button onclick="goAbout()">ABOUT</button>
+            <button onclick="openAffiliate()">AFFILIATE PROGRAM</button>
+        </div>
 
     </div>
 
@@ -322,25 +342,26 @@ h1 {
 
 <h1>Dark Magic Ai Bot</h1>
 
-<p id="statusMessage">Checking approval status...</p>
+<p id="statusMessage">Checking verification status...</p>
 
 <!-- REGISTER PANEL -->
 <div id="registrationContainer">
     <p id="instructionText">
-        Click REGISTER below to create a new account ✅<br>
-        Submit your NEW 1Win ID to access instantly.
+        Step 1: Register 1Win with our link ✅<br>
+        Step 2: Make your FIRST DEPOSIT<br>
+        Step 3: Submit your 1Win ID below to unlock
     </p>
 
     <button id="registerBtn" onclick="window.open('https://lkiv.cc/021d52', '_blank')">
         ✅ Register with Official Link
     </button>
 
-    <input type="text" id="oneWinID" placeholder="Enter Your New 1Win Account ID" />
-    <button id="submitIDBtn" onclick="submitID()">📩 Submit ID</button>
+    <input type="text" id="oneWinID" placeholder="Enter Your 1Win Account ID" />
+    <button id="submitIDBtn" onclick="submitID()">🔒 Verify & Unlock</button>
 </div>
 
 <!-- GAME GRID -->
-<div class="grid">
+<div class="grid" id="gameGrid">
     <div class="game-button" id="luckyJetBtn"><img src="lucky.jpg"><div class="label">Lucky Jet</div></div>
     <div class="game-button" id="aviatorBtn"><img src="aviator.jpg"><div class="label">Aviator</div></div>
     <div class="game-button" id="diceBtn"><img src="dice.jpg"><div class="label">Dice</div></div>
@@ -368,7 +389,7 @@ function toast(msg){
     const t=document.getElementById("toast");
     t.innerHTML=msg;
     t.className="show";
-    setTimeout(()=>{t.className=t.className.replace("show","");},3000);
+    setTimeout(()=>{t.className=t.className.replace("show","");},3500);
 }
 
 // HAMBURGER TOGGLE
@@ -383,6 +404,7 @@ hamburger.onclick=()=>{
 function openTelegram(){ window.open("https://t.me/darkmagic01","_blank"); }
 function goHelp(){ window.location.href="help.html"; }
 function goAbout(){ window.location.href="about.html"; }
+function openAffiliate() { window.location.href = "affiliate.html"; }
 
 function contactSupport(){
     const links=["https://t.me/dark_magiks","https://t.me/dark_maggik"];
@@ -391,7 +413,6 @@ function contactSupport(){
 
 // BALANCE PANEL
 const balanceDisplay = document.getElementById("balanceAmount");
-
 document.getElementById("addBalanceBtn").onclick=()=>{
     window.location.href="deposit.html";
 };
@@ -408,32 +429,27 @@ const firebaseConfig = {
 };
 
 firebase.initializeApp(firebaseConfig);
-
 const db=firebase.database();
 let approvalStatus=null;
+let currentUser = null;
 
-// AUTH + APPROVAL
-firebase.auth().onAuthStateChanged(user=>{
-    if(!user){
-        window.location.href="login.html";
-        return;
-    }
+// YOUR REPLIT API
+const REPLIT_API_BASE = "https://851121ca-ccc2-4499-80da-660f93d71362-00-9t6p296zjha6.spock.replit.dev/api/onewin/check/";
 
-    checkStatus(user.uid);
-    listenBalance(user.uid);
-});
+async function checkOnewinId(registrationId) {
+  const res = await fetch(REPLIT_API_BASE + registrationId);
+  return await res.json();
+}
 
 function lockButtons(){
-    document.querySelectorAll(".game-button img").forEach(i=>{
-        i.style.opacity="0.3";
-        i.style.pointerEvents="none";
+    document.querySelectorAll(".game-button").forEach(el=>{
+        el.classList.add("locked");
     });
 }
 
 function unlockButtons(){
-    document.querySelectorAll(".game-button img").forEach(i=>{
-        i.style.opacity="1";
-        i.style.pointerEvents="auto";
+    document.querySelectorAll(".game-button").forEach(el=>{
+        el.classList.remove("locked");
     });
 }
 
@@ -455,7 +471,6 @@ const gamePages={
 
 Object.keys(gamePages).forEach(id=>{
     const page=gamePages[id];
-
     document.getElementById(id).onclick=()=>{
         if(!page) return toast("🚫 Server Unavailable");
         handleGameClick(page);
@@ -464,113 +479,105 @@ Object.keys(gamePages).forEach(id=>{
 
 function handleGameClick(page){
     if(approvalStatus!=="activated"){
-        toast("You must complete verification to access games.");
+        toast("You must verify 1Win ID + First Deposit first");
         return;
     }
-
     toast("Connecting to Game Server...");
-
-    setTimeout(()=>{
-        location.href=page;
-    },900);
+    setTimeout(()=>{ location.href=page; },900);
 }
 
-function submitID(){
+// NEW SUBMIT ID WITH REPLIT API
+async function submitID(){
     const user=firebase.auth().currentUser;
-
     if(!user) return toast("Auth error — please login again.");
 
     const idRaw=(document.getElementById("oneWinID").value||"").trim();
-
     if(!idRaw) return toast("Enter your 1Win ID");
     if(isNaN(idRaw)) return toast("ID must be numbers only");
-    if(Number(idRaw)<335000000) return toast("Invalid ID ❌ Use a newly created 1Win ID");
 
-    document.getElementById("statusMessage").innerHTML="⏳ Validating ID...";
+    document.getElementById("submitIDBtn").disabled = true;
+    document.getElementById("statusMessage").innerHTML="⏳ Checking with 1Win Bot...";
 
     lockButtons();
 
-    setTimeout(()=>{
-        document.getElementById("statusMessage").innerHTML=`⏳ Connecting to 1Win ID: ${idRaw}...`;
+    try {
+        const data = await checkOnewinId(idRaw);
 
-        setTimeout(()=>{
-            const updates={
-                email:user.email||"",
-                oneWinID:idRaw,
-                status:"approved"
-            };
+        if (!data.exists) {
+            document.getElementById("statusMessage").innerHTML="🚫 ID not found in Telegram group";
+            toast("Join our Telegram group with this 1Win ID first");
+        }
+        else if (!data.deposited) {
+            document.getElementById("statusMessage").innerHTML="🚫 No first deposit found";
+            toast("Make your first deposit on 1Win, then come back");
+        }
+        else {
+            // SUCCESS
+            approvalStatus="activated";
+            document.getElementById("statusMessage").innerHTML=`✅ Verified! Deposit: $${data.deposit_amount}. Unlocking...`;
 
-            db.ref("users/"+user.uid).update(updates).then(()=>{
-                approvalStatus="activated";
-
-                document.getElementById("statusMessage").innerHTML="✅ ID verified — You can now play!";
-
-                document.getElementById("registrationContainer").style.display="none";
-
-                unlockButtons();
-
-            }).catch(err=>{
-                console.error(err);
-                toast("Error submitting — try again.");
+            // Save to Firebase
+            db.ref("users/"+user.uid).update({
+                email: user.email || "",
+                oneWinID: idRaw,
+                verified: true,
+                firstDepositAmount: data.deposit_amount,
+                verifiedAt: Date.now(),
+                status: "activated"
             });
 
-        },2000);
+            setTimeout(()=>{
+                document.getElementById("registrationContainer").style.display="none";
+                unlockButtons();
+                toast("Features unlocked!");
+            },1500);
+        }
+    } catch(e) {
+        toast("Error connecting to server. Try again.");
+        console.log(e);
+    }
 
-    },1500);
+    document.getElementById("submitIDBtn").disabled = false;
 }
 
 function checkStatus(uid){
-
     const statusMessage=document.getElementById("statusMessage");
     const registrationContainer=document.getElementById("registrationContainer");
 
-    statusMessage.innerHTML="Checking approval status...";
-
-    registrationContainer.style.display="block";
-
-    lockButtons();
-
     db.ref("users/"+uid).on("value",snap=>{
-
         const data=snap.val()||{};
-        const userStatus=data.status||null;
 
-        if(userStatus==="activated"||userStatus==="approved"){
-
+        if(data.verified === true){
             approvalStatus="activated";
-
             statusMessage.innerHTML="✅ Fully verified — You can now play!";
-
             unlockButtons();
-
             registrationContainer.style.display="none";
-
-        }else{
-
-            approvalStatus=userStatus;
-
-            statusMessage.innerHTML="🚫 You have not submitted your ID yet";
-
+            if(data.oneWinID) document.getElementById("oneWinID").value = data.oneWinID;
+        } else {
+            approvalStatus=null;
+            statusMessage.innerHTML="🚫 Verify 1Win ID + First Deposit to unlock";
             lockButtons();
-
             registrationContainer.style.display="block";
         }
     });
 }
 
 function listenBalance(uid){
-
     db.ref("users/"+uid+"/balance").on("value",snap=>{
-
-        balanceDisplay.innerText=snap.val()!=null
-        ?Math.floor(snap.val())
-        :0;
-
+        balanceDisplay.innerText=snap.val()!=null? Math.floor(snap.val()) : 0;
     });
 }
-function openAffiliate() {
-    window.location.href = "affiliate.html";
-}
+
+// AUTH
+firebase.auth().onAuthStateChanged(user=>{
+    if(!user){
+        window.location.href="login.html";
+        return;
+    }
+    currentUser = user;
+    checkStatus(user.uid);
+    listenBalance(user.uid);
+});
 </script>
 </body>
 </html>
