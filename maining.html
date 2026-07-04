@@ -7,7 +7,7 @@
 <title>Dark Magic Ai Bot - Main</title>
 
 <link href="https://fonts.googleapis.com/css2?family=UnifrakturCook:wght@700&display=swap" rel="stylesheet">
-<link href="https://fonts.googleapis.com/css2?family=Poppins:wght@500;600&display=swap" rel="stylesheet">
+<link href="https://fonts.googleapis.com/css2?family=Poppins:wght@500;600;700&display=swap" rel="stylesheet">
 
 <style>
 body {
@@ -49,7 +49,6 @@ h1 {
     gap: 5px;
     cursor: pointer;
     box-shadow: 0 0 18px rgba(255,0,0,0.25);
-    backdrop-filter: blur(10px);
 }
 #hamburger span {
     display: block;
@@ -71,7 +70,6 @@ h1 {
     border-radius: 18px;
     padding: 12px;
     box-shadow: 0 0 25px rgba(255,0,0,0.25);
-    backdrop-filter: blur(12px);
 }
 #toolbar button {
     background: linear-gradient(135deg,#1f0000,#520000);
@@ -97,7 +95,6 @@ h1 {
     color: #fff;
     box-shadow: 0 0 18px rgba(255, 0, 0, 0.25);
     border:1px solid rgba(255,0,0,0.25);
-    backdrop-filter: blur(10px);
 }
 #balanceAmount { font-size: 14px; margin-right: 6px; font-weight: 600; }
 #addBalanceBtn {
@@ -118,55 +115,57 @@ h1 {
     text-shadow: 0 0 4px orange;
 }
 #instructionText {
-    font-size: 15px;
-    color: orange;
+    font-size: 16px;
+    color: #ffdd00;
     margin-bottom: 15px;
-    line-height: 1.6;
+    font-weight: 600;
 }
+.warning-text {
+    color: #ff1a1a;
+    font-size: 14px;
+    font-weight: 700;
+    margin: 8px 0;
+    animation: blink 1.5s infinite;
+}
+@keyframes blink {
+    0%, 100% { opacity: 1; }
+    50% { opacity: 0.4; }
+}
+
+/* REGISTER PANEL */
 #registrationContainer {
     margin: 20px auto;
-    background: rgba(0,0,0,0.5);
-    padding: 20px;
-    border-radius: 15px;
-    border: 1px solid rgba(255,0,0,0.3);
-    max-width: 420px;
+    background: rgba(255,0,0,0.08);
+    padding: 25px;
+    border-radius: 18px;
+    border: 2px solid #ff1a1a;
+    max-width: 450px;
+    box-shadow: 0 0 25px rgba(255,0,0,0.3);
 }
+
+/* COMPULSORY REGISTER BUTTON */
 #registerBtn {
-    border: 2px solid cyan;
-    border-radius: 16px;
-    padding: 12px 20px;
-    background: red;
+    border: 3px solid #00ffff;
+    border-radius: 18px;
+    padding: 16px 25px;
+    background: linear-gradient(90deg, #ff0000, #ff4d4d);
     color: white;
     cursor: pointer;
-    font-size: 16px;
-    font-weight: 600;
-    margin-bottom: 12px;
-    width: 90%;
+    font-size: 18px;
+    font-weight: 700;
+    margin-bottom: 15px;
+    width: 95%;
+    box-shadow: 0 0 20px rgba(255,0,0,0.8);
+    animation: pulse 2s infinite;
+    letter-spacing: 0.5px;
 }
-#registerBtn:hover { background: #ff1a1a; transform: scale(1.03); }
-#oneWinID {
-    border: 2px solid cyan;
-    border-radius: 12px;
-    padding: 10px 12px;
-    font-size: 15px;
-    width: 60%;
-    text-align: center;
-    outline: none;
-    background: #000;
-    color: white;
+@keyframes pulse {
+    0% { box-shadow: 0 0 20px rgba(255,0,0,0.8); }
+    50% { box-shadow: 0 0 35px rgba(255,0,0,1); }
+    100% { box-shadow: 0 0 20px rgba(255,0,0,0.8); }
 }
-#submitIDBtn {
-    border: 2px solid cyan;
-    border-radius: 12px;
-    padding: 10px 14px;
-    margin-left: 8px;
-    font-size: 15px;
-    cursor: pointer;
-    background: red;
-    color: white;
-    font-weight: 600;
-}
-#submitIDBtn:disabled { background: #444; cursor: not-allowed; }
+#registerBtn:hover { transform: scale(1.04); }
+
 .grid {
     display: grid;
     grid-template-columns: repeat(auto-fill,minmax(100px,1fr));
@@ -182,7 +181,11 @@ h1 {
     overflow: hidden;
     box-shadow: 0 0 10px rgba(255,0,0,0.5);
 }
-.game-button.locked { opacity: 0.25; filter: grayscale(1); pointer-events: none; }
+.game-button.locked img {
+    opacity: 0.25!important;
+    pointer-events: none!important;
+    filter: grayscale(1);
+}
 .game-button img {
     width: 100%;
     height: 100px;
@@ -242,21 +245,38 @@ h1 {
 <h1>Dark Magic Ai Bot</h1>
 <p id="statusMessage">Checking verification status...</p>
 
+<!-- REGISTER PANEL WITH NEW WIDGET -->
 <div id="registrationContainer">
-    <p id="instructionText">
-        1. Register 1Win with our official link ✅<br>
-        2. Make your FIRST DEPOSIT<br>
-        3. Submit your 1Win ID below to unlock all games
-    </p>
+    <p id="instructionText">TO ACCESS ALL FEATURES YOU MUST:</p>
+    <p class="warning-text">⚠️ COMPULSORY: REGISTER WITH OUR OFFICIAL LINK BELOW ⚠️</p>
+    <p class="warning-text">IF YOU REGISTERED WITH ANOTHER LINK, THE BOT CANNOT VERIFY YOU</p>
+
     <button id="registerBtn" onclick="window.open('https://lkiv.cc/021d52', '_blank')">
-        ✅ Register with Official Link
+        🔥 CLICK HERE TO REGISTER NEW 1WIN ACCOUNT 🔥
     </button>
-    <div>
-        <input type="text" id="oneWinID" placeholder="Enter Your 1Win ID" />
-        <button id="submitIDBtn" onclick="submitID()">🔒 Verify</button>
+
+    <p style="color:#aaa; font-size:13px; margin:15px 0;">After registering + First Deposit, verify your 1Win ID below</p>
+
+    <!-- 1WIN VERIFICATION WIDGET FROM REPLIT -->
+    <div id="onewin-verify" style="max-width:400px;margin:15px auto;font-family:'Poppins',sans-serif;">
+      <input
+        id="onewin-id-input"
+        type="text"
+        placeholder="Enter your 1Win ID (numbers only)"
+        style="width:100%;padding:14px;font-size:16px;border:2px solid cyan;border-radius:12px;box-sizing:border-box;background:#000;color:white;text-align:center;outline:none;"
+      />
+      <button
+        onclick="checkOneWinId()"
+        id="verifyBtn"
+        style="width:100%;margin-top:12px;padding:14px;font-size:16px;background:linear-gradient(90deg, #ff0000, #ff4d4d);color:#fff;border:none;border-radius:12px;cursor:pointer;font-weight:700;box-shadow:0 0 15px rgba(255,0,0,0.6);"
+      >
+        🔒 Verify & Unlock
+      </button>
+      <div id="onewin-result" style="margin-top:15px;padding:14px;border-radius:12px;display:none;font-size:15px;font-weight:600;"></div>
     </div>
 </div>
 
+<!-- GAME GRID -->
 <div class="grid" id="gameGrid">
     <div class="game-button" id="luckyJetBtn"><img src="lucky.jpg"><div class="label">Lucky Jet</div></div>
     <div class="game-button" id="aviatorBtn"><img src="aviator.jpg"><div class="label">Aviator</div></div>
@@ -314,14 +334,6 @@ const db=firebase.database();
 let approvalStatus=null;
 let currentUser = null;
 
-// NEW API URL
-const REPLIT_API_BASE = "https://telegram-guard.replit.app/api/onewin/check/";
-
-async function checkOnewinId(registrationId) {
-  const res = await fetch(REPLIT_API_BASE + registrationId);
-  return await res.json(); // { exists, deposited, deposit_amount }
-}
-
 function lockButtons(){ document.querySelectorAll(".game-button").forEach(el=>{ el.classList.add("locked"); }); }
 function unlockButtons(){ document.querySelectorAll(".game-button").forEach(el=>{ el.classList.remove("locked"); }); }
 
@@ -341,50 +353,84 @@ Object.keys(gamePages).forEach(id=>{
 });
 
 function handleGameClick(page){
-    if(approvalStatus!=="activated"){ toast("Verify 1Win ID + First Deposit first"); return; }
+    if(approvalStatus!=="activated"){
+        toast("You must verify 1Win ID + First Deposit first");
+        return;
+    }
     toast("Connecting to Game Server...");
     setTimeout(()=>{ location.href=page; },900);
 }
 
-async function submitID(){
-    const user=firebase.auth().currentUser;
-    if(!user) return toast("Auth error — please login again.");
-    const idRaw=(document.getElementById("oneWinID").value||"").trim();
-    if(!idRaw) return toast("Enter your 1Win ID");
-    if(isNaN(idRaw)) return toast("ID must be numbers only");
+// NEW WIDGET FUNCTION FROM REPLIT
+let currentVerifyingID = null;
+async function checkOneWinId() {
+  var input = document.getElementById("onewin-id-input");
+  var result = document.getElementById("onewin-result");
+  var user = firebase.auth().currentUser;
+  if(!user) return toast("Auth error — please login again.");
 
-    document.getElementById("submitIDBtn").disabled = true;
-    document.getElementById("statusMessage").innerHTML="⏳ Checking with 1Win Bot...";
-    lockButtons();
+  var id = input.value.replace(/\D/g, ""); // keep digits only
+  currentVerifyingID = id;
+  result.style.display = "block";
 
-    try {
-        const data = await checkOnewinId(idRaw);
-        if (!data.exists) {
-            document.getElementById("statusMessage").innerHTML="🚫 ID not found in Telegram group";
-            toast("Join our Telegram group with this 1Win ID first");
-        }
-        else if (!data.deposited) {
-            document.getElementById("statusMessage").innerHTML="🚫 No first deposit found";
-            toast("Make your first deposit on 1Win, then come back");
-        }
-        else {
-            approvalStatus="activated";
-            document.getElementById("statusMessage").innerHTML=`✅ Verified! Deposit: $${data.deposit_amount}. Unlocking...`;
-            db.ref("users/"+user.uid).update({
-                email: user.email || "", oneWinID: idRaw, verified: true,
-                firstDepositAmount: data.deposit_amount, verifiedAt: Date.now(), status: "activated"
-            });
-            setTimeout(()=>{
-                document.getElementById("registrationContainer").style.display="none";
-                unlockButtons();
-                toast("Features unlocked!");
-            },1500);
-        }
-    } catch(e) {
-        toast("Server Error. Enable CORS on Replit.");
-        console.log(e);
+  if (!id) {
+    result.style.background = "#fff3cd";
+    result.style.color = "#664d03";
+    result.textContent = "Please enter your numeric ID.";
+    return;
+  }
+
+  result.style.background = "#222";
+  result.style.color = "yellow";
+  result.textContent = "⏳ Checking with 1Win Bot...";
+  lockButtons();
+  document.getElementById("verifyBtn").disabled = true;
+
+  try {
+    var res = await fetch("https://telegram-guard.replit.app/api/onewin/check/" + id);
+    var data = await res.json();
+
+    if (!data.exists) {
+      result.style.background = "#4a0000";
+      result.style.color = "#ff8080";
+      result.textContent = "❌ ID not found. Register with our link above first.";
+      document.getElementById("statusMessage").innerHTML="🚫 ID not found";
+    } else if (!data.deposited) {
+      result.style.background = "#4a3a00";
+      result.style.color = "#ffdd00";
+      result.textContent = "⚠️ Registered, but no deposit yet. Make a deposit to unlock.";
+      document.getElementById("statusMessage").innerHTML="🚫 No first deposit found";
+    } else {
+      result.style.background = "#003300";
+      result.style.color = "#00ff88";
+      result.textContent = `✅ Verified! Deposit: $${data.deposit_amount}. Unlocking games...`;
+      document.getElementById("statusMessage").innerHTML=`✅ Verified! Deposit: $${data.deposit_amount}. Unlocking...`;
+
+      approvalStatus="activated";
+
+      db.ref("users/"+user.uid).update({
+          email: user.email || "",
+          oneWinID: id,
+          verified: true,
+          firstDepositAmount: data.deposit_amount,
+          verifiedAt: Date.now(),
+          status: "activated"
+      });
+
+      setTimeout(()=>{
+          document.getElementById("registrationContainer").style.display="none";
+          unlockButtons();
+          toast("Features unlocked!");
+      },1500);
     }
-    document.getElementById("submitIDBtn").disabled = false;
+  } catch (e) {
+    result.style.background = "#4a0000";
+    result.style.color = "#ff8080";
+    result.textContent = "Connection error. Enable CORS on Replit.";
+    toast("Server Error");
+  }
+
+  document.getElementById("verifyBtn").disabled = false;
 }
 
 function checkStatus(uid){
@@ -397,7 +443,7 @@ function checkStatus(uid){
             statusMessage.innerHTML="✅ Fully verified — You can now play!";
             unlockButtons();
             registrationContainer.style.display="none";
-            if(data.oneWinID) document.getElementById("oneWinID").value = data.oneWinID;
+            if(data.oneWinID) document.getElementById("onewin-id-input").value = data.oneWinID;
         } else {
             approvalStatus=null;
             statusMessage.innerHTML="🚫 Verify 1Win ID + First Deposit to unlock";
