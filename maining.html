@@ -7,10 +7,9 @@
 <title>Dark Magic Ai Bot - Main</title>
 
 <link href="https://fonts.googleapis.com/css2?family=UnifrakturCook:wght@700&display=swap" rel="stylesheet">
-<link href="https://fonts.googleapis.com/css2?family=Poppins:wght@500;600&display=swap" rel="stylesheet">
+<link href="https://fonts.googleapis.com/css2?family=Poppins:wght@500;600;700&display=swap" rel="stylesheet">
 
 <style>
-/* BODY + FONT */
 body {
     background: linear-gradient(to bottom, #000, #1a0000);
     color: white;
@@ -19,8 +18,6 @@ body {
     margin: 0;
     padding: 10px;
 }
-
-/* HEADER */
 h1 {
     font-family: 'UnifrakturCook', cursive;
     font-size: 35px;
@@ -29,8 +26,6 @@ h1 {
     text-shadow: 0 0 8px rgba(255,0,0,0.8);
     margin-top: 85px;
 }
-
-/* TOP RIGHT AREA */
 #topBar {
     position: fixed;
     top: 10px;
@@ -40,13 +35,7 @@ h1 {
     gap: 10px;
     z-index: 99999;
 }
-
-/* HAMBURGER TOOLBAR */
-#toolbarContainer {
-    position: relative;
-}
-
-/* Hamburger icon */
+#toolbarContainer { position: relative; }
 #hamburger {
     width: 42px;
     height: 42px;
@@ -60,19 +49,14 @@ h1 {
     gap: 5px;
     cursor: pointer;
     box-shadow: 0 0 18px rgba(255,0,0,0.25);
-    backdrop-filter: blur(10px);
 }
-
 #hamburger span {
     display: block;
     height: 3px;
     width: 20px;
     background: linear-gradient(90deg,#ff0000,#ff4d4d);
     border-radius: 10px;
-    transition: all 0.3s ease-in-out;
 }
-
-/* Toolbar */
 #toolbar {
     position: absolute;
     top: 55px;
@@ -86,9 +70,7 @@ h1 {
     border-radius: 18px;
     padding: 12px;
     box-shadow: 0 0 25px rgba(255,0,0,0.25);
-    backdrop-filter: blur(12px);
 }
-
 #toolbar button {
     background: linear-gradient(135deg,#1f0000,#520000);
     border: 1px solid rgba(255,0,0,0.2);
@@ -97,36 +79,24 @@ h1 {
     border-radius: 14px;
     font-size: 13px;
     cursor: pointer;
-    transition: 0.25s;
-    text-align: left;
     font-weight: 600;
+    text-align: left;
 }
-
 #toolbar button:hover {
     background: linear-gradient(135deg,#ff0000,#990000);
     transform: scale(1.03);
 }
-
-/* BALANCE PANEL */
 #balanceContainer {
     background: rgba(20,20,20,0.95);
     padding: 7px 12px;
     border-radius: 20px;
     display: flex;
     align-items: center;
-    font-family: 'Poppins', sans-serif;
     color: #fff;
     box-shadow: 0 0 18px rgba(255, 0, 0, 0.25);
     border:1px solid rgba(255,0,0,0.25);
-    backdrop-filter: blur(10px);
 }
-
-#balanceAmount {
-    font-size: 14px;
-    margin-right: 6px;
-    font-weight: 600;
-}
-
+#balanceAmount { font-size: 14px; margin-right: 6px; font-weight: 600; }
 #addBalanceBtn {
     font-size: 14px;
     background: red;
@@ -136,106 +106,92 @@ h1 {
     width: 26px;
     height: 26px;
     cursor: pointer;
-    display: flex;
-    justify-content: center;
-    align-items: center;
     box-shadow: 0 0 6px rgba(255,0,0,0.8);
-    transition: 0.2s ease-in-out;
 }
-
-#addBalanceBtn:hover {
-    background: #ff3333;
-    box-shadow: 0 0 12px rgba(255,0,0,1);
-    transform: scale(1.1);
-}
-
-/* STATUS + INSTRUCTIONS */
 #statusMessage {
     margin-top: 12px;
     font-size: 18px;
     color: yellow;
     text-shadow: 0 0 4px orange;
 }
-
 #instructionText {
     font-size: 16px;
-    color: orange;
+    color: #ffdd00;
     margin-bottom: 15px;
+    font-weight: 600;
+}
+.warning-text {
+    color: #ff1a1a;
+    font-size: 14px;
+    font-weight: 700;
+    margin: 8px 0;
+    animation: blink 1.5s infinite;
+}
+@keyframes blink {
+    0%, 100% { opacity: 1; }
+    50% { opacity: 0.4; }
 }
 
 /* REGISTER PANEL */
 #registrationContainer {
-    margin-bottom: 20px;
-    background: rgba(0,0,0,0.5);
-    padding: 20px;
-    border-radius: 15px;
-    border: 1px solid rgba(255,0,0,0.3);
-    max-width: 400px;
     margin: 20px auto;
+    background: rgba(255,0,0,0.08);
+    padding: 25px;
+    border-radius: 18px;
+    border: 2px solid #ff1a1a;
+    max-width: 450px;
+    box-shadow: 0 0 25px rgba(255,0,0,0.3);
 }
 
-/* REGISTER BUTTON CUSTOM STYLE */
+/* COMPULSORY REGISTER BUTTON */
 #registerBtn {
-    border: 2px solid cyan;
-    border-radius: 16px;
-    padding: 10px 20px;
-    background: red;
+    border: 3px solid #00ffff;
+    border-radius: 18px;
+    padding: 16px 25px;
+    background: linear-gradient(90deg, #ff0000, #ff4d4d);
     color: white;
     cursor: pointer;
-    font-size: 16px;
-    transition: 0.3s;
-    margin-bottom: 10px;
+    font-size: 18px;
+    font-weight: 700;
+    margin-bottom: 15px;
+    width: 95%;
+    box-shadow: 0 0 20px rgba(255,0,0,0.8);
+    animation: pulse 2s infinite;
+    letter-spacing: 0.5px;
 }
-
+@keyframes pulse {
+    0% { box-shadow: 0 0 20px rgba(255,0,0,0.8); }
+    50% { box-shadow: 0 0 35px rgba(255,0,0,1); }
+    100% { box-shadow: 0 0 20px rgba(255,0,0,0.8); }
+}
 #registerBtn:hover {
-    background: #ff1a1a;
-    transform: scale(1.05);
+    transform: scale(1.04);
 }
 
-/* 1WIN ID INPUT + SUBMIT BUTTON */
 #oneWinID {
     border: 2px solid cyan;
     border-radius: 12px;
-    padding: 10px 12px;
+    padding: 12px 14px;
     font-size: 15px;
-    margin-top: 10px;
-    width: 220px;
+    width: 60%;
     text-align: center;
     outline: none;
     background: #000;
     color: white;
-    transition: 0.3s;
 }
-
-#oneWinID:focus {
-    border-color: #00ffff;
-    box-shadow: 0 0 8px cyan;
-}
-
 #submitIDBtn {
     border: 2px solid cyan;
     border-radius: 12px;
-    padding: 10px 14px;
-    margin-left: 10px;
+    padding: 12px 16px;
+    margin-left: 8px;
     font-size: 15px;
     cursor: pointer;
-    background: red;
+    background: linear-gradient(90deg, #e60000, #ff1a1a);
     color: white;
-    font-weight: 600;
-    transition: 0.3s;
+    font-weight: 700;
 }
+#submitIDBtn:disabled { background: #444; cursor: not-allowed; }
 
-#submitIDBtn:hover {
-    background: #ff1a1a;
-    transform: scale(1.05);
-}
-
-#submitIDBtn:disabled {
-    background: #444;
-    cursor: not-allowed;
-}
-
-/* GAME GRID */
 .grid {
     display: grid;
     grid-template-columns: repeat(auto-fill,minmax(100px,1fr));
@@ -243,48 +199,34 @@ h1 {
     padding-top: 20px;
     justify-items: center;
 }
-
 .game-button {
     width: 100%;
     max-width: 120px;
     cursor: pointer;
-    transition: 0.25s;
     border-radius: 12px;
     overflow: hidden;
     box-shadow: 0 0 10px rgba(255,0,0,0.5);
 }
-
 .game-button.locked img {
     opacity: 0.25!important;
     pointer-events: none!important;
     filter: grayscale(1);
 }
-
 .game-button img {
     width: 100%;
     height: 100px;
     object-fit: cover;
     border-radius: 12px;
-    transition: transform 0.3s, opacity 0.3s;
 }
-
-.game-button:hover img {
-    transform: scale(1.08);
-    opacity: 1;
-}
-
 .label {
     margin-top: 5px;
     color: cyan;
     font-size: 14px;
     font-weight: 600;
-    text-shadow: 0 0 4px rgba(0,255,255,0.7);
 }
-
-/* TOAST */
 #toast {
     visibility: hidden;
-    min-width: 240px;
+    min-width: 260px;
     background-color: red;
     color: white;
     text-align: center;
@@ -300,7 +242,6 @@ h1 {
     opacity: 0;
     transition: opacity 0.3s, bottom 0.3s;
 }
-
 #toast.show {
     visibility: visible;
     opacity: 1;
@@ -310,24 +251,13 @@ h1 {
 </head>
 <body>
 
-<!-- TOP RIGHT -->
 <div id="topBar">
-
-    <!-- BALANCE -->
     <div id="balanceContainer">
         <span id="balanceAmount">0</span> DM COINS
         <button id="addBalanceBtn">+</button>
     </div>
-
-    <!-- TOOLBAR -->
     <div id="toolbarContainer">
-
-        <div id="hamburger">
-            <span></span>
-            <span></span>
-            <span></span>
-        </div>
-
+        <div id="hamburger"><span></span><span></span><span></span></div>
         <div id="toolbar">
             <button onclick="openTelegram()">JOIN TELEGRAM CHANNEL</button>
             <button onclick="contactSupport()">CUSTOMER SUPPORT</button>
@@ -335,28 +265,27 @@ h1 {
             <button onclick="goAbout()">ABOUT</button>
             <button onclick="openAffiliate()">AFFILIATE PROGRAM</button>
         </div>
-
     </div>
-
 </div>
 
 <h1>Dark Magic Ai Bot</h1>
-
 <p id="statusMessage">Checking verification status...</p>
 
 <!-- REGISTER PANEL -->
 <div id="registrationContainer">
     <p id="instructionText">
-        Step 1: Register 1Win with our link ✅<br>
-        Step 2: Make your FIRST DEPOSIT<br>
-        Step 3: Submit your 1Win ID below to unlock
+        TO ACCESS ALL FEATURES YOU MUST:
     </p>
+    <p class="warning-text">⚠️ COMPULSORY: REGISTER WITH OUR OFFICIAL LINK BELOW ⚠️</p>
+    <p class="warning-text">IF YOU REGISTERED WITH ANOTHER LINK, THE BOT CANNOT VERIFY YOU</p>
 
     <button id="registerBtn" onclick="window.open('https://lkiv.cc/021d52', '_blank')">
-        ✅ Register with Official Link
+        🔥 CLICK HERE TO REGISTER NEW 1WIN ACCOUNT 🔥
     </button>
 
-    <input type="text" id="oneWinID" placeholder="Enter Your 1Win Account ID" />
+    <p style="color:#aaa; font-size:13px; margin:15px 0;">After registering + First Deposit, submit your 1Win ID below</p>
+
+    <input type="text" id="oneWinID" placeholder="Enter Your NEW 1Win ID" />
     <button id="submitIDBtn" onclick="submitID()">🔒 Verify & Unlock</button>
 </div>
 
@@ -384,7 +313,6 @@ h1 {
 <script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-database.js"></script>
 
 <script>
-// TOAST
 function toast(msg){
     const t=document.getElementById("toast");
     t.innerHTML=msg;
@@ -392,81 +320,49 @@ function toast(msg){
     setTimeout(()=>{t.className=t.className.replace("show","");},3500);
 }
 
-// HAMBURGER TOGGLE
 const hamburger=document.getElementById("hamburger");
 const toolbar=document.getElementById("toolbar");
+hamburger.onclick=()=>{ toolbar.style.display=(toolbar.style.display==="flex")?"none":"flex"; };
 
-hamburger.onclick=()=>{
-    toolbar.style.display=(toolbar.style.display==="flex")?"none":"flex";
-};
-
-// TOOLBAR BUTTONS
 function openTelegram(){ window.open("https://t.me/darkmagic01","_blank"); }
 function goHelp(){ window.location.href="help.html"; }
 function goAbout(){ window.location.href="about.html"; }
 function openAffiliate() { window.location.href = "affiliate.html"; }
-
 function contactSupport(){
     const links=["https://t.me/dark_magiks","https://t.me/dark_maggik"];
     window.open(links[Math.floor(Math.random()*links.length)],"_blank");
 }
 
-// BALANCE PANEL
 const balanceDisplay = document.getElementById("balanceAmount");
-document.getElementById("addBalanceBtn").onclick=()=>{
-    window.location.href="deposit.html";
-};
+document.getElementById("addBalanceBtn").onclick=()=>{ window.location.href="deposit.html"; };
 
-// FIREBASE CONFIG
 const firebaseConfig = {
     apiKey: "AIzaSyDvFDByPPo9zgwKLdPaREz1OVMQCXmPfrs",
     authDomain: "bets-d795d.firebaseapp.com",
-    projectId: "bets-d795d",
-    storageBucket: "bets-d795d.appspot.com",
-    messagingSenderId: "384386108287",
-    appId: "1:384386108287:android:d238a5ec8068d9bb9be84a",
-    databaseURL: "https://bets-d795d-default-rtdb.firebaseio.com"
+    databaseURL: "https://bets-d795d-default-rtdb.firebaseio.com",
+    projectId: "bets-d795d"
 };
-
 firebase.initializeApp(firebaseConfig);
 const db=firebase.database();
 let approvalStatus=null;
 let currentUser = null;
 
-// YOUR REPLIT API
-const REPLIT_API_BASE = "https://851121ca-ccc2-4499-80da-660f93d71362-00-9t6p296zjha6.spock.replit.dev/api/onewin/check/";
+// NEW REPLIT API
+const REPLIT_API_BASE = "https://telegram-guard.replit.app/api/onewin/check/";
 
 async function checkOnewinId(registrationId) {
   const res = await fetch(REPLIT_API_BASE + registrationId);
   return await res.json();
 }
 
-function lockButtons(){
-    document.querySelectorAll(".game-button").forEach(el=>{
-        el.classList.add("locked");
-    });
-}
-
-function unlockButtons(){
-    document.querySelectorAll(".game-button").forEach(el=>{
-        el.classList.remove("locked");
-    });
-}
+function lockButtons(){ document.querySelectorAll(".game-button").forEach(el=>{ el.classList.add("locked"); }); }
+function unlockButtons(){ document.querySelectorAll(".game-button").forEach(el=>{ el.classList.remove("locked"); }); }
 
 const gamePages={
-    luckyJetBtn:"lucky.html",
-    aviatorBtn:"aviator.html",
-    diceBtn:"dice.html",
-    luckyBtn:"luckys.html",
-    coinBtn:"coin.html",
-    minesBtn:"mines.html",
-    bottleBtn:"bottle.html",
-    towerBtn:"tower.html",
-    globalmineBtn:"globalmine.html",
-    chickenBtn:"chicken.html",
-    thimbleBtn:"thimble.html",
-    rocketBtn:null,
-    aviator2Btn:"aviatorpro.html",
+    luckyJetBtn:"lucky.html", aviatorBtn:"aviator.html", diceBtn:"dice.html", luckyBtn:"luckys.html",
+    coinBtn:"coin.html", minesBtn:"mines.html", bottleBtn:"bottle.html", towerBtn:"tower.html",
+    globalmineBtn:"globalmine.html", chickenBtn:"chicken.html", thimbleBtn:"thimble.html",
+    rocketBtn:null, aviator2Btn:"aviatorpro.html",
 };
 
 Object.keys(gamePages).forEach(id=>{
@@ -486,46 +382,34 @@ function handleGameClick(page){
     setTimeout(()=>{ location.href=page; },900);
 }
 
-// NEW SUBMIT ID WITH REPLIT API
 async function submitID(){
     const user=firebase.auth().currentUser;
     if(!user) return toast("Auth error — please login again.");
-
     const idRaw=(document.getElementById("oneWinID").value||"").trim();
     if(!idRaw) return toast("Enter your 1Win ID");
     if(isNaN(idRaw)) return toast("ID must be numbers only");
 
     document.getElementById("submitIDBtn").disabled = true;
     document.getElementById("statusMessage").innerHTML="⏳ Checking with 1Win Bot...";
-
     lockButtons();
 
     try {
         const data = await checkOnewinId(idRaw);
-
         if (!data.exists) {
-            document.getElementById("statusMessage").innerHTML="🚫 ID not found in Telegram group";
-            toast("Join our Telegram group with this 1Win ID first");
+            document.getElementById("statusMessage").innerHTML="🚫 ID not found. Use the link above to register";
+            toast("You must register with our official link first");
         }
         else if (!data.deposited) {
             document.getElementById("statusMessage").innerHTML="🚫 No first deposit found";
             toast("Make your first deposit on 1Win, then come back");
         }
         else {
-            // SUCCESS
             approvalStatus="activated";
             document.getElementById("statusMessage").innerHTML=`✅ Verified! Deposit: $${data.deposit_amount}. Unlocking...`;
-
-            // Save to Firebase
             db.ref("users/"+user.uid).update({
-                email: user.email || "",
-                oneWinID: idRaw,
-                verified: true,
-                firstDepositAmount: data.deposit_amount,
-                verifiedAt: Date.now(),
-                status: "activated"
+                email: user.email || "", oneWinID: idRaw, verified: true,
+                firstDepositAmount: data.deposit_amount, verifiedAt: Date.now(), status: "activated"
             });
-
             setTimeout(()=>{
                 document.getElementById("registrationContainer").style.display="none";
                 unlockButtons();
@@ -533,20 +417,17 @@ async function submitID(){
             },1500);
         }
     } catch(e) {
-        toast("Error connecting to server. Try again.");
+        toast("Server Error. Enable CORS on Replit.");
         console.log(e);
     }
-
     document.getElementById("submitIDBtn").disabled = false;
 }
 
 function checkStatus(uid){
     const statusMessage=document.getElementById("statusMessage");
     const registrationContainer=document.getElementById("registrationContainer");
-
     db.ref("users/"+uid).on("value",snap=>{
         const data=snap.val()||{};
-
         if(data.verified === true){
             approvalStatus="activated";
             statusMessage.innerHTML="✅ Fully verified — You can now play!";
@@ -568,12 +449,8 @@ function listenBalance(uid){
     });
 }
 
-// AUTH
 firebase.auth().onAuthStateChanged(user=>{
-    if(!user){
-        window.location.href="login.html";
-        return;
-    }
+    if(!user){ window.location.href="login.html"; return; }
     currentUser = user;
     checkStatus(user.uid);
     listenBalance(user.uid);
