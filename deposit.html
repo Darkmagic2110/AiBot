@@ -86,7 +86,6 @@ button:disabled {
     visibility: hidden;
     min-width: 260px;
     background-color: #ff1a1a;
-    font-family: 'Poppins', sans-serif;
     color: white;
     text-align: center;
     border-radius: 12px;
@@ -148,7 +147,6 @@ button:disabled {
     margin: 10px 0;
     display: flex;
     justify-content: space-between;
-    font-family: 'Poppins', sans-serif;
 }
 .history-left { text-align: left; }
 .history-right { text-align: right; }
@@ -166,7 +164,6 @@ button:disabled {
     width: 100%;
     height: 100%;
     background: rgba(0,0,0,0.95);
-    backdrop-filter: blur(5px);
 }
 #instructionContent {
     background: #0a0a0a;
@@ -177,7 +174,6 @@ button:disabled {
     border-radius: 15px;
     border: 2px solid #ff1a1a;
     text-align: left;
-    font-family: 'Poppins', sans-serif;
     max-height: 80%;
     overflow-y: auto;
 }
@@ -195,17 +191,15 @@ button:disabled {
 <p class="subtitle">Power up your Dark Magic Ai Bot</p>
 
 <div class="input-group">
-    <label>Select Country</label>
+    <label>Select Your African Country</label>
     <select id="countrySelect">
         <option value="">-- Choose Country --</option>
-        <option value="NG">Nigeria 🇳🇬</option>
-        <option value="OTHER">Other Countries 🌍</option>
     </select>
 </div>
 
 <div class="input-group">
     <label id="amountLabel">Enter Deposit Amount</label>
-    <input type="number" id="depositAmount" placeholder="Enter amount" min="1" />
+    <input type="number" id="depositAmount" placeholder="Select country first" min="1" step="any" />
     <div id="coinRate"></div>
 </div>
 
@@ -227,7 +221,7 @@ button:disabled {
         <h2>HOW TO DEPOSIT</h2>
         <p class="bold">READ CAREFULLY TO AVOID COIN LOSS</p>
         <p>1. You will be redirected to Flutterwave payment page</p>
-        <p>2. Choose your preferred payment method: Card, Bank Transfer, USSD etc</p>
+        <p>2. Choose your preferred payment method: Card, Bank Transfer, Mobile Money etc</p>
         <p>3. Complete payment with the exact amount shown</p>
         <p>4. <span class="bold">DO NOT REFRESH</span>. After payment, come back to this page</p>
         <p>5. Click <span class="bold">"I HAVE PAID"</span> and your coins will be credited instantly</p>
@@ -267,11 +261,55 @@ let selectedCountry = "";
 let flutterwaveKey = null;
 let currentUser = null;
 
-// PRICING CONFIG
-const PRICING = {
-    NG: { currency: "NGN", rate: 200, minAmount: 1000, symbol: "₦", label: "₦200 = 1 Coin" },
-    OTHER: { currency: "USD", rate: 0.14, minAmount: 0.70, symbol: "$", label: "$0.14 = 1 Coin" }
+// BASE: ₦200 = 1 coin, ₦1000 = 5 coins
+// Rates are approximate as of 2026. Update this object to adjust prices
+const AFRICAN_RATES = {
+    "NG": {name: "Nigeria 🇳🇬", currency: "NGN", symbol: "₦", rate: 1, flutterwave: "NGN"},
+    "GH": {name: "Ghana 🇬🇭", currency: "GHS", symbol: "GH₵", rate: 0.045, flutterwave: "GHS"},
+    "ZA": {name: "South Africa 🇿🇦", currency: "ZAR", symbol: "R", rate: 0.11, flutterwave: "ZAR"},
+    "KE": {name: "Kenya 🇰🇪", currency: "KES", symbol: "KSh", rate: 2.3, flutterwave: "KES"},
+    "UG": {name: "Uganda 🇺🇬", currency: "UGX", symbol: "USh", rate: 70, flutterwave: "UGX"},
+    "TZ": {name: "Tanzania 🇹🇿", currency: "TZS", symbol: "TSh", rate: 45, flutterwave: "TZS"},
+    "RW": {name: "Rwanda 🇷🇼", currency: "RWF", symbol: "RWF", rate: 22, flutterwave: "RWF"},
+    "ZM": {name: "Zambia 🇿🇲", currency: "ZMW", symbol: "ZK", rate: 0.4, flutterwave: "ZMW"},
+    "ZW": {name: "Zimbabwe 🇿🇼", currency: "USD", symbol: "$", rate: 0.0025, flutterwave: "USD"},
+    "EG": {name: "Egypt 🇪🇬", currency: "EGP", symbol: "E£", rate: 0.95, flutterwave: "EGP"},
+    "MA": {name: "Morocco 🇲🇦", currency: "MAD", symbol: "MAD", rate: 0.4, flutterwave: "MAD"},
+    "DZ": {name: "Algeria 🇩🇿", currency: "DZD", symbol: "DA", rate: 3.3, flutterwave: "USD"},
+    "TN": {name: "Tunisia 🇹🇳", currency: "TND", symbol: "DT", rate: 0.06, flutterwave: "USD"},
+    "CM": {name: "Cameroon 🇨🇲", currency: "XAF", symbol: "FCFA", rate: 12, flutterwave: "XAF"},
+    "SN": {name: "Senegal 🇸🇳", currency: "XOF", symbol: "CFA", rate: 12, flutterwave: "XOF"},
+    "CI": {name: "Côte d'Ivoire 🇨🇮", currency: "XOF", symbol: "CFA", rate: 12, flutterwave: "XOF"},
+    "ET": {name: "Ethiopia 🇪🇹", currency: "ETB", symbol: "Br", rate: 1.45, flutterwave: "ETB"},
+    "AO": {name: "Angola 🇦🇴", currency: "AOA", symbol: "Kz", rate: 2.1, flutterwave: "USD"},
+    "MW": {name: "Malawi 🇲🇼", currency: "MWK", symbol: "MK", rate: 4.2, flutterwave: "USD"},
+    "BW": {name: "Botswana 🇧🇼", currency: "BWP", symbol: "P", rate: 0.035, flutterwave: "BWP"},
+    "NA": {name: "Namibia 🇳🇦", currency: "NAD", symbol: "N$", rate: 0.11, flutterwave: "NAD"},
+    "LR": {name: "Liberia 🇱🇷", currency: "LRD", symbol: "L$", rate: 0.45, flutterwave: "LRD"},
+    "SL": {name: "Sierra Leone 🇸🇱", currency: "SLL", symbol: "Le", rate: 50, flutterwave: "SLL"},
+    "GM": {name: "Gambia 🇬🇲", currency: "GMD", symbol: "D", rate: 0.16, flutterwave: "GMD"},
+    "BJ": {name: "Benin 🇧🇯", currency: "XOF", symbol: "CFA", rate: 12, flutterwave: "XOF"},
+    "BF": {name: "Burkina Faso 🇧🇫", currency: "XOF", symbol: "CFA", rate: 12, flutterwave: "XOF"},
+    "ML": {name: "Mali 🇲🇱", currency: "XOF", symbol: "CFA", rate: 12, flutterwave: "XOF"},
+    "NE": {name: "Niger 🇳🇪", currency: "XOF", symbol: "CFA", rate: 12, flutterwave: "XOF"},
+    "TG": {name: "Togo 🇹🇬", currency: "XOF", symbol: "CFA", rate: 12, flutterwave: "XOF"},
+    "GA": {name: "Gabon 🇬🇦", currency: "XAF", symbol: "FCFA", rate: 12, flutterwave: "XAF"},
+    "CD": {name: "DR Congo 🇨🇩", currency: "CDF", symbol: "FC", rate: 5, flutterwave: "USD"},
+    "MG": {name: "Madagascar 🇲🇬", currency: "MGA", symbol: "Ar", rate: 11, flutterwave: "MGA"},
+    "MU": {name: "Mauritius 🇲🇺", currency: "MUR", symbol: "Rs", rate: 0.11, flutterwave: "MUR"},
+    "SO": {name: "Somalia 🇸🇴", currency: "USD", symbol: "$", rate: 0.0025, flutterwave: "USD"},
+    "SD": {name: "Sudan 🇸🇩", currency: "SDG", symbol: "SDG", rate: 0.15, flutterwave: "USD"},
+    "LY": {name: "Libya 🇱🇾", currency: "LYD", symbol: "LD", rate: 0.012, flutterwave: "USD"},
+    "MZ": {name: "Mozambique 🇲🇿", currency: "MZN", symbol: "MT", rate: 0.16, flutterwave: "MZN"}
 };
+
+// Populate dropdown
+Object.keys(AFRICAN_RATES).forEach(code => {
+    const opt = document.createElement("option");
+    opt.value = code;
+    opt.textContent = AFRICAN_RATES[code].name;
+    countrySelect.appendChild(opt);
+});
 
 function toast(msg) {
     const t = document.getElementById("toast");
@@ -288,24 +326,30 @@ countrySelect.onchange = () => {
         depositInput.placeholder = "Select country first";
         return;
     }
-    const config = PRICING[selectedCountry === "NG" ? "NG" : "OTHER"];
-    amountLabel.innerHTML = `Enter Deposit Amount (${config.symbol})`;
-    depositInput.placeholder = `Min ${config.symbol}${config.minAmount}`;
-    depositInput.min = config.minAmount;
-    coinRate.innerHTML = `${config.label} | Min Deposit: ${config.symbol}${config.minAmount} = 5 Coins`;
+    const c = AFRICAN_RATES[selectedCountry];
+    const coinPrice = Math.ceil(200 * c.rate);
+    const minDeposit = Math.ceil(1000 * c.rate);
+
+    amountLabel.innerHTML = `Enter Deposit Amount (${c.symbol})`;
+    depositInput.placeholder = `Min ${c.symbol}${minDeposit}`;
+    depositInput.min = minDeposit;
+    coinRate.innerHTML = `${c.symbol}${coinPrice} = 1 Coin | Min Deposit: ${c.symbol}${minDeposit} = 5 Coins`;
 };
 
 // VALIDATION
-function validateAmount(amount, country) {
-    const config = PRICING[country === "NG" ? "NG" : "OTHER"];
-    if (amount < config.minAmount)
-        return { valid: false, msg: `Minimum deposit is ${config.symbol}${config.minAmount}` };
-    
-    const coins = amount / config.rate;
-    if (!Number.isInteger(coins) && country === "NG")
-        return { valid: false, msg: `Enter a multiple of ${config.symbol}${config.rate}` };
-    
-    return { valid: true, coins: Math.floor(coins) };
+function validateAmount(amount, countryCode) {
+    const c = AFRICAN_RATES[countryCode];
+    const coinPrice = Math.ceil(200 * c.rate);
+    const minDeposit = Math.ceil(1000 * c.rate);
+
+    if (amount < minDeposit)
+        return { valid: false, msg: `Minimum deposit is ${c.symbol}${minDeposit}` };
+
+    const coins = Math.floor(amount / coinPrice);
+    if (coins < 5)
+        return { valid: false, msg: `Minimum 5 coins. Deposit at least ${c.symbol}${minDeposit}` };
+
+    return { valid: true, coins };
 }
 
 // HISTORY
@@ -321,7 +365,7 @@ firebase.auth().onAuthStateChanged(user => {
         arr.forEach(tx => {
             if (tx.type === "deposit") {
                 const d = new Date(tx.time).toLocaleString();
-                const symbol = tx.currency === "NGN" ? "₦" : "$";
+                const symbol = tx.symbol || "";
                 historyList.innerHTML += `
                 <div class="history-item">
                     <div class="history-left">
@@ -348,7 +392,7 @@ db.ref("settings/flutterwaveKeys/public").once("value").then(snap => {
 function processAffiliate(userId, amountRaw, txId) {
     db.ref("users/" + userId).once("value").then(userSnap => {
         const userData = userSnap.val();
-        if (!userData || !userData.referredBy) return;
+        if (!userData ||!userData.referredBy) return;
         const refCode = userData.referredBy;
         db.ref("processedAffiliates/" + txId).once("value").then(check => {
             if (check.exists()) return;
@@ -367,15 +411,16 @@ function processAffiliate(userId, amountRaw, txId) {
 }
 
 // PAYMENT
-function startPayment(user, amountRaw, coins, country) {
-    const config = PRICING[country === "NG" ? "NG" : "OTHER"];
-    let payment_options = country === "NG" ? "card, banktransfer, ussd" : "card";
+function startPayment(user, amountRaw, coins, countryCode) {
+    const c = AFRICAN_RATES[countryCode];
+    let payment_options = "card";
+    if(countryCode === "NG") payment_options = "card, banktransfer, ussd";
 
     FlutterwaveCheckout({
         public_key: flutterwaveKey,
         tx_ref: "TX-" + Date.now(),
         amount: amountRaw,
-        currency: config.currency,
+        currency: c.flutterwave,
         payment_options: payment_options,
         customer: { email: user.email, name: user.displayName || "User" },
         customizations: { title: "Dark Magic Ai Bot", description: `${coins} Coins Purchase` },
@@ -390,8 +435,8 @@ function startPayment(user, amountRaw, coins, country) {
                         db.ref("processedPayments/" + txId).set(true);
                         db.ref("users/" + user.uid + "/balance").transaction(v => (v || 0) + coins);
                         db.ref("users/" + user.uid + "/transactions").push({
-                            type: "deposit", coins, amount: amountRaw, currency: config.currency,
-                            ref: txId, time: Date.now()
+                            type: "deposit", coins, amount: amountRaw, currency: c.currency, symbol: c.symbol,
+                            ref: txId, time: Date.now(), country: countryCode
                         });
                         processAffiliate(user.uid, amountRaw, txId);
                         toast("✅ Payment successful! Coins credited.");
@@ -411,7 +456,7 @@ function startPayment(user, amountRaw, coins, country) {
 submitBtn.onclick = () => {
     if (!currentUser) return toast("Please login again");
     if (!selectedCountry) return toast("Please select your country");
-    
+
     const amountRaw = Number(depositInput.value);
     if (!amountRaw || amountRaw <= 0) return toast("Enter a valid amount");
 
