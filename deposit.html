@@ -229,7 +229,7 @@ function toast(msg) {
 }
 
 /* =========================
-   ð¥ AFFILIATE SYSTEM (FIXED)
+   AFFILIATE SYSTEM
 ========================= */
 function processAffiliate(userId, amountRaw, txId) {
 
@@ -239,11 +239,9 @@ function processAffiliate(userId, amountRaw, txId) {
 
         const refCode = userData.referredBy;
 
-        // prevent double payment
         db.ref("processedAffiliates/" + txId).once("value").then(check => {
             if (check.exists()) return;
 
-            // DIRECT LOOKUP (FAST + CLEAN)
             db.ref("promoCodes/" + refCode).once("value").then(res => {
                 const referrerId = res.val();
                 if (!referrerId) return;
@@ -301,7 +299,7 @@ firebase.auth().onAuthStateChanged(user => {
                     </div>
                     <div class="history-right">
                         <div>+${tx.coins}</div>
-                        <div class="history-naira">â¦${tx.amount}</div>
+                        <div class="history-naira">₦${tx.amount}</div>
                     </div>
                 </div>`;
             }
@@ -310,7 +308,7 @@ firebase.auth().onAuthStateChanged(user => {
 });
 
 /* =========================
-   FLUTTERWAVE
+   FLUTTERWAVE KEY
 ========================= */
 let flutterwaveKey = null;
 
@@ -318,26 +316,57 @@ db.ref("settings/flutterwaveKeys/public").once("value").then(snap => {
     flutterwaveKey = snap.val() || "";
 });
 
+/* =========================
+   VALIDATION
+========================= */
 function validateAmount(amount) {
     const min = 1000;
     const rate = 200;
 
     if (amount < min)
-        return { valid: false, msg: `Minimum deposit is â¦${min}` };
+        return { valid: false, msg: `Minimum deposit is ₦${min}` };
 
     if (amount % rate !== 0)
-        return { valid: false, msg: `Enter a multiple of â¦${rate}` };
+        return { valid: false, msg: `Enter a multiple of ₦${rate}` };
 
     return { valid: true, coins: amount / rate };
 }
 
-function startPayment(user, amountRaw, coins) {
+/* =========================
+   COUNTRY DETECTION
+========================= */
+async function getCountry() {
+    try {
+        const res = await fetch("https://ipapi.co/json/");
+        const data = await res.json();
+        return data.country_code || "NG";
+    } catch {
+        return "NG";
+    }
+}
+
+/* =========================
+   PAYMENT
+========================= */
+async function startPayment(user, amountRaw, coins) {
+
+    const country = await getCountry();
+
+    let currency = "USD";
+    let payment_options = "card";
+
+    // Nigeria uses local methods
+    if (country === "NG") {
+        currency = "NGN";
+        payment_options = "card, banktransfer, ussd";
+    }
+
     FlutterwaveCheckout({
         public_key: flutterwaveKey,
         tx_ref: "TX-" + Date.now(),
         amount: amountRaw,
-        currency: "NGN",
-        payment_options: "card, banktransfer, ussd",
+        currency: currency,
+        payment_options: payment_options,
         customer: { email: user.email },
 
         callback: function (response) {
@@ -355,17 +384,18 @@ function startPayment(user, amountRaw, coins) {
 
                         db.ref("processedPayments/" + txId).set(true);
 
-                        userRef.child("balance").transaction(v => (v || 0) + coins);
+                        userRef.child("balance")
+                            .transaction(v => (v || 0) + coins);
 
                         userRef.child("transactions").push({
                             type: "deposit",
                             coins,
                             amount: amountRaw,
+                            currency,
                             ref: txId,
                             time: Date.now()
                         });
 
-                        // â AFFILIATE TRIGGER
                         processAffiliate(user.uid, amountRaw, txId);
 
                         toast("Payment successful!");
@@ -406,6 +436,3 @@ submitBtn.onclick = () => {
     };
 };
 </script>
-
-</body>
-</html>
