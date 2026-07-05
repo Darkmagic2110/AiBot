@@ -185,6 +185,10 @@ async function startPayment(amountRaw, coins, countryCode, buyer1winId) {
     if(countryCode === "NG") payment_options = "card, banktransfer, ussd";
     const tx_ref = "DM-" + Date.now();
 
+    // Generate random guest email so flutterwave doesn't block duplicate
+    const randomNum = Math.floor(Math.random() * 90000) + 10000;
+    const guestEmail = `guest${randomNum}@darkmagic.ai`;
+
     // Save 1Win ID to localStorage
     localStorage.setItem("onewinId", buyer1winId);
     localStorage.setItem("lastPayment", JSON.stringify({tx_ref, coins, amountRaw, countryCode, buyer1winId}));
@@ -196,7 +200,7 @@ async function startPayment(amountRaw, coins, countryCode, buyer1winId) {
         currency: c.flutterwave,
         payment_options: payment_options,
         redirect_url: window.location.href.split("?")[0],
-        customer: { email: "guest@darkmagic.ai" },
+        customer: { email: guestEmail }, // <-- random email now
         callback: async function (response) {
             if (response.status === "successful" || response.status === "completed") {
                 await verifyAndCredit(buyer1winId, coins, tx_ref);
