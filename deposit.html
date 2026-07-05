@@ -52,7 +52,6 @@ select {appearance: none; -webkit-appearance: none; -moz-appearance: none;}
 <div id="toast"></div>
 
 <script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-app.js"></script>
-<script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-auth.js"></script>
 <script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-database.js"></script>
 <script src="https://checkout.flutterwave.com/v3.js"></script>
 
@@ -68,7 +67,7 @@ const depositInput = document.getElementById("depositAmount");
 const amountLabel = document.getElementById("amountLabel");
 const coinRate = document.getElementById("coinRate");
 const onewinInput = document.getElementById("onewinIdInput");
-let selectedCountry = "", flutterwaveKey = null, currentUser = null;
+let selectedCountry = "", flutterwaveKey = null;
 
 const AFRICAN_RATES = {
     "NG": {name: "Nigeria 🇳🇬", currency: "NGN", symbol: "₦", rate: 1, flutterwave: "NGN", minAmount: 1000, coins: 5},
@@ -88,6 +87,11 @@ document.addEventListener("DOMContentLoaded", () => {
         opt.textContent = AFRICAN_RATES[code].name;
         countrySelect.appendChild(opt);
     });
+
+    const savedId = localStorage.getItem("onewinId");
+    if(savedId) onewinInput.value = savedId;
+
+    checkPendingPayment();
 });
 
 function toast(msg) {const t = document.getElementById("toast");t.innerHTML = msg;t.className = "show";setTimeout(() => t.className = "", 3500);}
@@ -102,7 +106,7 @@ countrySelect.onchange = () => {
     }
 
     const c = AFRICAN_RATES[selectedCountry];
-    if(!c) { // FIX 1: false country error
+    if(!c) {
         toast("Invalid country selected");
         return;
     }
@@ -135,16 +139,14 @@ async function creditCoinsViaReplit(buyer1winId, coins, paymentOrderId) {
     } catch(e) {return {success: false, message: "Server connection error"};}
 }
 
-async function verifyAndCredit(user, buyer1winId, coins, tx_ref) {
+async function verifyAndCredit(buyer1winId, coins, tx_ref) {
     document.getElementById("depositStatus").innerHTML = "⏳ Verifying payment...";
     const result = await creditCoinsViaReplit(buyer1winId, coins, tx_ref);
     if (result.success) {
-        try {
-            await db.ref("users/" + user.uid + "/balance").transaction(v => (v || 0) + coins);
-            await db.ref("users/" + user.uid + "/transactions").push({
-                type: "deposit", coins: coins, ref: tx_ref, time: Date.now()
-            });
-        } catch(e) { }
+        await db.ref("public_transactions").push({
+            type: "deposit", coins: coins, ref: tx_ref, time: Date.now(), onewinId: buyer1winId
+        });
+
         localStorage.removeItem("lastPayment");
         document.getElementById("depositStatus").innerHTML = "";
         toast(`✅ +${coins} Coins Credited! Check your bot balance.`);
@@ -155,7 +157,7 @@ async function verifyAndCredit(user, buyer1winId, coins, tx_ref) {
     }
 }
 
-function checkPendingPayment(user) {
+function checkPendingPayment() {
     const urlParams = new URLSearchParams(window.location.search);
     const status = urlParams.get("status");
     const tx_ref = urlParams.get("tx_ref");
@@ -163,7 +165,7 @@ function checkPendingPayment(user) {
 
     if (status && tx_ref && saved.tx_ref === tx_ref) {
         if (status === "successful" || status === "completed") {
-            verifyAndCredit(user, saved.buyer1winId, saved.coins, saved.tx_ref);
+            verifyAndCredit(saved.buyer1winId, saved.coins, saved.tx_ref);
         } else {
             localStorage.removeItem("lastPayment");
             toast("Payment was not completed");
@@ -171,18 +173,28 @@ function checkPendingPayment(user) {
     }
 }
 
-firebase.auth().onAuthStateChanged(user => {
-    if (!user) return window.location.href = "login.html";
-    currentUser = user;
-    checkPendingPayment(user);
+// LOAD FLUTTERWAVE KEY WITH ERROR CHECK
+db.ref("settings/flutterwaveKeys/public").once("value").then(snap => {
+    flutterwaveKey = snap.val() || "";
+    if(!flutterwaveKey) {
+        toast("⚠️ Payment key failed to load. Check Firebase Rules");
+        console.log("Flutterwave key is null");
+    }
+}).catch(err => {
+    toast("⚠️ Cannot read payment key. Check Firebase Rules");
+    console.error(err);
 });
-db.ref("settings/flutterwaveKeys/public").once("value").then(snap => {flutterwaveKey = snap.val() || "";});
 
-async function startPayment(user, amountRaw, coins, countryCode, buyer1winId) {
+async function startPayment(amountRaw, coins, countryCode, buyer1winId) {
     const c = AFRICAN_RATES[countryCode];
     let payment_options = "card";
     if(countryCode === "NG") payment_options = "card, banktransfer, ussd";
-    const tx_ref = "DM-" + Date.now() + "-" + user.uid;
+    const tx_ref = "DM-" + Date.now();
+
+    const randomNum = Math.floor(Math.random() * 90000) + 10000;
+    const guestEmail = `guest${randomNum}@darkmagic.ai`;
+
+    localStorage.setItem("onewinId", buyer1winId);
     localStorage.setItem("lastPayment", JSON.stringify({tx_ref, coins, amountRaw, countryCode, buyer1winId}));
 
     FlutterwaveCheckout({
@@ -192,10 +204,10 @@ async function startPayment(user, amountRaw, coins, countryCode, buyer1winId) {
         currency: c.flutterwave,
         payment_options: payment_options,
         redirect_url: window.location.href.split("?")[0],
-        customer: { email: user.email },
+        customer: { email: guestEmail },
         callback: async function (response) {
             if (response.status === "successful" || response.status === "completed") {
-                await verifyAndCredit(user, buyer1winId, coins, tx_ref);
+                await verifyAndCredit(buyer1winId, coins, tx_ref);
             }
         },
         onclose: () => toast("Payment window closed")
@@ -203,7 +215,6 @@ async function startPayment(user, amountRaw, coins, countryCode, buyer1winId) {
 }
 
 document.getElementById("submitDepositBtn").onclick = () => {
-    if (!currentUser) return toast("Please login again");
     const buyer1winId = onewinInput.value.trim();
     if (!buyer1winId) return toast("Please enter your 1Win ID");
     if (!selectedCountry) return toast("Please select your country");
@@ -212,7 +223,7 @@ document.getElementById("submitDepositBtn").onclick = () => {
     const check = validateAmount(amountRaw, selectedCountry);
     if (!check.valid) return toast(check.msg);
     if (!flutterwaveKey) return toast("Payment key not loaded. Refresh page.");
-    startPayment(currentUser, amountRaw, check.coins, selectedCountry, buyer1winId);
+    startPayment(amountRaw, check.coins, selectedCountry, buyer1winId);
 };
 </script>
 </body>
