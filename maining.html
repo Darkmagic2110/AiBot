@@ -1,4 +1,3 @@
-
 <!DOCTYPE html>
 <html lang="en">
 <head>
@@ -10,217 +9,33 @@
 <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@500;600;700&display=swap" rel="stylesheet">
 
 <style>
-body {
-    background: linear-gradient(to bottom, #000, #1a0000);
-    color: white;
-    font-family: 'Poppins', sans-serif;
-    text-align: center;
-    margin: 0;
-    padding: 10px;
-}
-h1 {
-    font-family: 'UnifrakturCook', cursive;
-    font-size: 35px;
-    color: red;
-    margin-bottom: 10px;
-    text-shadow: 0 0 8px rgba(255,0,0,0.8);
-    margin-top: 85px;
-}
-#topBar {
-    position: fixed;
-    top: 10px;
-    right: 10px;
-    display: flex;
-    align-items: center;
-    gap: 10px;
-    z-index: 99999;
-}
+body {background: linear-gradient(to bottom, #000, #1a0000);color: white;font-family: 'Poppins', sans-serif;text-align: center;margin: 0;padding: 10px;}
+h1 {font-family: 'UnifrakturCook', cursive;font-size: 35px;color: red;margin-bottom: 10px;text-shadow: 0 0 8px rgba(255,0,0,0.8);margin-top: 85px;}
+#topBar {position: fixed;top: 10px;right: 10px;display: flex;align-items: center;gap: 10px;z-index: 99999;}
 #toolbarContainer { position: relative; }
-#hamburger {
-    width: 42px;
-    height: 42px;
-    background: rgba(20,20,20,0.95);
-    border: 1px solid rgba(255,0,0,0.3);
-    border-radius: 14px;
-    display: flex;
-    flex-direction: column;
-    justify-content: center;
-    align-items: center;
-    gap: 5px;
-    cursor: pointer;
-    box-shadow: 0 0 18px rgba(255,0,0,0.25);
-}
-#hamburger span {
-    display: block;
-    height: 3px;
-    width: 20px;
-    background: linear-gradient(90deg,#ff0000,#ff4d4d);
-    border-radius: 10px;
-}
-#toolbar {
-    position: absolute;
-    top: 55px;
-    right: 0;
-    width: 230px;
-    display: none;
-    flex-direction: column;
-    gap: 10px;
-    background: rgba(15,15,15,0.98);
-    border: 1px solid rgba(255,0,0,0.2);
-    border-radius: 18px;
-    padding: 12px;
-    box-shadow: 0 0 25px rgba(255,0,0,0.25);
-}
-#toolbar button {
-    background: linear-gradient(135deg,#1f0000,#520000);
-    border: 1px solid rgba(255,0,0,0.2);
-    color: white;
-    padding: 13px;
-    border-radius: 14px;
-    font-size: 13px;
-    cursor: pointer;
-    font-weight: 600;
-    text-align: left;
-}
-#toolbar button:hover {
-    background: linear-gradient(135deg,#ff0000,#990000);
-    transform: scale(1.03);
-}
-#balanceContainer {
-    background: rgba(20,20,20,0.95);
-    padding: 7px 12px;
-    border-radius: 20px;
-    display: flex;
-    align-items: center;
-    color: #fff;
-    box-shadow: 0 0 18px rgba(255, 0, 0, 0.25);
-    border:1px solid rgba(255,0,0,0.25);
-}
+#hamburger {width: 42px;height: 42px;background: rgba(20,20,20,0.95);border: 1px solid rgba(255,0,0,0.3);border-radius: 14px;display: flex;flex-direction: column;justify-content: center;align-items: center;gap: 5px;cursor: pointer;box-shadow: 0 0 18px rgba(255,0,0,0.25);}
+#hamburger span {display: block;height: 3px;width: 20px;background: linear-gradient(90deg,#ff0000,#ff4d4d);border-radius: 10px;}
+#toolbar {position: absolute;top: 55px;right: 0;width: 230px;display: none;flex-direction: column;gap: 10px;background: rgba(15,15,15,0.98);border: 1px solid rgba(255,0,0,0.2);border-radius: 18px;padding: 12px;box-shadow: 0 0 25px rgba(255,0,0,0.25);}
+#toolbar button {background: linear-gradient(135deg,#1f0000,#520000);border: 1px solid rgba(255,0,0,0.2);color: white;padding: 13px;border-radius: 14px;font-size: 13px;cursor: pointer;font-weight: 600;text-align: left;}
+#toolbar button:hover {background: linear-gradient(135deg,#ff0000,#990000);transform: scale(1.03);}
+#balanceContainer {background: rgba(20,20,20,0.95);padding: 7px 12px;border-radius: 20px;display: flex;align-items: center;color: #fff;box-shadow: 0 0 18px rgba(255, 0, 0, 0.25);border:1px solid rgba(255,0,0,0.25);}
 #balanceAmount { font-size: 14px; margin-right: 6px; font-weight: 600; }
-#addBalanceBtn {
-    font-size: 14px;
-    background: red;
-    border: none;
-    color: white;
-    border-radius: 50%;
-    width: 26px;
-    height: 26px;
-    cursor: pointer;
-    box-shadow: 0 0 6px rgba(255,0,0,0.8);
-}
-#statusMessage {
-    margin-top: 12px;
-    font-size: 18px;
-    color: yellow;
-    text-shadow: 0 0 4px orange;
-}
-#instructionText {
-    font-size: 16px;
-    color: #ffdd00;
-    margin-bottom: 15px;
-    font-weight: 600;
-}
-.warning-text {
-    color: #ff1a1a;
-    font-size: 14px;
-    font-weight: 700;
-    margin: 8px 0;
-    animation: blink 1.5s infinite;
-}
-@keyframes blink {
-    0%, 100% { opacity: 1; }
-    50% { opacity: 0.4; }
-}
-
-/* REGISTER PANEL */
-#registrationContainer {
-    margin: 20px auto;
-    background: rgba(255,0,0,0.08);
-    padding: 25px;
-    border-radius: 18px;
-    border: 2px solid #ff1a1a;
-    max-width: 450px;
-    box-shadow: 0 0 25px rgba(255,0,0,0.3);
-}
-
-/* COMPULSORY REGISTER BUTTON */
-#registerBtn {
-    border: 3px solid #00ffff;
-    border-radius: 18px;
-    padding: 16px 25px;
-    background: linear-gradient(90deg, #ff0000, #ff4d4d);
-    color: white;
-    cursor: pointer;
-    font-size: 18px;
-    font-weight: 700;
-    margin-bottom: 15px;
-    width: 95%;
-    box-shadow: 0 0 20px rgba(255,0,0,0.8);
-    animation: pulse 2s infinite;
-    letter-spacing: 0.5px;
-}
-@keyframes pulse {
-    0% { box-shadow: 0 0 20px rgba(255,0,0,0.8); }
-    50% { box-shadow: 0 0 35px rgba(255,0,0,1); }
-    100% { box-shadow: 0 0 20px rgba(255,0,0,0.8); }
-}
+#addBalanceBtn {font-size: 14px;background: red;border: none;color: white;border-radius: 50%;width: 26px;height: 26px;cursor: pointer;box-shadow: 0 0 6px rgba(255,0,0,0.8);}
+#statusMessage {margin-top: 12px;font-size: 18px;color: yellow;text-shadow: 0 0 4px orange;}
+#instructionText {font-size: 16px;color: #ffdd00;margin-bottom: 15px;font-weight: 600;}
+.warning-text {color: #ff1a1a;font-size: 14px;font-weight: 700;margin: 8px 0;animation: blink 1.5s infinite;}
+@keyframes blink {0%, 100% { opacity: 1; }50% { opacity: 0.4; }}
+#registrationContainer {margin: 20px auto;background: rgba(255,0,0,0.08);padding: 25px;border-radius: 18px;border: 2px solid #ff1a1a;max-width: 450px;box-shadow: 0 0 25px rgba(255,0,0,0.3);}
+#registerBtn {border: 3px solid #00ffff;border-radius: 18px;padding: 16px 25px;background: linear-gradient(90deg, #ff0000, #ff4d4d);color: white;cursor: pointer;font-size: 18px;font-weight: 700;margin-bottom: 15px;width: 95%;box-shadow: 0 0 20px rgba(255,0,0,0.8);animation: pulse 2s infinite;letter-spacing: 0.5px;}
+@keyframes pulse {0% { box-shadow: 0 0 20px rgba(255,0,0,0.8); }50% { box-shadow: 0 0 35px rgba(255,0,0,1); }100% { box-shadow: 0 0 20px rgba(255,0,0,0.8); }}
 #registerBtn:hover { transform: scale(1.04); }
-
-.grid {
-    display: grid;
-    grid-template-columns: repeat(auto-fill,minmax(100px,1fr));
-    gap: 15px;
-    padding-top: 20px;
-    justify-items: center;
-}
-.game-button {
-    width: 100%;
-    max-width: 120px;
-    cursor: pointer;
-    border-radius: 12px;
-    overflow: hidden;
-    box-shadow: 0 0 10px rgba(255,0,0,0.5);
-}
-.game-button.locked img {
-    opacity: 0.25!important;
-    pointer-events: none!important;
-    filter: grayscale(1);
-}
-.game-button img {
-    width: 100%;
-    height: 100px;
-    object-fit: cover;
-    border-radius: 12px;
-}
-.label {
-    margin-top: 5px;
-    color: cyan;
-    font-size: 14px;
-    font-weight: 600;
-}
-#toast {
-    visibility: hidden;
-    min-width: 260px;
-    background-color: red;
-    color: white;
-    text-align: center;
-    border-radius: 10px;
-    padding: 12px;
-    position: fixed;
-    bottom: 30px;
-    left: 50%;
-    transform: translateX(-50%);
-    font-size: 16px;
-    font-weight: 600;
-    z-index: 99999;
-    opacity: 0;
-    transition: opacity 0.3s, bottom 0.3s;
-}
-#toast.show {
-    visibility: visible;
-    opacity: 1;
-    bottom: 50px;
-}
+.grid {display: grid;grid-template-columns: repeat(auto-fill,minmax(100px,1fr));gap: 15px;padding-top: 20px;justify-items: center;}
+.game-button {width: 100%;max-width: 120px;cursor: pointer;border-radius: 12px;overflow: hidden;box-shadow: 0 0 10px rgba(255,0,0,0.5);}
+.game-button.locked img {opacity: 0.25!important;pointer-events: none!important;filter: grayscale(1);}
+.game-button img {width: 100%;height: 100px;object-fit: cover;border-radius: 12px;}
+.label {margin-top: 5px;color: cyan;font-size: 14px;font-weight: 600;}
+#toast {visibility: hidden;min-width: 260px;background-color: red;color: white;text-align: center;border-radius: 10px;padding: 12px;position: fixed;bottom: 30px;left: 50%;transform: translateX(-50%);font-size: 16px;font-weight: 600;z-index: 99999;opacity: 0;transition: opacity 0.3s, bottom 0.3s;}
+#toast.show {visibility: visible;opacity: 1;bottom: 50px;}
 </style>
 </head>
 <body>
@@ -238,6 +53,7 @@ h1 {
             <button onclick="goHelp()">HELP</button>
             <button onclick="goAbout()">ABOUT</button>
             <button onclick="openAffiliate()">AFFILIATE PROGRAM</button>
+            <button onclick="logout()" style="background:#333;">🚪 LOGOUT</button>
         </div>
     </div>
 </div>
@@ -245,38 +61,19 @@ h1 {
 <h1>Dark Magic Ai Bot</h1>
 <p id="statusMessage">Checking verification status...</p>
 
-<!-- REGISTER PANEL WITH NEW WIDGET -->
 <div id="registrationContainer">
     <p id="instructionText">TO ACCESS ALL FEATURES YOU MUST:</p>
     <p class="warning-text">⚠️ COMPULSORY: REGISTER WITH OUR OFFICIAL LINK BELOW ⚠️</p>
     <p class="warning-text">🚫 1 ID = 1 ACCOUNT. CANNOT BE SHARED 🚫</p>
-
-    <button id="registerBtn" onclick="window.open('https://lkiv.cc/021d52', '_blank')">
-        🔥 CLICK HERE TO REGISTER NEW 1WIN ACCOUNT 🔥
-    </button>
-
+    <button id="registerBtn" onclick="window.open('https://lkiv.cc/021d52', '_blank')">🔥 CLICK HERE TO REGISTER NEW 1WIN ACCOUNT 🔥</button>
     <p style="color:#aaa; font-size:13px; margin:15px 0;">After registering + First Deposit, verify your 1Win ID below</p>
-
-    <!-- 1WIN VERIFICATION WIDGET FROM REPLIT -->
     <div id="onewin-verify" style="max-width:400px;margin:15px auto;font-family:'Poppins',sans-serif;">
-      <input
-        id="onewin-id-input"
-        type="text"
-        placeholder="Enter your 1Win ID (numbers only)"
-        style="width:100%;padding:14px;font-size:16px;border:2px solid cyan;border-radius:12px;box-sizing:border-box;background:#000;color:white;text-align:center;outline:none;"
-      />
-      <button
-        onclick="checkOneWinId()"
-        id="verifyBtn"
-        style="width:100%;margin-top:12px;padding:14px;font-size:16px;background:linear-gradient(90deg, #ff0000, #ff4d4d);color:#fff;border:none;border-radius:12px;cursor:pointer;font-weight:700;box-shadow:0 0 15px rgba(255,0,0,0.6);"
-      >
-        🔒 Verify & Unlock
-      </button>
+      <input id="onewin-id-input" type="text" placeholder="Enter your 1Win ID (numbers only)" style="width:100%;padding:14px;font-size:16px;border:2px solid cyan;border-radius:12px;box-sizing:border-box;background:#000;color:white;text-align:center;outline:none;"/>
+      <button onclick="checkOneWinId()" id="verifyBtn" style="width:100%;margin-top:12px;padding:14px;font-size:16px;background:linear-gradient(90deg, #ff0000, #ff4d4d);color:#fff;border:none;border-radius:12px;cursor:pointer;font-weight:700;box-shadow:0 0 15px rgba(255,0,0,0.6);">🔒 Verify & Unlock</button>
       <div id="onewin-result" style="margin-top:15px;padding:14px;border-radius:12px;display:none;font-size:15px;font-weight:600;"></div>
     </div>
 </div>
 
-<!-- GAME GRID -->
 <div class="grid" id="gameGrid">
     <div class="game-button" id="luckyJetBtn"><img src="lucky.jpg"><div class="label">Lucky Jet</div></div>
     <div class="game-button" id="aviatorBtn"><img src="aviator.jpg"><div class="label">Aviator</div></div>
@@ -315,10 +112,8 @@ function openTelegram(){ window.open("https://t.me/darkmagic01","_blank"); }
 function goHelp(){ window.location.href="help.html"; }
 function goAbout(){ window.location.href="about.html"; }
 function openAffiliate() { window.location.href = "affiliate.html"; }
-function contactSupport(){
-    const links=["https://t.me/dark_magiks","https://t.me/dark_maggik"];
-    window.open(links[Math.floor(Math.random()*links.length)],"_blank");
-}
+function contactSupport(){const links=["https://t.me/dark_magiks","https://t.me/dark_maggik"];window.open(links[Math.floor(Math.random()*links.length)],"_blank");}
+function logout(){ firebase.auth().signOut().then(()=>{ window.location.href="login.html"; }); }
 
 const balanceDisplay = document.getElementById("balanceAmount");
 document.getElementById("addBalanceBtn").onclick=()=>{ window.location.href="deposit.html"; };
@@ -333,6 +128,7 @@ firebase.initializeApp(firebaseConfig);
 const db=firebase.database();
 let approvalStatus=null;
 let currentUser = null;
+let lastVerifyTime = 0; // ANTI-SPAM
 
 function lockButtons(){ document.querySelectorAll(".game-button").forEach(el=>{ el.classList.add("locked"); }); }
 function unlockButtons(){ document.querySelectorAll(".game-button").forEach(el=>{ el.classList.remove("locked"); }); }
@@ -361,32 +157,39 @@ function handleGameClick(page){
     setTimeout(()=>{ location.href=page; },900);
 }
 
-// NEW: CHECK IF ID IS ALREADY USED BY ANOTHER ACCOUNT
+// BACKUP BALANCE BEFORE ANY CHANGE
+function backupBalance(uid, balance){
+    db.ref("backups/"+uid+"/"+Date.now()).set({balance: balance, time: Date.now()});
+}
+
 async function isIdAlreadyUsed(onewinID, currentUID) {
     const snap = await db.ref("onewin_ids/" + onewinID).once("value");
     const data = snap.val();
     if(data && data.uid!== currentUID) {
-        return data; // return who used it
+        return data;
     }
     return null;
 }
 
-// UPDATED WIDGET FUNCTION WITH ID LOCK
 let currentVerifyingID = null;
 async function checkOneWinId() {
+  // ANTI-SPAM: 10 second cooldown
+  if(Date.now() - lastVerifyTime < 10000) return toast("⏳ Wait 10 seconds before retrying");
+  lastVerifyTime = Date.now();
+
   var input = document.getElementById("onewin-id-input");
   var result = document.getElementById("onewin-result");
   var user = firebase.auth().currentUser;
   if(!user) return toast("Auth error — please login again.");
 
-  var id = input.value.replace(/\D/g, ""); // keep digits only
+  var id = input.value.replace(/\D/g, "");
   currentVerifyingID = id;
   result.style.display = "block";
 
-  if (!id) {
+  if (!id || id.length < 4) {
     result.style.background = "#fff3cd";
     result.style.color = "#664d03";
-    result.textContent = "Please enter your numeric ID.";
+    result.textContent = "Please enter a valid numeric ID.";
     return;
   }
 
@@ -397,18 +200,16 @@ async function checkOneWinId() {
   document.getElementById("verifyBtn").disabled = true;
 
   try {
-    // STEP 1: CHECK IF ID IS ALREADY LINKED TO ANOTHER ACCOUNT
     const usedBy = await isIdAlreadyUsed(id, user.uid);
     if(usedBy) {
         result.style.background = "#4a0000";
         result.style.color = "#ff8080";
-        result.textContent = `🚫 This ID is already verified on another account: ${usedBy.email || 'Hidden'}`;
+        result.textContent = `🚫 This ID is already verified on another account`;
         document.getElementById("statusMessage").innerHTML="🚫 ID already in use";
         document.getElementById("verifyBtn").disabled = false;
         return;
     }
 
-    // STEP 2: CHECK WITH REPLIT API
     var res = await fetch("https://telegram-guard.replit.app/api/onewin/check/" + id);
     var data = await res.json();
 
@@ -430,23 +231,21 @@ async function checkOneWinId() {
 
       approvalStatus="activated";
 
-      // STEP 3: SAVE TO 2 PLACES - USER + GLOBAL ID LOCK
-      const updates = {};
-      updates["users/"+user.uid] = {
+      // SECURE WRITE: Only write to user node
+      await db.ref("users/"+user.uid).update({
           email: user.email || "",
           oneWinID: id,
           verified: true,
           firstDepositAmount: data.deposit_amount,
           verifiedAt: Date.now(),
           status: "activated"
-      };
-      updates["onewin_ids/"+id] = {
+      });
+
+      await db.ref("onewin_ids/"+id).set({
           uid: user.uid,
           email: user.email || "",
           lockedAt: Date.now()
-      };
-
-      await db.ref().update(updates);
+      });
 
       setTimeout(()=>{
           document.getElementById("registrationContainer").style.display="none";
@@ -457,7 +256,7 @@ async function checkOneWinId() {
   } catch (e) {
     result.style.background = "#4a0000";
     result.style.color = "#ff8080";
-    result.textContent = "Connection error. Enable CORS on Replit.";
+    result.textContent = "Connection error. Try again.";
     toast("Server Error");
     console.log(e);
   }
@@ -487,7 +286,9 @@ function checkStatus(uid){
 
 function listenBalance(uid){
     db.ref("users/"+uid+"/balance").on("value",snap=>{
-        balanceDisplay.innerText=snap.val()!=null? Math.floor(snap.val()) : 0;
+        const bal = snap.val()!=null? Math.floor(snap.val()) : 0;
+        backupBalance(uid, bal); // AUTO BACKUP
+        balanceDisplay.innerText = bal;
     });
 }
 
