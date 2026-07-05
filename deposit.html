@@ -13,8 +13,9 @@ body {background: #000;color: white;font-family: 'Poppins', sans-serif;text-alig
 h1 {font-family: 'UnifrakturCook', cursive;font-size: 38px;color: #ff1a1a;margin-bottom: 8px;text-shadow: 0 0 10px rgba(255,0,0,0.5);}
 .input-group {margin: 15px 0;text-align: left;width: 92%;margin-left: auto;margin-right: auto;}
 label {font-size: 14px;color: #aaa;margin-bottom: 5px;display: block;}
+.warn-text {font-size: 12px;color: #ffdd00;margin-top: -8px;margin-bottom: 8px;display: block;}
 select, input[type="number"], input[type="text"] {width: 100%;padding: 14px;font-size: 16px;border-radius: 10px;border: 2px solid #333;background: #111;color: white;box-sizing: border-box;}
-select {appearance: none; -webkit-appearance: none; -moz-appearance: none;} /* fixes mobile dropdown */
+select {appearance: none; -webkit-appearance: none; -moz-appearance: none;}
 .glass-btn {width: 92%;padding: 15px;background: rgba(255, 0, 0, 0.15);backdrop-filter: blur(12px);border: 1px solid rgba(255, 0, 0, 0.4);font-size: 18px;color: #ffffff;font-weight: 700;border-radius: 15px;margin-top: 15px;cursor: pointer;box-shadow: 0 0 20px rgba(255, 0, 0, 0.6);}
 #toast {visibility: hidden;min-width: 260px;background-color: #ff1a1a;color: white;text-align: center;border-radius: 12px;padding: 14px;position: fixed;bottom: 30px;left: 50%;transform: translateX(-50%);font-size: 16px;font-weight: 600;z-index: 99999;opacity: 0;transition: opacity 0.3s;}
 #toast.show {visibility: visible;opacity: 1;bottom: 50px;}
@@ -29,6 +30,7 @@ select {appearance: none; -webkit-appearance: none; -moz-appearance: none;} /* f
 
 <div class="input-group">
     <label>Enter Your 1Win ID <span style="color:#ff1a1a;">*Required</span></label>
+    <span class="warn-text">⚠️ Note: Your 1Win ID only links you to the bot. Depositing here will NOT reflect in your 1Win account. Double check your ID, coins can be lost if wrong.</span>
     <input type="text" id="onewinIdInput" placeholder="Enter numbers only" />
 </div>
 
@@ -45,7 +47,7 @@ select {appearance: none; -webkit-appearance: none; -moz-appearance: none;} /* f
     <div id="coinRate"></div>
 </div>
 
-<button class="glass-btn" id="submitDepositBtn">ð° Buy Coins Now</button>
+<button class="glass-btn" id="submitDepositBtn">💰 Buy Coins Now</button>
 <div id="depositStatus"></div>
 <div id="toast"></div>
 
@@ -69,21 +71,21 @@ const onewinInput = document.getElementById("onewinIdInput");
 let selectedCountry = "", flutterwaveKey = null, currentUser = null;
 
 const AFRICAN_RATES = {
-    "NG": {name: "Nigeria", currency: "NGN", symbol: "â¦", rate: 1, flutterwave: "NGN", flag: "ð³ð¬"},
-    "GH": {name: "Ghana", currency: "GHS", symbol: "GHâµ", rate: 0.045, flutterwave: "GHS", flag: "ð¬ð­"},
-    "ZA": {name: "South Africa", currency: "ZAR", symbol: "R", rate: 0.11, flutterwave: "ZAR", flag: "ð¿ð¦"},
-    "KE": {name: "Kenya", currency: "KES", symbol: "KSh", rate: 2.3, flutterwave: "KES", flag: "ð°ðª"},
-    "UG": {name: "Uganda", currency: "UGX", symbol: "USh", rate: 70, flutterwave: "UGX", flag: "ðºð¬"},
-    "TZ": {name: "Tanzania", currency: "TZS", symbol: "TSh", rate: 45, flutterwave: "TZS", flag: "ð¹ð¿"},
-    "CM": {name: "Cameroon", currency: "XAF", symbol: "FCFA", rate: 12, flutterwave: "XAF", flag: "ð¨ð²"},
-    "SN": {name: "Senegal", currency: "XOF", symbol: "CFA", rate: 12, flutterwave: "XOF", flag: "ð¸ð³"}
+    "NG": {name: "Nigeria 🇳🇬", currency: "NGN", symbol: "₦", rate: 1, flutterwave: "NGN", minAmount: 1000, coins: 5},
+    "GH": {name: "Ghana 🇬🇭", currency: "GHS", symbol: "GH₵", rate: 0.045, flutterwave: "GHS", minAmount: 45, coins: 10},
+    "ZA": {name: "South Africa 🇿🇦", currency: "ZAR", symbol: "R", rate: 0.11, flutterwave: "ZAR", minAmount: 25, coins: 5},
+    "KE": {name: "Kenya 🇰🇪", currency: "KES", symbol: "KSh", rate: 2.3, flutterwave: "KES", minAmount: 200, coins: 5},
+    "UG": {name: "Uganda 🇺🇬", currency: "UGX", symbol: "USh", rate: 70, flutterwave: "UGX", minAmount: 3000, coins: 5},
+    "TZ": {name: "Tanzania 🇹🇿", currency: "TZS", symbol: "TSh", rate: 45, flutterwave: "TZS", minAmount: 2500, coins: 5},
+    "CM": {name: "Cameroon 🇨🇲", currency: "XAF", symbol: "FCFA", rate: 12, flutterwave: "XAF", minAmount: 1000, coins: 5},
+    "SN": {name: "Senegal 🇸🇳", currency: "XOF", symbol: "CFA", rate: 12, flutterwave: "XOF", minAmount: 1000, coins: 5}
 };
 
 document.addEventListener("DOMContentLoaded", () => {
     Object.keys(AFRICAN_RATES).forEach(code => {
         const opt = document.createElement("option");
         opt.value = code;
-        opt.textContent = `${AFRICAN_RATES[code].flag} ${AFRICAN_RATES[code].name}`;
+        opt.textContent = AFRICAN_RATES[code].name;
         countrySelect.appendChild(opt);
     });
 });
@@ -100,25 +102,25 @@ countrySelect.onchange = () => {
     }
 
     const c = AFRICAN_RATES[selectedCountry];
-    if(!c) return;
+    if(!c) { // FIX 1: false country error
+        toast("Invalid country selected");
+        return;
+    }
 
-    const coinPrice = Math.ceil(200 * c.rate);
-    const minDeposit = Math.ceil(1000 * c.rate);
+    const coinPrice = Math.ceil(c.minAmount / c.coins);
     amountLabel.innerHTML = `Enter Deposit Amount (${c.symbol})`;
-    depositInput.placeholder = `Min ${c.symbol}${minDeposit}`;
-    depositInput.min = minDeposit;
+    depositInput.placeholder = `Min ${c.symbol}${c.minAmount}`;
+    depositInput.min = c.minAmount;
     depositInput.value = "";
-    coinRate.innerHTML = `${c.symbol}${coinPrice} = 1 Coin | Min Deposit: ${c.symbol}${minDeposit} = 5 Coins`;
+    coinRate.innerHTML = `${c.symbol}${coinPrice} = 1 Coin | Min Deposit: ${c.symbol}${c.minAmount} = ${c.coins} Coins`;
 };
 
 function validateAmount(amount, countryCode) {
     const c = AFRICAN_RATES[countryCode];
     if(!c) return {valid: false, msg: "Select country first"};
-    const coinPrice = Math.ceil(200 * c.rate);
-    const minDeposit = Math.ceil(1000 * c.rate);
-    if (amount < minDeposit) return { valid: false, msg: `Minimum deposit is ${c.symbol}${minDeposit}` };
-    const coins = Math.floor(amount / coinPrice);
-    if (coins < 5) return { valid: false, msg: `Minimum 5 coins. Deposit at least ${c.symbol}${minDeposit}` };
+    if (amount < c.minAmount) return { valid: false, msg: `Minimum deposit is ${c.symbol}${c.minAmount}` };
+    const coins = Math.floor(amount / (c.minAmount / c.coins));
+    if (coins < c.coins) return { valid: false, msg: `Minimum ${c.coins} coins. Deposit at least ${c.symbol}${c.minAmount}` };
     return { valid: true, coins };
 }
 
@@ -133,9 +135,8 @@ async function creditCoinsViaReplit(buyer1winId, coins, paymentOrderId) {
     } catch(e) {return {success: false, message: "Server connection error"};}
 }
 
-// FINISH CREDITING (works from both callback AND redirect)
 async function verifyAndCredit(user, buyer1winId, coins, tx_ref) {
-    document.getElementById("depositStatus").innerHTML = "â³ Verifying payment...";
+    document.getElementById("depositStatus").innerHTML = "⏳ Verifying payment...";
     const result = await creditCoinsViaReplit(buyer1winId, coins, tx_ref);
     if (result.success) {
         try {
@@ -143,19 +144,17 @@ async function verifyAndCredit(user, buyer1winId, coins, tx_ref) {
             await db.ref("users/" + user.uid + "/transactions").push({
                 type: "deposit", coins: coins, ref: tx_ref, time: Date.now()
             });
-        } catch(e) { /* Firebase record failed but coins are already in the bot */ }
+        } catch(e) { }
         localStorage.removeItem("lastPayment");
         document.getElementById("depositStatus").innerHTML = "";
-        toast(`â +${coins} Coins Credited! Check your bot balance.`);
+        toast(`✅ +${coins} Coins Credited! Check your bot balance.`);
         setTimeout(() => { window.location.href = "main.html"; }, 2500);
     } else {
         document.getElementById("depositStatus").innerHTML = "";
-        toast(`â ${result.message || result.error || "Crediting failed. Contact support."}`);
-        // Keep lastPayment saved so it can retry on next page load
+        toast(`❌ ${result.message || result.error || "Crediting failed. Contact support."}`);
     }
 }
 
-// CHECK IF WE CAME BACK FROM A FLUTTERWAVE REDIRECT
 function checkPendingPayment(user) {
     const urlParams = new URLSearchParams(window.location.search);
     const status = urlParams.get("status");
@@ -175,7 +174,7 @@ function checkPendingPayment(user) {
 firebase.auth().onAuthStateChanged(user => {
     if (!user) return window.location.href = "login.html";
     currentUser = user;
-    checkPendingPayment(user); // run AFTER login is confirmed
+    checkPendingPayment(user);
 });
 db.ref("settings/flutterwaveKeys/public").once("value").then(snap => {flutterwaveKey = snap.val() || "";});
 
@@ -184,8 +183,6 @@ async function startPayment(user, amountRaw, coins, countryCode, buyer1winId) {
     let payment_options = "card";
     if(countryCode === "NG") payment_options = "card, banktransfer, ussd";
     const tx_ref = "DM-" + Date.now() + "-" + user.uid;
-
-    // SAVE BEFORE PAYMENT so we can finish crediting after a redirect
     localStorage.setItem("lastPayment", JSON.stringify({tx_ref, coins, amountRaw, countryCode, buyer1winId}));
 
     FlutterwaveCheckout({
