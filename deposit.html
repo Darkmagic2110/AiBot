@@ -9,7 +9,6 @@
 <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@500;600;700&display=swap" rel="stylesheet">
 
 <style>
-/* SAME CSS AS YOURS */
 body {background: #000;color: white;font-family: 'Poppins', sans-serif;text-align: center;padding: 15px;}
 h1 {font-family: 'UnifrakturCook', cursive;font-size: 38px;color: #ff1a1a;margin-bottom: 8px;text-shadow: 0 0 10px rgba(255,0,0,0.5);}
 .subtitle {color: #ccc;font-size: 14px;margin-bottom: 20px;}
@@ -19,11 +18,24 @@ select, input[type="number"], input[type="text"] {width: 100%;padding: 14px;font
 select:focus, input:focus {border-color: #ff1a1a;outline: none;box-shadow: 0 0 10px rgba(255,0,0,0.4);}
 .glass-btn {width: 92%;padding: 15px;background: rgba(255, 0, 0, 0.15);backdrop-filter: blur(12px);-webkit-backdrop-filter: blur(12px);border: 1px solid rgba(255, 0, 0, 0.4);font-family: 'Poppins', sans-serif;font-size: 18px;color: #ffffff;font-weight: 700;border-radius: 15px;margin-top: 15px;cursor: pointer;letter-spacing: 0.5px;transition: 0.3s ease-in-out;box-shadow: 0 0 20px rgba(255, 0, 0, 0.6);}
 .glass-btn:hover {transform: scale(1.02);background: rgba(255, 0, 0, 0.25);box-shadow: 0 0 30px rgba(255, 0, 0, 0.9);}
+.glass-btn.green {background: rgba(0,255,0,0.15);border: 1px solid rgba(0,255,0,0.4);box-shadow: 0 0 20px rgba(0,255,0,0.6);}
+.glass-btn.green:hover {background: rgba(0,255,0,0.25);box-shadow: 0 0 30px rgba(0,255,0,0.9);}
 #toast {visibility: hidden;min-width: 260px;background-color: #ff1a1a;color: white;text-align: center;border-radius: 12px;padding: 14px;position: fixed;bottom: 30px;left: 50%;transform: translateX(-50%);font-size: 16px;font-weight: 600;z-index: 99999;opacity: 0;transition: opacity 0.3s, bottom 0.3s;}
 #toast.show {visibility: visible;opacity: 1;bottom: 50px;}
 #coinRate {font-size: 15px;color: #00e5ff;margin-top: 8px;font-weight: 600;}
 #refreshNotice {font-size: 13px;color: #ffdd00;margin-top: 15px;font-weight: 600;animation: blinkGlow 1.2s infinite alternate;}
 @keyframes blinkGlow {0% { opacity: 1; text-shadow: 0 0 5px #ffdd00; }100% { opacity: 0.5; text-shadow: 0 0 15px #ff1a1a; }}
+
+#pendingBox {
+    display:none;
+    width: 92%;
+    margin: 20px auto;
+    padding:20px;
+    background:rgba(255,221,0,0.1);
+    border:2px dashed #ffdd00;
+    border-radius:15px;
+}
+#pendingBox p {margin:8px 0;}
 </style>
 </head>
 <body>
@@ -31,7 +43,6 @@ select:focus, input:focus {border-color: #ff1a1a;outline: none;box-shadow: 0 0 1
 <h1>Deposit Coins</h1>
 <p class="subtitle">Power up your Dark Magic Ai Bot</p>
 
-<!-- NEW: 1WIN ID INPUT -->
 <div class="input-group">
     <label>Enter Your 1Win ID <span style="color:#ff1a1a;">*Required for coin credit</span></label>
     <input type="text" id="onewinIdInput" placeholder="Enter numbers only" />
@@ -39,9 +50,7 @@ select:focus, input:focus {border-color: #ff1a1a;outline: none;box-shadow: 0 0 1
 
 <div class="input-group">
     <label>Select Your African Country</label>
-    <select id="countrySelect">
-        <option value="">-- Choose Country --</option>
-    </select>
+    <select id="countrySelect"><option value="">-- Choose Country --</option></select>
 </div>
 
 <div class="input-group">
@@ -52,8 +61,17 @@ select:focus, input:focus {border-color: #ff1a1a;outline: none;box-shadow: 0 0 1
 
 <button class="glass-btn" id="submitDepositBtn">💰 Buy Coins Now</button>
 
+<!-- NEW: PENDING PAYMENT RECOVERY BOX -->
+<div id="pendingBox">
+    <p style="color:#ffdd00; font-weight:700; font-size:16px;">⚠️ PAYMENT IN PROGRESS</p>
+    <p style="font-size:13px; color:#aaa;">If payment was successful but you weren't redirected, click below</p>
+    <p>Tx Ref: <span id="pendingTxRef" style="color:#00e5ff; font-weight:700;"></span></p>
+    <button class="glass-btn green" id="verifyPaymentBtn">✅ I HAVE PAID - VERIFY NOW</button>
+    <button class="glass-btn" id="cancelPendingBtn" style="background:rgba(100,100,100,0.2);">❌ Cancel</button>
+</div>
+
 <div id="depositStatus"></div>
-<div id="refreshNotice">⚡ Return to site immediately after payment to credit coins ⚡</div>
+<div id="refreshNotice">⚡ DO NOT CLOSE PAGE. Return here after payment ⚡</div>
 
 <div id="toast"></div>
 
@@ -81,14 +99,16 @@ const coinRate = document.getElementById("coinRate");
 const submitBtn = document.getElementById("submitDepositBtn");
 const depositStatus = document.getElementById("depositStatus");
 const onewinInput = document.getElementById("onewinIdInput");
+const pendingBox = document.getElementById("pendingBox");
 
 let selectedCountry = "";
 let flutterwaveKey = null;
 let currentUser = null;
+let pendingTx = null;
 
 const AFRICAN_RATES = {
     "NG": {name: "Nigeria 🇳🇬", currency: "NGN", symbol: "₦", rate: 1, flutterwave: "NGN"},
-    "GH": {name: "Ghana 🇬🇭", currency: "GHS", symbol: "GH₵", rate: 0.0083, flutterwave: "GHS"}, // FIXED RATE
+    "GH": {name: "Ghana 🇬🇭", currency: "GHS", symbol: "GH₵", rate: 0.0083, flutterwave: "GHS"},
     "ZA": {name: "South Africa 🇿🇦", currency: "ZAR", symbol: "R", rate: 0.11, flutterwave: "ZAR"},
     "KE": {name: "Kenya 🇰🇪", currency: "KES", symbol: "KSh", rate: 2.3, flutterwave: "KES"},
     "UG": {name: "Uganda 🇺🇬", currency: "UGX", symbol: "USh", rate: 70, flutterwave: "UGX"},
@@ -141,6 +161,52 @@ db.ref("settings/flutterwaveKeys/public").once("value").then(snap => {
     flutterwaveKey = snap.val() || "";
 });
 
+// SAVE PENDING PAYMENT TO LOCALSTORAGE
+function savePending(tx_ref, coins, amount, buyer1winId){
+    pendingTx = {tx_ref, coins, amount, buyer1winId, country: selectedCountry};
+    localStorage.setItem("pendingPayment", JSON.stringify(pendingTx));
+    pendingBox.style.display = "block";
+    document.getElementById("pendingTxRef").innerText = tx_ref;
+}
+
+function clearPending(){
+    localStorage.removeItem("pendingPayment");
+    pendingTx = null;
+    pendingBox.style.display = "none";
+}
+
+// VERIFY PAYMENT MANUALLY
+async function verifyPayment(){
+    if(!pendingTx) return toast("No pending payment");
+    depositStatus.innerHTML = "⏳ Verifying payment with server...";
+    document.getElementById("verifyPaymentBtn").disabled = true;
+
+    const result = await creditCoinsViaReplit(pendingTx.buyer1winId, pendingTx.coins, pendingTx.tx_ref);
+
+    if(result.success){
+        await db.ref("users/" + currentUser.uid + "/balance").transaction(v => (v || 0) + pendingTx.coins);
+        await db.ref("users/" + currentUser.uid + "/transactions").push({
+            type: "deposit", coins: pendingTx.coins, amount: pendingTx.amount,
+            currency: AFRICAN_RATES[pendingTx.country].currency,
+            symbol: AFRICAN_RATES[pendingTx.country].symbol,
+            ref: pendingTx.tx_ref, time: Date.now(), country: pendingTx.country, oneWinID: pendingTx.buyer1winId
+        });
+        clearPending();
+        toast(`✅ ${pendingTx.coins} Coins Credited Successfully!`);
+        depositStatus.innerHTML = `Coins Added: ${pendingTx.coins}`;
+        setTimeout(() => { window.location.href = "main.html"; }, 2000);
+    } else {
+        toast(`❌ ${result.message || "Payment not confirmed yet"}`);
+        depositStatus.innerHTML = "Payment not found. Wait 1 minute and try again.";
+    }
+    document.getElementById("verifyPaymentBtn").disabled = false;
+}
+
+document.getElementById("verifyPaymentBtn").onclick = verifyPayment;
+document.getElementById("cancelPendingBtn").onclick = () => {
+    if(confirm("Cancel this pending payment?")) clearPending();
+}
+
 // NEW: FUNCTION TO CREDIT VIA REPLIT
 async function creditCoinsViaReplit(buyer1winId, coins, paymentOrderId) {
     try {
@@ -168,7 +234,8 @@ function startPayment(user, amountRaw, coins, countryCode, buyer1winId) {
     let payment_options = "card";
     if(countryCode === "NG") payment_options = "card, banktransfer, ussd";
 
-    const tx_ref = "DM-" + Date.now() + "-" + user.uid; // UNIQUE ORDER ID
+    const tx_ref = "DM-" + Date.now() + "-" + user.uid;
+    savePending(tx_ref, coins, amountRaw, buyer1winId); // SAVE BEFORE OPENING POPUP
 
     FlutterwaveCheckout({
         public_key: flutterwaveKey,
@@ -179,39 +246,14 @@ function startPayment(user, amountRaw, coins, countryCode, buyer1winId) {
         customer: { email: user.email, name: user.displayName || "User" },
         customizations: { title: "Dark Magic Ai Bot", description: `${coins} Coins Purchase` },
         callback: async function (response) {
-            const txId = response.transaction_id;
-            if (!txId) return toast("Payment not completed");
-
             if (response.status === "successful" || response.status === "completed") {
-                depositStatus.innerHTML = "⏳ Verifying payment...";
-                submitBtn.disabled = true;
-
-                // STEP 1: CALL REPLIT TO CREDIT COINS TO TELEGRAM BOT
-                const result = await creditCoinsViaReplit(buyer1winId, coins, tx_ref);
-
-                if (result.success) {
-                    // STEP 2: ALSO SAVE TO FIREBASE FOR WEBSITE BALANCE
-                    await db.ref("users/" + user.uid + "/balance").transaction(v => (v || 0) + coins);
-                    await db.ref("users/" + user.uid + "/transactions").push({
-                        type: "deposit", coins, amount: amountRaw, currency: c.currency, symbol: c.symbol,
-                        ref: tx_ref, time: Date.now(), country: countryCode, oneWinID: buyer1winId
-                    });
-
-                    toast(`✅ Payment successful! +${coins} Coins Credited`);
-                    depositStatus.innerHTML = `Coins Added: ${coins} | New Balance: ${result.new_balance || 'N/A'}`;
-                    setTimeout(() => { window.location.href = "main.html"; }, 2500);
-
-                } else {
-                    // Failed - user hasn't verified in bot
-                    toast(`❌ ${result.message || "Please verify your 1win ID in our Telegram bot first"}`);
-                    depositStatus.innerHTML = "🚫 Payment received but coins not credited. Contact support with TX: " + tx_ref;
-                }
+                await verifyPayment(); // Auto verify if callback works
             } else {
-                toast("Payment failed. Try again.");
+                toast("Payment failed");
+                clearPending();
             }
-            submitBtn.disabled = false;
         },
-        onclose: () => toast("Payment cancelled")
+        onclose: () => toast("Payment window closed. Click 'I HAVE PAID' to verify")
     });
 }
 
@@ -228,11 +270,20 @@ submitBtn.onclick = () => {
     if (!check.valid) return toast(check.msg);
     if (!flutterwaveKey) return toast("Payment key not loaded. Refresh page.");
 
-    // Show instructions then start payment
-    if(confirm("You will pay " + amountRaw + " and get " + check.coins + " coins. Continue?")){
+    if(confirm(`Pay ${amountRaw} for ${check.coins} coins?`)){
         startPayment(currentUser, amountRaw, check.coins, selectedCountry, buyer1winId);
     }
 };
+
+// CHECK IF THERE IS PENDING PAYMENT ON PAGE LOAD
+window.onload = () => {
+    const saved = localStorage.getItem("pendingPayment");
+    if(saved){
+        pendingTx = JSON.parse(saved);
+        pendingBox.style.display = "block";
+        document.getElementById("pendingTxRef").innerText = pendingTx.tx_ref;
+    }
+}
 </script>
 </body>
 </html>
