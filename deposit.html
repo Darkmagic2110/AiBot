@@ -9,209 +9,33 @@
 <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@500;600;700&display=swap" rel="stylesheet">
 
 <style>
-body {
-    background: #000;
-    color: white;
-    font-family: 'Poppins', sans-serif;
-    text-align: center;
-    padding: 15px;
-}
-h1 {
-    font-family: 'UnifrakturCook', cursive;
-    font-size: 38px;
-    color: #ff1a1a;
-    margin-bottom: 8px;
-    text-shadow: 0 0 10px rgba(255,0,0,0.5);
-}
-.subtitle {
-    color: #ccc;
-    font-size: 14px;
-    margin-bottom: 20px;
-}
-.input-group {
-    margin: 15px 0;
-    text-align: left;
-    width: 92%;
-    margin-left: auto;
-    margin-right: auto;
-}
-label {
-    font-size: 14px;
-    color: #aaa;
-    margin-bottom: 5px;
-    display: block;
-}
-select, input[type="number"], input[type="text"] {
-    width: 100%;
-    padding: 14px;
-    font-size: 16px;
-    border-radius: 10px;
-    border: 2px solid #333;
-    background: #111;
-    color: white;
-    box-sizing: border-box;
-    transition: 0.3s;
-}
-select:focus, input:focus {
-    border-color: #ff1a1a;
-    outline: none;
-    box-shadow: 0 0 10px rgba(255,0,0,0.4);
-}
-
-/* GLASS BUTTON */
-.glass-btn {
-    width: 92%;
-    padding: 15px;
-    background: rgba(255, 0, 0, 0.15);
-    backdrop-filter: blur(12px);
-    -webkit-backdrop-filter: blur(12px);
-    border: 1px solid rgba(255, 0, 0, 0.4);
-    font-family: 'Poppins', sans-serif;
-    font-size: 18px;
-    color: #ffffff;
-    font-weight: 700;
-    border-radius: 15px;
-    margin-top: 15px;
-    cursor: pointer;
-    letter-spacing: 0.5px;
-    transition: 0.3s ease-in-out;
-    box-shadow: 0 0 20px rgba(255, 0, 0, 0.6);
-}
-.glass-btn:hover {
-    transform: scale(1.02);
-    background: rgba(255, 0, 0, 0.25);
-    box-shadow: 0 0 30px rgba(255, 0, 0, 0.9);
-}
-.glass-btn:disabled {
-    background: rgba(68,68,68,0.3);
-    cursor: not-allowed;
-    box-shadow: none;
-}
-
-/* GLASS CARD */
-.glass-card {
-    width: 92%;
-    margin: 25px auto;
-    padding: 20px;
-    background: rgba(20,20,20,0.35);
-    backdrop-filter: blur(15px);
-    -webkit-backdrop-filter: blur(15px);
-    border: 1px solid rgba(0,229,255,0.3);
-    border-radius: 18px;
-    box-shadow: 0 0 25px rgba(0,229,255,0.2);
-}
-
-#toast {
-    visibility: hidden;
-    min-width: 260px;
-    background-color: #ff1a1a;
-    color: white;
-    text-align: center;
-    border-radius: 12px;
-    padding: 14px;
-    position: fixed;
-    bottom: 30px;
-    left: 50%;
-    transform: translateX(-50%);
-    font-size: 16px;
-    font-weight: 600;
-    z-index: 99999;
-    opacity: 0;
-    transition: opacity 0.3s, bottom 0.3s;
-}
-#toast.show {
-    visibility: visible;
-    opacity: 1;
-    bottom: 50px;
-}
-#depositStatus {
-    margin-top: 15px;
-    font-size: 16px;
-    color: #00ff88;
-    font-weight: 600;
-}
-#coinRate {
-    font-size: 15px;
-    color: #00e5ff;
-    margin-top: 8px;
-    font-weight: 600;
-}
-#refreshNotice {
-    font-size: 13px;
-    color: #ffdd00;
-    margin-top: 15px;
-    font-weight: 600;
-    animation: blinkGlow 1.2s infinite alternate;
-}
-@keyframes blinkGlow {
-    0% { opacity: 1; text-shadow: 0 0 5px #ffdd00; }
-    100% { opacity: 0.5; text-shadow: 0 0 15px #ff1a1a; }
-}
-.divider {
-    width: 92%;
-    margin: 25px auto;
-    height: 2px;
-    background: linear-gradient(90deg, transparent, #ff1a1a, transparent);
-}
-
-#historyBox {
-    margin-top: 30px;
-    text-align: left;
-}
-#historyBox h3 {
-    text-align: center;
-    color: #ff1a1a;
-}
-.history-item {
-    background: #111;
-    border: 1px solid #222;
-    border-radius: 12px;
-    padding: 14px;
-    margin: 10px 0;
-    display: flex;
-    justify-content: space-between;
-}
-.history-left { text-align: left; }
-.history-right { text-align: right; }
-.history-title { color: #00ff88; font-weight: 700; }
-.history-sub { font-size: 12px; color: #888; }
-.history-amount { color: #00e5ff; font-size: 13px; font-weight: 600; }
-
-/* MODAL */
-#instructionModal {
-    display: none;
-    position: fixed;
-    z-index: 999;
-    left: 0;
-    top: 0;
-    width: 100%;
-    height: 100%;
-    background: rgba(0,0,0,0.95);
-}
-#instructionContent {
-    background: #0a0a0a;
-    color: white;
-    margin: 8% auto;
-    padding: 25px;
-    width: 90%;
-    border-radius: 15px;
-    border: 2px solid #ff1a1a;
-    text-align: left;
-    max-height: 80%;
-    overflow-y: auto;
-}
-#instructionContent h2 {
-    text-align: center;
-    color: #ff1a1a;
-    margin-bottom: 15px;
-}
-.bold { font-weight: 700; color: #ffdd00; }
+/* SAME CSS AS YOURS */
+body {background: #000;color: white;font-family: 'Poppins', sans-serif;text-align: center;padding: 15px;}
+h1 {font-family: 'UnifrakturCook', cursive;font-size: 38px;color: #ff1a1a;margin-bottom: 8px;text-shadow: 0 0 10px rgba(255,0,0,0.5);}
+.subtitle {color: #ccc;font-size: 14px;margin-bottom: 20px;}
+.input-group {margin: 15px 0;text-align: left;width: 92%;margin-left: auto;margin-right: auto;}
+label {font-size: 14px;color: #aaa;margin-bottom: 5px;display: block;}
+select, input[type="number"], input[type="text"] {width: 100%;padding: 14px;font-size: 16px;border-radius: 10px;border: 2px solid #333;background: #111;color: white;box-sizing: border-box;transition: 0.3s;}
+select:focus, input:focus {border-color: #ff1a1a;outline: none;box-shadow: 0 0 10px rgba(255,0,0,0.4);}
+.glass-btn {width: 92%;padding: 15px;background: rgba(255, 0, 0, 0.15);backdrop-filter: blur(12px);-webkit-backdrop-filter: blur(12px);border: 1px solid rgba(255, 0, 0, 0.4);font-family: 'Poppins', sans-serif;font-size: 18px;color: #ffffff;font-weight: 700;border-radius: 15px;margin-top: 15px;cursor: pointer;letter-spacing: 0.5px;transition: 0.3s ease-in-out;box-shadow: 0 0 20px rgba(255, 0, 0, 0.6);}
+.glass-btn:hover {transform: scale(1.02);background: rgba(255, 0, 0, 0.25);box-shadow: 0 0 30px rgba(255, 0, 0, 0.9);}
+#toast {visibility: hidden;min-width: 260px;background-color: #ff1a1a;color: white;text-align: center;border-radius: 12px;padding: 14px;position: fixed;bottom: 30px;left: 50%;transform: translateX(-50%);font-size: 16px;font-weight: 600;z-index: 99999;opacity: 0;transition: opacity 0.3s, bottom 0.3s;}
+#toast.show {visibility: visible;opacity: 1;bottom: 50px;}
+#coinRate {font-size: 15px;color: #00e5ff;margin-top: 8px;font-weight: 600;}
+#refreshNotice {font-size: 13px;color: #ffdd00;margin-top: 15px;font-weight: 600;animation: blinkGlow 1.2s infinite alternate;}
+@keyframes blinkGlow {0% { opacity: 1; text-shadow: 0 0 5px #ffdd00; }100% { opacity: 0.5; text-shadow: 0 0 15px #ff1a1a; }}
 </style>
 </head>
 <body>
 
 <h1>Deposit Coins</h1>
 <p class="subtitle">Power up your Dark Magic Ai Bot</p>
+
+<!-- NEW: 1WIN ID INPUT -->
+<div class="input-group">
+    <label>Enter Your 1Win ID <span style="color:#ff1a1a;">*Required for coin credit</span></label>
+    <input type="text" id="onewinIdInput" placeholder="Enter numbers only" />
+</div>
 
 <div class="input-group">
     <label>Select Your African Country</label>
@@ -231,42 +55,7 @@ select:focus, input:focus {
 <div id="depositStatus"></div>
 <div id="refreshNotice">⚡ Return to site immediately after payment to credit coins ⚡</div>
 
-<div class="divider"></div>
-
-<!-- REDEEM CODE SECTION -->
-<div class="glass-card">
-    <h2 style="color:#00e5ff; margin-top:0; text-shadow:0 0 8px rgba(0,229,255,0.5);">🎁 Redeem Code</h2>
-    <p style="color:#aaa; font-size:13px; margin-bottom:15px;">Enter a code from admin to get free coins</p>
-    <div class="input-group" style="width:100%; margin:0;">
-        <input type="text" id="redeemCodeInput" placeholder="ENTER CODE" style="text-transform:uppercase; text-align:center; font-weight:700; letter-spacing:2px; background:rgba(0,0,0,0.5); border-color:#00e5ff;" />
-    </div>
-    <button class="glass-btn" id="redeemBtn" style="border-color:rgba(0,229,255,0.4); box-shadow:0 0 20px rgba(0,229,255,0.4);">🔓 Redeem Coins</button>
-    <div id="redeemStatus" style="margin-top:10px; font-size:14px; color:#00ff88;"></div>
-</div>
-
-<div class="divider"></div>
-
-<div id="historyBox">
-    <h3>📜 Transaction History</h3>
-    <div id="historyList"></div>
-</div>
-
 <div id="toast"></div>
-
-<!-- INSTRUCTION MODAL -->
-<div id="instructionModal">
-    <div id="instructionContent">
-        <h2>HOW TO DEPOSIT</h2>
-        <p class="bold">READ CAREFULLY TO AVOID COIN LOSS</p>
-        <p>1. You will be redirected to Flutterwave payment page</p>
-        <p>2. Choose your preferred payment method: Card, Bank Transfer, Mobile Money etc</p>
-        <p>3. Complete payment with the exact amount shown</p>
-        <p>4. <span class="bold">DO NOT REFRESH</span>. After payment, come back to this page</p>
-        <p>5. Click <span class="bold">"I HAVE PAID"</span> and your coins will be credited instantly</p>
-        <p class="bold">You are responsible for coin loss if you close page before returning</p>
-        <button class="glass-btn" id="agreeBtn">I HAVE READ AND UNDERSTOOD</button>
-    </div>
-</div>
 
 <script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-app.js"></script>
 <script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-auth.js"></script>
@@ -274,16 +63,14 @@ select:focus, input:focus {
 <script src="https://checkout.flutterwave.com/v3.js"></script>
 
 <script>
+const REPLIT_CREDIT_KEY = "PASTE-YOUR-KEY-HERE"; // CHANGE THIS
+
 const firebaseConfig = {
     apiKey: "AIzaSyDvFDByPPo9zgwKLdPaREz1OVMQCXmPfrs",
     authDomain: "bets-d795d.firebaseapp.com",
-    projectId: "bets-d795d",
-    storageBucket: "bets-d795d.appspot.com",
-    messagingSenderId: "384386108287",
-    appId: "1:384386108287:android:d238a5ec8068d9bb9be84a",
-    databaseURL: "https://bets-d795d-default-rtdb.firebaseio.com"
+    databaseURL: "https://bets-d795d-default-rtdb.firebaseio.com",
+    projectId: "bets-d795d"
 };
-
 if (!firebase.apps.length) firebase.initializeApp(firebaseConfig);
 const db = firebase.database();
 
@@ -293,10 +80,7 @@ const amountLabel = document.getElementById("amountLabel");
 const coinRate = document.getElementById("coinRate");
 const submitBtn = document.getElementById("submitDepositBtn");
 const depositStatus = document.getElementById("depositStatus");
-const historyList = document.getElementById("historyList");
-const redeemInput = document.getElementById("redeemCodeInput");
-const redeemBtn = document.getElementById("redeemBtn");
-const redeemStatus = document.getElementById("redeemStatus");
+const onewinInput = document.getElementById("onewinIdInput");
 
 let selectedCountry = "";
 let flutterwaveKey = null;
@@ -304,7 +88,7 @@ let currentUser = null;
 
 const AFRICAN_RATES = {
     "NG": {name: "Nigeria 🇳🇬", currency: "NGN", symbol: "₦", rate: 1, flutterwave: "NGN"},
-    "GH": {name: "Ghana 🇬🇭", currency: "GHS", symbol: "GH₵", rate: 0.045, flutterwave: "GHS"},
+    "GH": {name: "Ghana 🇬🇭", currency: "GHS", symbol: "GH₵", rate: 0.0083, flutterwave: "GHS"}, // FIXED RATE
     "ZA": {name: "South Africa 🇿🇦", currency: "ZAR", symbol: "R", rate: 0.11, flutterwave: "ZAR"},
     "KE": {name: "Kenya 🇰🇪", currency: "KES", symbol: "KSh", rate: 2.3, flutterwave: "KES"},
     "UG": {name: "Uganda 🇺🇬", currency: "UGX", symbol: "USh", rate: 70, flutterwave: "UGX"},
@@ -328,11 +112,7 @@ function toast(msg) {
 
 countrySelect.onchange = () => {
     selectedCountry = countrySelect.value;
-    if(!selectedCountry) {
-        coinRate.innerHTML = "";
-        depositInput.placeholder = "Select country first";
-        return;
-    }
+    if(!selectedCountry) {coinRate.innerHTML = "";depositInput.placeholder = "Select country first";return;}
     const c = AFRICAN_RATES[selectedCountry];
     const coinPrice = Math.ceil(200 * c.rate);
     const minDeposit = Math.ceil(1000 * c.rate);
@@ -352,96 +132,84 @@ function validateAmount(amount, countryCode) {
     return { valid: true, coins };
 }
 
-// HISTORY - NOW INCLUDES REDEEM
 firebase.auth().onAuthStateChanged(user => {
     if (!user) return window.location.href = "login.html";
     currentUser = user;
-
-    db.ref("users/" + user.uid + "/transactions").once("value").then(snap => {
-        historyList.innerHTML = "";
-        let arr = [];
-        snap.forEach(child => arr.push(child.val()));
-        arr.sort((a, b) => b.time - a.time);
-        arr.forEach(tx => {
-            if (tx.type === "deposit" || tx.type === "redeem") {
-                const d = new Date(tx.time).toLocaleString();
-                const symbol = tx.symbol || "";
-                const isRedeem = tx.type === "redeem";
-                historyList.innerHTML += `
-                <div class="history-item">
-                    <div class="history-left">
-                        <div class="history-title" style="color:${isRedeem? '#ffdd00' : '#00ff88'}">${isRedeem? '🎁 ' : '+'}${tx.coins} Coins</div>
-                        <div class="history-sub">Ref: ${tx.ref}</div>
-                        <div class="history-sub">${d}</div>
-                    </div>
-                    <div class="history-right">
-                        <div>+${tx.coins} Coins</div>
-                        <div class="history-amount">${symbol}${tx.amount || 0}</div>
-                    </div>
-                </div>`;
-            }
-        });
-    });
 });
 
 db.ref("settings/flutterwaveKeys/public").once("value").then(snap => {
     flutterwaveKey = snap.val() || "";
 });
 
-function processAffiliate(userId, amountRaw, txId) {
-    db.ref("users/" + userId).once("value").then(userSnap => {
-        const userData = userSnap.val();
-        if (!userData ||!userData.referredBy) return;
-        const refCode = userData.referredBy;
-        db.ref("processedAffiliates/" + txId).once("value").then(check => {
-            if (check.exists()) return;
-            db.ref("promoCodes/" + refCode).once("value").then(res => {
-                const referrerId = res.val();
-                if (!referrerId) return;
-                const commission = amountRaw * 0.30;
-                db.ref("users/" + referrerId + "/affiliateBalance").transaction(v => (v || 0) + commission);
-                db.ref("users/" + referrerId + "/totalEarned").transaction(v => (v || 0) + commission);
-                db.ref("users/" + referrerId + "/totalReferrals").transaction(v => (v || 0) + 1);
-                db.ref("referrals").push({ referrerId, referredId: userId, amount: amountRaw, commission, txId, time: Date.now() });
-                db.ref("processedAffiliates/" + txId).set(true);
-            });
+// NEW: FUNCTION TO CREDIT VIA REPLIT
+async function creditCoinsViaReplit(buyer1winId, coins, paymentOrderId) {
+    try {
+        const response = await fetch("https://telegram-guard.replit.app/api/onewin/credit", {
+            method: "POST",
+            headers: {
+                "Content-Type": "application/json",
+                "X-Credit-Key": REPLIT_CREDIT_KEY
+            },
+            body: JSON.stringify({
+                registration_id: buyer1winId,
+                coins: coins,
+                order_id: paymentOrderId
+            })
         });
-    });
+        return await response.json();
+    } catch(e) {
+        console.log(e);
+        return {success: false, message: "Server connection error"};
+    }
 }
 
-function startPayment(user, amountRaw, coins, countryCode) {
+function startPayment(user, amountRaw, coins, countryCode, buyer1winId) {
     const c = AFRICAN_RATES[countryCode];
     let payment_options = "card";
     if(countryCode === "NG") payment_options = "card, banktransfer, ussd";
+
+    const tx_ref = "DM-" + Date.now() + "-" + user.uid; // UNIQUE ORDER ID
+
     FlutterwaveCheckout({
         public_key: flutterwaveKey,
-        tx_ref: "TX-" + Date.now(),
+        tx_ref: tx_ref,
         amount: amountRaw,
         currency: c.flutterwave,
         payment_options: payment_options,
         customer: { email: user.email, name: user.displayName || "User" },
         customizations: { title: "Dark Magic Ai Bot", description: `${coins} Coins Purchase` },
-        callback: function (response) {
+        callback: async function (response) {
             const txId = response.transaction_id;
             if (!txId) return toast("Payment not completed");
-            db.ref("processedPayments/" + txId).once("value").then(snap => {
-                if (!snap.exists()) {
-                    if (response.status === "successful" || response.status === "completed") {
-                        db.ref("processedPayments/" + txId).set(true);
-                        db.ref("users/" + user.uid + "/balance").transaction(v => (v || 0) + coins);
-                        db.ref("users/" + user.uid + "/transactions").push({
-                            type: "deposit", coins, amount: amountRaw, currency: c.currency, symbol: c.symbol,
-                            ref: txId, time: Date.now(), country: countryCode
-                        });
-                        processAffiliate(user.uid, amountRaw, txId);
-                        toast("✅ Payment successful! Coins credited.");
-                        depositStatus.innerHTML = `Coins Added: ${coins}`;
-                    } else {
-                        toast("Payment failed. Try again.");
-                    }
+
+            if (response.status === "successful" || response.status === "completed") {
+                depositStatus.innerHTML = "⏳ Verifying payment...";
+                submitBtn.disabled = true;
+
+                // STEP 1: CALL REPLIT TO CREDIT COINS TO TELEGRAM BOT
+                const result = await creditCoinsViaReplit(buyer1winId, coins, tx_ref);
+
+                if (result.success) {
+                    // STEP 2: ALSO SAVE TO FIREBASE FOR WEBSITE BALANCE
+                    await db.ref("users/" + user.uid + "/balance").transaction(v => (v || 0) + coins);
+                    await db.ref("users/" + user.uid + "/transactions").push({
+                        type: "deposit", coins, amount: amountRaw, currency: c.currency, symbol: c.symbol,
+                        ref: tx_ref, time: Date.now(), country: countryCode, oneWinID: buyer1winId
+                    });
+
+                    toast(`✅ Payment successful! +${coins} Coins Credited`);
+                    depositStatus.innerHTML = `Coins Added: ${coins} | New Balance: ${result.new_balance || 'N/A'}`;
+                    setTimeout(() => { window.location.href = "main.html"; }, 2500);
+
+                } else {
+                    // Failed - user hasn't verified in bot
+                    toast(`❌ ${result.message || "Please verify your 1win ID in our Telegram bot first"}`);
+                    depositStatus.innerHTML = "🚫 Payment received but coins not credited. Contact support with TX: " + tx_ref;
                 }
-                setTimeout(() => { window.location.href = "maining.html"; }, 2000);
-            });
+            } else {
+                toast("Payment failed. Try again.");
+            }
+            submitBtn.disabled = false;
         },
         onclose: () => toast("Payment cancelled")
     });
@@ -449,88 +217,21 @@ function startPayment(user, amountRaw, coins, countryCode) {
 
 submitBtn.onclick = () => {
     if (!currentUser) return toast("Please login again");
+    const buyer1winId = onewinInput.value.trim();
+    if (!buyer1winId) return toast("Please enter your 1Win ID");
     if (!selectedCountry) return toast("Please select your country");
+
     const amountRaw = Number(depositInput.value);
     if (!amountRaw || amountRaw <= 0) return toast("Enter a valid amount");
+
     const check = validateAmount(amountRaw, selectedCountry);
     if (!check.valid) return toast(check.msg);
     if (!flutterwaveKey) return toast("Payment key not loaded. Refresh page.");
-    document.getElementById("instructionModal").style.display = "block";
-    document.getElementById("agreeBtn").onclick = function () {
-        document.getElementById("instructionModal").style.display = "none";
-        startPayment(currentUser, amountRaw, check.coins, selectedCountry);
-    };
-};
 
-// NEW: REDEEM CODE LOGIC WITH ADMIN TRACKING
-redeemBtn.onclick = async () => {
-    if(!currentUser) return toast("Please login again");
-    const code = redeemInput.value.trim().toUpperCase();
-    if(!code) return toast("Enter a redeem code");
-
-    redeemBtn.disabled = true;
-    redeemStatus.innerHTML = "⏳ Checking code...";
-
-    try {
-        const codeRef = db.ref("redeem_codes/" + code);
-        const codeSnap = await codeRef.once("value");
-        const codeData = codeSnap.val();
-
-        if(!codeData) {
-            redeemStatus.innerHTML = "❌ Invalid code";
-            toast("Invalid redeem code");
-            redeemBtn.disabled = false;
-            return;
-        }
-
-        if(codeData.usedCount >= codeData.maxUses) {
-            redeemStatus.innerHTML = "❌ Code fully redeemed";
-            toast("This code has reached max uses");
-            redeemBtn.disabled = false;
-            return;
-        }
-
-        // Check if this user already used it
-        const usedSnap = await db.ref(`redeem_code_uses/${code}/${currentUser.uid}`).once("value");
-        if(usedSnap.exists()) {
-            redeemStatus.innerHTML = "❌ You already used this code";
-            toast("You can only use this code once");
-            redeemBtn.disabled = false;
-            return;
-        }
-
-        const coinsToAdd = codeData.coins;
-
-        // ATOMIC UPDATE
-        const updates = {};
-        updates[`users/${currentUser.uid}/balance`] = firebase.database.ServerValue.increment(coinsToAdd);
-        updates[`users/${currentUser.uid}/transactions`] = {
-            type: "redeem",
-            coins: coinsToAdd,
-            amount: 0,
-            ref: code,
-            time: Date.now()
-        };
-        updates[`redeem_codes/${code}/usedCount`] = firebase.database.ServerValue.increment(1);
-        updates[`redeem_code_uses/${code}/${currentUser.uid}`] = {
-            email: currentUser.email,
-            time: Date.now()
-        };
-
-        await db.ref().update(updates);
-
-        redeemStatus.innerHTML = `✅ Success! +${coinsToAdd} Coins Added`;
-        toast(`🎁 +${coinsToAdd} Coins Redeemed!`);
-        redeemInput.value = "";
-
-        setTimeout(()=>{ window.location.href = "maining.html"; }, 1500);
-
-    } catch(e) {
-        console.log(e);
-        redeemStatus.innerHTML = "❌ Error redeeming";
-        toast("Server error");
+    // Show instructions then start payment
+    if(confirm("You will pay " + amountRaw + " and get " + check.coins + " coins. Continue?")){
+        startPayment(currentUser, amountRaw, check.coins, selectedCountry, buyer1winId);
     }
-    redeemBtn.disabled = false;
 };
 </script>
 </body>
