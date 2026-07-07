@@ -18,15 +18,18 @@ h1 {font-family: 'UnifrakturCook', cursive;font-size: 35px;color: red;margin-bot
 #toolbar {position: absolute;top: 55px;right: 0;width: 230px;display: none;flex-direction: column;gap: 10px;background: rgba(15,15,15,0.98);border: 1px solid rgba(255,0,0,0.2);border-radius: 18px;padding: 12px;box-shadow: 0 0 25px rgba(255,0,0,0.25);}
 #toolbar button {background: linear-gradient(135deg,#1f0000,#520000);border: 1px solid rgba(255,0,0,0.2);color: white;padding: 13px;border-radius: 14px;font-size: 13px;cursor: pointer;font-weight: 600;text-align: left;}
 #toolbar button:hover {background: linear-gradient(135deg,#ff0000,#990000);transform: scale(1.03);}
+#toolbar button:disabled {opacity: 0.4; cursor: not-allowed;}
 #balanceContainer {background: rgba(20,20,20,0.95);padding: 7px 12px;border-radius: 20px;display: flex;align-items: center;color: #fff;box-shadow: 0 0 18px rgba(255, 0, 0, 0.25);border:1px solid rgba(255,0,0,0.25);}
 #balanceAmount { font-size: 14px; margin-right: 6px; font-weight: 600; }
 #addBalanceBtn {font-size: 14px;background: red;border: none;color: white;border-radius: 50%;width: 26px;height: 26px;cursor: pointer;box-shadow: 0 0 6px rgba(255,0,0,0.8);}
+#addBalanceBtn:disabled {opacity: 0.4; cursor: not-allowed;}
 #statusMessage {margin-top: 12px;font-size: 18px;color: yellow;text-shadow: 0 0 4px orange;}
 #instructionText {font-size: 16px;color: #ffdd00;margin-bottom: 15px;font-weight: 600;}
 .warning-text {color: #ff1a1a;font-size: 14px;font-weight: 700;margin: 8px 0;animation: blink 1.5s infinite;}
 @keyframes blink {0%, 100% { opacity: 1; }50% { opacity: 0.4; }}
 #registrationContainer {margin: 20px auto;background: rgba(255,0,0,0.08);padding: 25px;border-radius: 18px;border: 2px solid #ff1a1a;max-width: 450px;box-shadow: 0 0 25px rgba(255,0,0,0.3);}
 #registerBtn {border: 3px solid #00ffff;border-radius: 18px;padding: 16px 25px;background: linear-gradient(90deg, #ff0000, #ff4d4d);color: white;cursor: pointer;font-size: 18px;font-weight: 700;margin-bottom: 15px;width: 95%;box-shadow: 0 0 20px rgba(255,0,0,0.8);animation: pulse 2s infinite;letter-spacing: 0.5px;}
+#registerBtn:disabled {opacity: 0.4; cursor: not-allowed;}
 @keyframes pulse {0% { box-shadow: 0 0 20px rgba(255,0,0,0.8); }50% { box-shadow: 0 0 35px rgba(255,0,0,1); }100% { box-shadow: 0 0 20px rgba(255,0,0,0.8); }}
 #registerBtn:hover { transform: scale(1.04); }
 .grid {display: grid;grid-template-columns: repeat(auto-fill,minmax(100px,1fr));gap: 15px;padding-top: 20px;justify-items: center;}
@@ -36,9 +39,20 @@ h1 {font-family: 'UnifrakturCook', cursive;font-size: 35px;color: red;margin-bot
 .label {margin-top: 5px;color: cyan;font-size: 14px;font-weight: 600;}
 #toast {visibility: hidden;min-width: 260px;background-color: red;color: white;text-align: center;border-radius: 10px;padding: 12px;position: fixed;bottom: 30px;left: 50%;transform: translateX(-50%);font-size: 16px;font-weight: 600;z-index: 99999;opacity: 0;transition: opacity 0.3s, bottom 0.3s;}
 #toast.show {visibility: visible;opacity: 1;bottom: 50px;}
+
+/* LOCKDOWN OVERLAY */
+#lockdownOverlay {display: none;position: fixed;top: 0;left: 0;width: 100%;height: 100%;background: rgba(0,0,0,0.97);z-index: 999999;justify-content: center;align-items: center;flex-direction: column;padding: 20px;}
+#lockdownText {font-size: 32px;font-weight: 900;color: #ff1a1a;text-align: center;margin-bottom: 25px;text-shadow: 0 0 20px rgba(255,0,0,0.9);}
+.lockdown-btn {padding: 18px 35px;background: #ff1a1a;color: white;font-size: 18px;font-weight: 700;border: none;border-radius: 14px;cursor: pointer;box-shadow: 0 0 30px rgba(255,0,0,0.8);}
 </style>
 </head>
 <body>
+
+<!-- LOCKDOWN SCREEN -->
+<div id="lockdownOverlay">
+    <div id="lockdownText">THIS BOT IS NO LONGER FUNCTIONING</div>
+    <button class="lockdown-btn" onclick="window.location.href='https://t.me/DARKMAGIC_AI_PREDICTOR_BOT'">GET NEW BOT</button>
+</div>
 
 <div id="topBar">
     <div id="balanceContainer">
@@ -106,17 +120,20 @@ function toast(msg){
 
 const hamburger=document.getElementById("hamburger");
 const toolbar=document.getElementById("toolbar");
-hamburger.onclick=()=>{ toolbar.style.display=(toolbar.style.display==="flex")?"none":"flex"; };
+const lockdownOverlay = document.getElementById("lockdownOverlay");
+let isLocked = false;
 
-function openTelegram(){ window.open("https://t.me/darkmagic01","_blank"); }
-function goHelp(){ window.location.href="help.html"; }
-function goAbout(){ window.location.href="about.html"; }
-function openAffiliate() { window.location.href = "affiliate.html"; }
-function contactSupport(){const links=["https://t.me/dark_magiks","https://t.me/dark_maggik"];window.open(links[Math.floor(Math.random()*links.length)],"_blank");}
-function logout(){ firebase.auth().signOut().then(()=>{ window.location.href="login.html"; }); }
+hamburger.onclick=()=>{ if(isLocked) return; toolbar.style.display=(toolbar.style.display==="flex")?"none":"flex"; };
+
+function openTelegram(){ if(isLocked) return; window.open("https://t.me/darkmagic01","_blank"); }
+function goHelp(){ if(isLocked) return; window.location.href="help.html"; }
+function goAbout(){ if(isLocked) return; window.location.href="about.html"; }
+function openAffiliate() { if(isLocked) return; window.location.href = "affiliate.html"; }
+function contactSupport(){ if(isLocked) return; const links=["https://t.me/dark_magiks","https://t.me/dark_maggik"];window.open(links[Math.floor(Math.random()*links.length)],"_blank");}
+function logout(){ if(isLocked) return; firebase.auth().signOut().then(()=>{ window.location.href="login.html"; }); }
 
 const balanceDisplay = document.getElementById("balanceAmount");
-document.getElementById("addBalanceBtn").onclick=()=>{ window.location.href="deposit.html"; };
+document.getElementById("addBalanceBtn").onclick=()=>{ if(isLocked) return; window.location.href="deposit.html"; };
 
 const firebaseConfig = {
     apiKey: "AIzaSyDvFDByPPo9zgwKLdPaREz1OVMQCXmPfrs",
@@ -128,10 +145,30 @@ firebase.initializeApp(firebaseConfig);
 const db=firebase.database();
 let approvalStatus=null;
 let currentUser = null;
-let lastVerifyTime = 0; // ANTI-SPAM
+let lastVerifyTime = 0;
+
+// CHECK LOCKDOWN STATUS
+function checkLockdown() {
+    db.ref("settings/botLockdown").on("value", snap => {
+        isLocked = snap.val() === true;
+        if(isLocked) {
+            lockdownOverlay.style.display = "flex";
+            document.querySelectorAll("button").forEach(btn => btn.disabled = true);
+            document.querySelectorAll(".game-button").forEach(el => el.classList.add("locked"));
+            document.getElementById("onewin-id-input").disabled = true;
+            document.getElementById("hamburger").style.pointerEvents = "none";
+        } else {
+            lockdownOverlay.style.display = "none";
+            document.querySelectorAll("button").forEach(btn => btn.disabled = false);
+            document.getElementById("onewin-id-input").disabled = false;
+            document.getElementById("hamburger").style.pointerEvents = "auto";
+        }
+    });
+}
+checkLockdown(); // run on load
 
 function lockButtons(){ document.querySelectorAll(".game-button").forEach(el=>{ el.classList.add("locked"); }); }
-function unlockButtons(){ document.querySelectorAll(".game-button").forEach(el=>{ el.classList.remove("locked"); }); }
+function unlockButtons(){ if(!isLocked) document.querySelectorAll(".game-button").forEach(el=>{ el.classList.remove("locked"); }); }
 
 const gamePages={
     luckyJetBtn:"lucky.html", aviatorBtn:"aviator.html", diceBtn:"dice.html", luckyBtn:"luckys.html",
@@ -143,12 +180,14 @@ const gamePages={
 Object.keys(gamePages).forEach(id=>{
     const page=gamePages[id];
     document.getElementById(id).onclick=()=>{
+        if(isLocked) return;
         if(!page) return toast("🚫 Server Unavailable");
         handleGameClick(page);
     };
 });
 
 function handleGameClick(page){
+    if(isLocked) return;
     if(approvalStatus!=="activated"){
         toast("You must verify 1Win ID + First Deposit first");
         return;
@@ -157,7 +196,6 @@ function handleGameClick(page){
     setTimeout(()=>{ location.href=page; },900);
 }
 
-// BACKUP BALANCE BEFORE ANY CHANGE
 function backupBalance(uid, balance){
     db.ref("backups/"+uid+"/"+Date.now()).set({balance: balance, time: Date.now()});
 }
@@ -173,7 +211,7 @@ async function isIdAlreadyUsed(onewinID, currentUID) {
 
 let currentVerifyingID = null;
 async function checkOneWinId() {
-  // ANTI-SPAM: 10 second cooldown
+  if(isLocked) return toast("Bot is currently locked");
   if(Date.now() - lastVerifyTime < 10000) return toast("⏳ Wait 10 seconds before retrying");
   lastVerifyTime = Date.now();
 
@@ -231,7 +269,6 @@ async function checkOneWinId() {
 
       approvalStatus="activated";
 
-      // SECURE WRITE: Only write to user node
       await db.ref("users/"+user.uid).update({
           email: user.email || "",
           oneWinID: id,
@@ -287,7 +324,7 @@ function checkStatus(uid){
 function listenBalance(uid){
     db.ref("users/"+uid+"/balance").on("value",snap=>{
         const bal = snap.val()!=null? Math.floor(snap.val()) : 0;
-        backupBalance(uid, bal); // AUTO BACKUP
+        backupBalance(uid, bal);
         balanceDisplay.innerText = bal;
     });
 }
